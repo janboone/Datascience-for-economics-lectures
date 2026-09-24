@@ -1,0 +1,866 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lectures Datascience for Economics</title>
+<meta name="author" content="Jan Boone" />
+<meta name="generator" content="Org Mode" />
+<link rel="stylesheet" type="text/css" href="https://fniessen.github.io/org-html-themes/src/readtheorg/css/htmlize.css"/>
+<link rel="stylesheet" type="text/css" href="https://fniessen.github.io/org-html-themes/src/readtheorg/css/readtheorg.css"/>
+<link rel="stylesheet" type="text/css" href="https://fniessen.github.io/org-html-themes/src/readtheorg/css/code-copy.css"/>
+<link rel="stylesheet" type="text/css" href="https://fniessen.github.io/org-html-themes/src/readtheorg/css/search.css"/>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="https://fniessen.github.io/org-html-themes/src/vendor/stickytableheaders/jquery.stickytableheaders.min.js"></script>
+<script type="text/javascript" src="https://fniessen.github.io/org-html-themes/src/readtheorg/js/search.js"></script>
+<script type="text/javascript" src="https://fniessen.github.io/org-html-themes/src/readtheorg/js/readtheorg.js"></script>
+<script type="text/javascript" src="https://fniessen.github.io/org-html-themes/src/readtheorg/js/code-copy.js"></script>
+<link rel="stylesheet" href="./css/Latex.css">
+<link rel="stylesheet" href="https://latex.now.sh/prism/prism.css">
+<script src="https://cdn.jsdelivr.net/npm/prismjs/prism.min.js"></script>
+<style>
+pre.src code {
+background: transparent !important;
+border: none !important;
+box-shadow: none !important;
+padding: 0 !important;
+}
+pre.src-python code {
+font-size: 1.1em !important;
+}
+</style>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<style>
+body { font-family: Arial, sans-serif; margin: 0; background-color: #f5f7fa; line-height: 1.7; }
+header { background-color: #1f3c88; color: white; padding: 25px; text-align: center; }
+main { max-width: 950px; margin: 40px auto; padding: 30px; background: white; border-radius: 10px; box-shadow: 0 3px 12px rgba(0,0,0,0.1); }
+h1 { margin-top: 0; margin-bottom: 15px; }
+h2 { margin-top: 35px; margin-bottom: 10px; }
+h3 { margin-top: 25px; }
+iframe { width: 100%; height: 900px; border: none; border-radius: 8px; margin-top: 15px; margin-bottom: 15px; }
+pre { padding: 14px; border-radius: 6px; background: #f7f7f7; overflow-x: auto; }
+code { font-family: Consolas, Monaco, monospace; }
+table { font-size: 0.95em; border-collapse: collapse; }
+thead th { background:#1f3c88 !important; color:white !important; padding:8px; border:1px solid #ddd; }
+tbody td { padding:8px; border:1px solid #ddd; }
+figure, img { display: block; margin: 25px auto; max-width: 100%; }
+.fallback { margin-top: 15px; text-align: center; }
+.fallback a { color: #1f3c88; text-decoration: none; font-weight: bold; }
+.fallback a:hover { text-decoration: underline; }
+.section { margin-bottom: 40px; }
+div[style*="border-left:4px solid #1f3c88"] { border-radius:6px; padding:14px; }
+div[style*="border-left:4px solid #2c7a7b"] { border-radius:6px; padding:14px; }
+</style><style>.csl-entry{text-indent: -1.5em; margin-left: 1.5em;}</style>
+
+<script src="http://orgmode.org/org-info.js">
+// @license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&amp;dn=gpl-3.0.txt GPL-v3-or-Later
+// @license-end
+</script>
+
+<script>
+// @license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&amp;dn=gpl-3.0.txt GPL-v3-or-Later
+org_html_manager.set("TOC_DEPTH", "6");
+org_html_manager.set("LINK_HOME", "");
+org_html_manager.set("LINK_UP", "");
+org_html_manager.set("LOCAL_TOC", "1");
+org_html_manager.set("VIEW_BUTTONS", "0");
+org_html_manager.set("MOUSE_HINT", "underline");
+org_html_manager.set("FIXED_TOC", "0");
+org_html_manager.set("TOC", "1");
+org_html_manager.set("VIEW", "showall");
+org_html_manager.setup();  // activate after the parameters are set
+// @license-end
+</script>
+<script>
+  window.MathJax = {
+    tex: {
+      ams: {
+        multlineWidth: '85%'
+      },
+      tags: 'ams',
+      tagSide: 'right',
+      tagIndent: '.8em'
+    },
+    chtml: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    svg: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    output: {
+      font: 'mathjax-modern',
+      displayOverflow: 'overflow'
+    }
+  };
+</script>
+
+<script
+  id="MathJax-script"
+  async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
+</head>
+<body>
+<div id="content" class="content">
+<h1 class="title">Lectures Datascience for Economics</h1>
+<div id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#org95f5e0c">Preamble</a></li>
+<li><a href="#orgde082b7">1. Marimo</a></li>
+<li><a href="#orgf60f873">Introduction</a></li>
+<li><a href="#org6fb3dc8">2. Lecture 1: Statistical Hacking — Distributions and Bootstrapping</a>
+<ul>
+<li><a href="#org4971745">2.1. Learning objectives</a></li>
+<li><a href="#org0dca045">2.2. Introduction</a></li>
+<li><a href="#org9c46040">2.3. Apps</a>
+<ul>
+<li><a href="#org65da336">Distribution of an estimator</a></li>
+<li><a href="#orgf87ced8">Bootstrap hypothesis test</a></li>
+</ul>
+</li>
+<li><a href="#orgd4661a1">2.4. Python Code Explanation</a>
+<ul>
+<li><a href="#org26450ba">Simulating sampling distributions</a>
+<ul>
+<li><a href="#org95f214b">1. Import libraries and set parameters</a></li>
+<li><a href="#org64e4f0d">2. Generate the data</a></li>
+<li><a href="#orgf464173">3. Plot the histogram</a></li>
+<li><a href="#org2b2c150">4. Overlay the theoretical normal</a></li>
+</ul>
+</li>
+<li><a href="#orgb76560d">Distribution of the OLS slope</a>
+<ul>
+<li><a href="#org14cbdee">5. Generate data with broadcasting</a></li>
+<li><a href="#org740a25b">6. Compute OLS slopes without a loop</a></li>
+</ul>
+</li>
+<li><a href="#orge44f00b">Bootstrapping</a>
+<ul>
+<li><a href="#org2c7b41e">7. Generate two groups</a></li>
+<li><a href="#orge6a45da">8. Combine the samples</a></li>
+<li><a href="#orgf58ec2c">9. Run the permutation test (vectorised)</a></li>
+<li><a href="#orga491881">10. Compute the p-value</a></li>
+</ul>
+</li>
+<li><a href="#org958f7dc">OLS from scratch: the optimisation approach</a>
+<ul>
+<li><a href="#org8135453">11. Generate data</a></li>
+<li><a href="#org85d57eb">12. Define the OLS loss</a></li>
+<li><a href="#orgb3e30cf">13. Minimise the loss</a></li>
+<li><a href="#org689cb67">14. Ridge and lasso penalties</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#orga1c6fae">2.5. Summary</a></li>
+<li><a href="#orgf5e5bfe">2.6. Review Questions</a>
+<ul>
+<li><a href="#orgeef4046">Question 1: Distribution of the sample standard deviation</a></li>
+<li><a href="#orga00a947">Hint</a></li>
+<li><a href="#orgf92af07">Question 2: OLS with correlated predictors</a></li>
+<li><a href="#org82f328a">Question 3: Ridge regression and variable selection</a></li>
+<li><a href="#org5213b91">Hint</a></li>
+<li><a href="#org46630d0">Question 4: One-sided vs two-sided bootstrap test</a></li>
+<li><a href="#orgac83d75">Question 5: Bootstrap confidence interval</a></li>
+<li><a href="#org707177b">Hint</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#org737b66c">3. Course takeaway: simulation as a bridge to machine learning</a></li>
+<li><a href="#org733f282">4. Bibliography</a></li>
+</ul>
+</div>
+</div>
+<main>
+<div id="outline-container-org95f5e0c" class="outline-2">
+<h2 id="org95f5e0c">Preamble</h2>
+<div class="outline-text-2" id="text-org95f5e0c">
+<p>
+There are two versions of this document:
+</p>
+<ul class="org-ul">
+<li>the interactive <a href="https://janboone.github.io/Datascience-for-economics-lectures/">html version</a> which contains the interactive marimo apps</li>
+<li>and the static <a href="https://janboone.github.io/Datascience-for-economics-lectures/index.pdf">pdf version</a> which does not contain interactive apps but shows links to these apps</li>
+</ul>
+
+<p>
+The html version uses the <a href="https://github.com/fniessen/org-html-themes">ReadTheOrg</a> theme and the pdf version the <a href="https://github.com/Wandmalfarbe/pandoc-latex-template">Eisvogel latex template</a>.
+</p>
+</div>
+</div>
+<div id="outline-container-orgde082b7" class="outline-2">
+<h2 id="orgde082b7"><span class="section-number-2">1.</span> Marimo</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+In the lectures we use <a href="https://marimo.io/">marimo notebooks</a>. If you follow these lectures as a Tilburg University student, marimo is available at <a href="https://jupyterlab.uvt.nl/">jupyterlab server.</a>
+</p>
+
+<p>
+Information on how to install marimo on your own computer can be found <a href="https://docs.marimo.io/getting_started/installation/">here</a>. You can also use <a href="https://molab.marimo.io/notebooks">molab</a>.
+</p>
+</div>
+</div>
+<div id="outline-container-orgf60f873" class="outline-2">
+<h2 id="orgf60f873">Introduction</h2>
+<div class="outline-text-2" id="text-orgf60f873">
+<p>
+The goal of these lectures is to build intuition for statistical and machine-learning concepts through simulation. Rather than deriving results analytically, we generate data ourselves, repeat an experiment thousands of times, and read the answer directly from the resulting distribution. This approach — sometimes called <b>statistical hacking</b> — serves two purposes: you always know exactly where your data comes from, and you sharpen your Python skills along the way.
+</p>
+
+<p>
+Each lecture starts from a concrete economic or statistical question, introduces the Python tools needed to answer it through simulation, and then explains the code in detail. Interactive marimo apps let you experiment with the key parameters and see the effects immediately.
+</p>
+
+<p>
+The lectures build on each other. We begin with foundational ideas in statistics (distributions of estimators, bootstrapping, OLS) and move toward machine-learning techniques such as regularisation, neural networks, and treatment-effect estimation.
+</p>
+
+<div style="border-left:4px solid #444;padding:10px;margin:20px 0;background:#f7f7f7;">
+<strong>How to work with these lectures</strong>
+<ul>
+<li>Read the economic and statistical explanation to understand the intuition.</li>
+<li>Open your own <code>marimo</code> notebook and type the Python code yourself rather than copying it.</li>
+<li>Experiment with the parameters in the interactive apps to see how the results change.</li>
+<li>Use the review questions to check whether you understand both the intuition and the implementation.</li>
+<li>If you get stuck, try debugging yourself first, then consult documentation, classmates, or an LLM.</li>
+</ul>
+</div>
+
+<div style="overflow-x:auto; margin:20px 0;">
+<table style="border-collapse:collapse; width:100%;">
+<thead>
+<tr style="background:#1f3c88;color:white;">
+<th style="padding:8px;border:1px solid #ddd;">Lecture</th>
+<th style="padding:8px;border:1px solid #ddd;">Topic</th>
+<th style="padding:8px;border:1px solid #ddd;">Statistics / Econometrics</th>
+<th style="padding:8px;border:1px solid #ddd;">Python</th>
+</tr>
+</thead>
+<tbody>
+<tr><td style="padding:8px;border:1px solid #ddd;">1</td><td style="padding:8px;border:1px solid #ddd;">Distributions and bootstrapping</td><td style="padding:8px;border:1px solid #ddd;">Sampling distributions, CLT, hypothesis testing, OLS</td><td style="padding:8px;border:1px solid #ddd;">numpy simulations, matplotlib, scipy.optimize</td></tr>
+</tbody>
+</table>
+</div>
+
+<hr />
+</div>
+</div>
+<div id="outline-container-org6fb3dc8" class="outline-2 section">
+<h2 id="org6fb3dc8"><span class="section-number-2">2.</span> Lecture 1: Statistical Hacking — Distributions and Bootstrapping</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+<b>Skills you learn in this lecture:</b> simulating sampling distributions, visualising histograms, implementing bootstrapping and OLS from scratch using Python and numpy.
+</p>
+</div>
+<div id="outline-container-org4971745" class="outline-3">
+<h3 id="org4971745"><span class="section-number-3">2.1.</span> Learning objectives</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+After completing this lecture you should be able to:
+</p>
+<ul class="org-ul">
+<li>explain why simulating a distribution is a useful alternative to analytical statistical theory</li>
+<li>reproduce the Central Limit Theorem in Python by simulating sample means</li>
+<li>describe what the sampling distribution of an OLS slope looks like and what determines its spread</li>
+<li>implement a bootstrap permutation test to compare two group means without distributional assumptions</li>
+<li>define the loss function for OLS in Python and minimise it numerically</li>
+<li>explain the difference between ridge and lasso penalisation and implement both as modifications to the OLS loss</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-org0dca045" class="outline-3">
+<h3 id="org0dca045"><span class="section-number-3">2.2.</span> Introduction</h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+In your statistics and econometrics courses you have seen analytical results: the sample mean follows an approximately normal distribution by the Central Limit Theorem; the OLS slope has a t-distribution under certain assumptions. These results are elegant but limited. Modern machine-learning models are so complex that no such closed-form distributions exist for their estimated parameters. So how do you assess uncertainty?
+</p>
+
+<p>
+The answer is <b>simulation</b>. You write the statistical problem in Python, run it thousands of times, and read the distribution from the resulting histogram. This lecture introduces this way of thinking through three closely linked ideas:
+</p>
+
+<ol class="org-ol">
+<li><b>Distributions of estimators</b> — how much does the sample mean or OLS slope vary from sample to sample?</li>
+<li><b>Bootstrapping</b> — how can you test a hypothesis when you have only one sample and no knowledge of the underlying model?</li>
+<li><b>OLS from scratch</b> — how does the optimisation problem behind OLS work, and how do ridge and lasso extend it?</li>
+</ol>
+
+<p>
+Because you generate all the data yourself, you always know the true answer and can check whether the simulation recovers it. That is what makes this approach so useful for building intuition.
+</p>
+</div>
+</div>
+<div id="outline-container-org9c46040" class="outline-3">
+<h3 id="org9c46040"><span class="section-number-3">2.3.</span> Apps</h3>
+<div class="outline-text-3" id="text-2-3">
+<p>
+This lecture has two interactive apps. The first shows how the sampling distribution of the mean and the OLS slope change as you adjust the sample size and noise level. The second demonstrates bootstrap hypothesis testing: you control the effect size and watch whether the test detects it.
+</p>
+</div>
+<div id="outline-container-org65da336" class="outline-4 section">
+<h4 id="org65da336">Distribution of an estimator</h4>
+<div class="outline-text-4" id="text-org65da336">
+<p>
+The app below has two parts. In the first part you choose a sample size \(n\) and a number of simulations \(N\). Each simulation draws a sample of size \(n\) from the uniform distribution on \([0,1]\) and records the sample mean. The histogram of the \(N\) means shows the sampling distribution of the estimator; the red curve is the theoretical normal from the Central Limit Theorem.
+</p>
+
+<p>
+In the second part you choose a true slope \(\beta_1\), a noise level \(\sigma\), and sample dimensions. The app runs \(N\) OLS regressions and plots both the histogram of estimated slopes and a fan of 50 fitted regression lines. This illustrates that uncertainty about the slope translates directly into uncertainty about where the regression line lies — and that the uncertainty is largest far from the mean of \(x\).
+</p>
+
+<div style="text-align:center;margin:20px 0;">
+  <a href="https://janboone.github.io/datascience-marimo/lecture1_distributions.html"
+     target="_blank"
+     style="background:#1f3c88;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:1em;">
+    ▶ Open app: Distribution of an Estimator
+  </a>
+</div>
+</div>
+</div>
+<div id="outline-container-orgf87ced8" class="outline-4 section">
+<h4 id="orgf87ced8">Bootstrap hypothesis test</h4>
+<div class="outline-text-4" id="text-orgf87ced8">
+<p>
+Suppose we observe two groups \(A\) and \(B\) and want to know whether their means are significantly different. In the app, group \(B\) is generated as \(B = A \times \delta\) where \(\delta \leq 1\), so a smaller \(\delta\) means a larger effect. When \(\delta = 1\) there is no difference; the null hypothesis is true.
+</p>
+
+<p>
+The left panel shows the raw samples and their means. The right panel shows the bootstrap null distribution: the distribution of mean differences you would see if both groups were actually drawn from the same population. The observed difference is marked in red; the shaded tails are the fraction that exceed it in magnitude — that fraction is the p-value.
+</p>
+
+<p>
+Drag \(\delta\) from \(0.80\) toward \(1.00\) to watch the p-value rise above \(0.05\) as the effect becomes too small to detect with the given sample size.
+</p>
+
+<div style="text-align:center;margin:20px 0;">
+  <a href="https://janboone.github.io/datascience-marimo/lecture1_bootstrap.html"
+     target="_blank"
+     style="background:#1f3c88;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:1em;">
+    ▶ Open app: Bootstrap Hypothesis Test
+  </a>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-orgd4661a1" class="outline-3">
+<h3 id="orgd4661a1"><span class="section-number-3">2.4.</span> Python Code Explanation</h3>
+<div class="outline-text-3" id="text-2-4">
+<p>
+In this section we explain the Python code for the models. Open a <code>marimo</code> notebook alongside this document and type the code yourself — do not copy and paste. Getting errors and fixing them is the fastest way to learn.
+</p>
+</div>
+<div id="outline-container-org26450ba" class="outline-4">
+<h4 id="org26450ba">Simulating sampling distributions</h4>
+<div class="outline-text-4" id="text-org26450ba">
+</div>
+<div id="outline-container-org95f214b" class="outline-5">
+<h5 id="org95f214b">1. Import libraries and set parameters</h5>
+<div class="outline-text-5" id="text-org95f214b">
+<p>
+We use <code>numpy</code> for numerical computation and <code>matplotlib</code> for plotting. Type these imports at the top of your notebook.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><code><span style="color: #531ab6;">import</span> numpy <span style="color: #531ab6;">as</span> np
+<span style="color: #531ab6;">import</span> matplotlib.pyplot <span style="color: #531ab6;">as</span> plt
+
+<span style="color: #005e8b;">N_simulations</span> <span style="color: #000000;">=</span> 5000   <span style="color: #595959;"># </span><span style="color: #595959;">number of samples to draw
+</span><span style="color: #005e8b;">sample_size</span> <span style="color: #000000;">=</span> 10        <span style="color: #595959;"># </span><span style="color: #595959;">observations per sample</span>
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org64e4f0d" class="outline-5">
+<h5 id="org64e4f0d">2. Generate the data</h5>
+<div class="outline-text-5" id="text-org64e4f0d">
+<p>
+The key idea: instead of drawing one sample, we draw <code>N_simulations</code> samples at once by creating a 2D array (matrix). Each row is one sample; each column is one observation within that sample.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><code><span style="color: #005e8b;">samples</span> <span style="color: #000000;">=</span> np.random.uniform(0, 1, (N_simulations, sample_size))
+<span style="color: #005e8b;">means</span> <span style="color: #000000;">=</span> samples.mean(axis<span style="color: #000000;">=</span>1)
+</code></pre>
+</div>
+
+<p>
+<code>np.random.uniform(low, high, size)</code> draws uniformly distributed random numbers. The argument <code>(N_simulations, sample_size)</code> gives a matrix with <code>N_simulations</code> rows and <code>sample_size</code> columns.
+</p>
+
+<p>
+<code>.mean(axis=1)</code> takes the mean <i>across columns</i> (axis 1), so we get one mean per row — one per simulation. Compare this to <code>.mean(axis=0)</code> which would average across rows.
+</p>
+</div>
+</div>
+<div id="outline-container-orgf464173" class="outline-5">
+<h5 id="orgf464173">3. Plot the histogram</h5>
+<div class="outline-text-5" id="text-orgf464173">
+<div class="org-src-container">
+<pre class="src src-python"><code><span style="color: #005e8b;">fig</span>, <span style="color: #005e8b;">ax</span> <span style="color: #000000;">=</span> plt.subplots(figsize<span style="color: #000000;">=</span>(8, 4))
+ax.hist(means, bins<span style="color: #000000;">=</span>60, density<span style="color: #000000;">=</span><span style="color: #0000b0;">True</span>, alpha<span style="color: #000000;">=</span>0.6, color<span style="color: #000000;">=</span><span style="color: #3548cf;">"steelblue"</span>, label<span style="color: #000000;">=</span><span style="color: #3548cf;">"Simulated means"</span>)
+ax.set_xlabel(<span style="color: #3548cf;">"Sample mean"</span>)
+ax.set_ylabel(<span style="color: #3548cf;">"Density"</span>)
+ax.set_title(f<span style="color: #3548cf;">"Sampling distribution of the mean (n=</span>{sample_size}<span style="color: #3548cf;">)"</span>)
+ax.legend()
+</code></pre>
+</div>
+
+<p>
+Setting <code>density=True</code> normalises the histogram so that the total area equals 1, which makes it comparable to a probability density function. The <code>alpha</code> parameter controls transparency (0 = invisible, 1 = opaque).
+</p>
+</div>
+</div>
+<div id="outline-container-org2b2c150" class="outline-5">
+<h5 id="org2b2c150">4. Overlay the theoretical normal</h5>
+<div class="outline-text-5" id="text-org2b2c150">
+<p>
+For a sample drawn from Uniform[0,1], the population mean is \(\mu = 0.5\) and the population variance is \(\sigma^2 = 1/12\). The standard error of the sample mean is therefore \(\text{SE} = 1/\sqrt{12n}\). By the Central Limit Theorem, the sampling distribution of the mean is approximately \(\mathcal{N}(0.5,\, \text{SE}^2)\) for large \(n\).
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><code><span style="color: #005e8b;">se</span> <span style="color: #000000;">=</span> 1.0 <span style="color: #000000;">/</span> np.sqrt(12 <span style="color: #000000;">*</span> sample_size)
+<span style="color: #005e8b;">x</span> <span style="color: #000000;">=</span> np.linspace(0.2, 0.8, 300)
+<span style="color: #005e8b;">pdf</span> <span style="color: #000000;">=</span> (1.0 <span style="color: #000000;">/</span> (se <span style="color: #000000;">*</span> np.sqrt(2 <span style="color: #000000;">*</span> np.pi))) <span style="color: #000000;">*</span> np.exp(<span style="color: #000000;">-</span>0.5 <span style="color: #000000;">*</span> ((x <span style="color: #000000;">-</span> 0.5) <span style="color: #000000;">/</span> se) <span style="color: #000000;">**</span> 2)
+ax.plot(x, pdf, <span style="color: #3548cf;">"r-"</span>, lw<span style="color: #000000;">=</span>2, label<span style="color: #000000;">=</span>f<span style="color: #3548cf;">"Theoretical N(0.5, </span>{se:.4f}<span style="color: #3548cf;">&#178;)"</span>)
+ax.legend()
+</code></pre>
+</div>
+
+<p>
+We compute the normal PDF manually using the formula \(f(x) = \frac{1}{\sigma\sqrt{2\pi}} e^{-\frac{(x-\mu)^2}{2\sigma^2}}\). Overlaying it on the histogram checks whether the CLT approximation is good for the chosen <code>sample_size</code>.
+</p>
+
+<hr />
+</div>
+</div>
+</div>
+<div id="outline-container-orgb76560d" class="outline-4">
+<h4 id="orgb76560d">Distribution of the OLS slope</h4>
+<div class="outline-text-4" id="text-orgb76560d">
+<p>
+To simulate the distribution of an OLS slope, we need to generate many (x, y) pairs, fit a regression to each, and record the slope.
+</p>
+</div>
+<div id="outline-container-org14cbdee" class="outline-5">
+<h5 id="org14cbdee">5. Generate data with broadcasting</h5>
+<div class="outline-text-5" id="text-org14cbdee">
+<div class="org-src-container">
+<pre class="src src-python"><code><span style="color: #005e8b;">N_simulations</span> <span style="color: #000000;">=</span> 1000
+<span style="color: #005e8b;">sample_size</span> <span style="color: #000000;">=</span> 20
+<span style="color: #005e8b;">true_slope</span> <span style="color: #000000;">=</span> 0.5
+<span style="color: #005e8b;">true_intercept</span> <span style="color: #000000;">=</span> 1.0
+<span style="color: #005e8b;">noise</span> <span style="color: #000000;">=</span> 0.5
+
+<span style="color: #005e8b;">x</span> <span style="color: #000000;">=</span> np.random.normal(0, 1, (N_simulations, sample_size))
+<span style="color: #005e8b;">eps</span> <span style="color: #000000;">=</span> np.random.normal(0, noise, (N_simulations, sample_size))
+<span style="color: #005e8b;">y</span> <span style="color: #000000;">=</span> true_intercept <span style="color: #000000;">+</span> true_slope <span style="color: #000000;">*</span> x <span style="color: #000000;">+</span> eps
+</code></pre>
+</div>
+
+<p>
+Here <code>true_slope * x</code> multiplies every element of the matrix <code>x</code> by the scalar <code>true_slope</code>. This is called <b>broadcasting</b>: numpy automatically extends scalar operations to match the shape of the array.
+</p>
+</div>
+</div>
+<div id="outline-container-org740a25b" class="outline-5">
+<h5 id="org740a25b">6. Compute OLS slopes without a loop</h5>
+<div class="outline-text-5" id="text-org740a25b">
+<p>
+The OLS slope formula for a simple regression is \(\hat\beta_1 = \frac{\sum(x_i - \bar x)(y_i - \bar y)}{\sum(x_i - \bar x)^2}\). We can compute this for all simulations at once:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><code><span style="color: #005e8b;">x_c</span> <span style="color: #000000;">=</span> x <span style="color: #000000;">-</span> x.mean(axis<span style="color: #000000;">=</span>1, keepdims<span style="color: #000000;">=</span><span style="color: #0000b0;">True</span>)   <span style="color: #595959;"># </span><span style="color: #595959;">demean each row
+</span><span style="color: #005e8b;">y_c</span> <span style="color: #000000;">=</span> y <span style="color: #000000;">-</span> y.mean(axis<span style="color: #000000;">=</span>1, keepdims<span style="color: #000000;">=</span><span style="color: #0000b0;">True</span>)
+
+<span style="color: #005e8b;">slopes</span> <span style="color: #000000;">=</span> (x_c <span style="color: #000000;">*</span> y_c).<span style="color: #8f0075;">sum</span>(axis<span style="color: #000000;">=</span>1) <span style="color: #000000;">/</span> (x_c <span style="color: #000000;">**</span> 2).<span style="color: #8f0075;">sum</span>(axis<span style="color: #000000;">=</span>1)
+</code></pre>
+</div>
+
+<p>
+The argument <code>keepdims=True</code> ensures the mean has shape <code>(N_simulations, 1)</code> instead of <code>(N_simulations,)</code>, so that subtracting it from the <code>(N_simulations, sample_size)</code> matrix <code>x</code> broadcasts correctly.
+</p>
+
+<hr />
+</div>
+</div>
+</div>
+<div id="outline-container-orge44f00b" class="outline-4">
+<h4 id="orge44f00b">Bootstrapping</h4>
+<div class="outline-text-4" id="text-orge44f00b">
+</div>
+<div id="outline-container-org2c7b41e" class="outline-5">
+<h5 id="org2c7b41e">7. Generate two groups</h5>
+<div class="outline-text-5" id="text-org2c7b41e">
+<div class="org-src-container">
+<pre class="src src-python"><code><span style="color: #005e8b;">sample_size</span> <span style="color: #000000;">=</span> 50
+<span style="color: #005e8b;">delta</span> <span style="color: #000000;">=</span> 0.95         <span style="color: #595959;"># </span><span style="color: #595959;">B = A * delta; delta &lt; 1 means B is lower than A
+</span><span style="color: #005e8b;">A</span> <span style="color: #000000;">=</span> 10 <span style="color: #000000;">+</span> np.random.normal(0, 1, sample_size)
+<span style="color: #005e8b;">B</span> <span style="color: #000000;">=</span> A <span style="color: #000000;">*</span> delta
+<span style="color: #005e8b;">observed_difference</span> <span style="color: #000000;">=</span> A.mean() <span style="color: #000000;">-</span> B.mean()
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orge6a45da" class="outline-5">
+<h5 id="orge6a45da">8. Combine the samples</h5>
+<div class="outline-text-5" id="text-orge6a45da">
+<p>
+Under the null hypothesis (H₀: both groups come from the same distribution), the group labels are arbitrary. We combine the two samples:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><code><span style="color: #005e8b;">AB</span> <span style="color: #000000;">=</span> np.concatenate([A, B])
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orgf58ec2c" class="outline-5">
+<h5 id="orgf58ec2c">9. Run the permutation test (vectorised)</h5>
+<div class="outline-text-5" id="text-orgf58ec2c">
+<p>
+We randomly relabel the combined sample <code>N_boot</code> times and record the difference in means each time. Using <code>np.argsort</code> on a uniform random matrix gives a vectorised permutation — no Python loop required:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><code><span style="color: #005e8b;">N_boot</span> <span style="color: #000000;">=</span> 10000
+<span style="color: #005e8b;">rng</span> <span style="color: #000000;">=</span> np.random.default_rng()
+
+<span style="color: #595959;"># </span><span style="color: #595959;">Each row of perm_indices is a random permutation of 0 &#8230; 2n-1
+</span><span style="color: #005e8b;">perm_indices</span> <span style="color: #000000;">=</span> np.argsort(rng.uniform(size<span style="color: #000000;">=</span>(N_boot, 2 <span style="color: #000000;">*</span> sample_size)), axis<span style="color: #000000;">=</span>1)
+
+<span style="color: #595959;"># </span><span style="color: #595959;">First n columns &#8594; group A; remaining n columns &#8594; group B
+</span><span style="color: #005e8b;">boot_diff</span> <span style="color: #000000;">=</span> (AB[perm_indices[:, :sample_size]].mean(axis<span style="color: #000000;">=</span>1)
+             <span style="color: #000000;">-</span> AB[perm_indices[:, sample_size:]].mean(axis<span style="color: #000000;">=</span>1))
+</code></pre>
+</div>
+
+<p>
+<code>AB[perm_indices[:, :sample_size]]</code> uses <b>fancy indexing</b>: for each of the <code>N_boot</code> rows we select <code>sample_size</code> elements of <code>AB</code> according to the permuted indices.
+</p>
+</div>
+</div>
+<div id="outline-container-orga491881" class="outline-5">
+<h5 id="orga491881">10. Compute the p-value</h5>
+<div class="outline-text-5" id="text-orga491881">
+<div class="org-src-container">
+<pre class="src src-python"><code><span style="color: #005e8b;">p_value</span> <span style="color: #000000;">=</span> np.mean(np.<span style="color: #8f0075;">abs</span>(boot_diff) <span style="color: #000000;">&gt;=</span> np.<span style="color: #8f0075;">abs</span>(observed_difference))
+<span style="color: #8f0075;">print</span>(f<span style="color: #3548cf;">"p-value: </span>{p_value:.4f}<span style="color: #3548cf;">"</span>)
+</code></pre>
+</div>
+
+<p>
+<code>np.abs(boot_diff) &gt;= np.abs(observed_difference)</code> produces a boolean array; taking its mean gives the fraction of bootstrap differences that are at least as extreme as the observed one. That fraction is the (two-sided) p-value.
+</p>
+
+<hr />
+</div>
+</div>
+</div>
+<div id="outline-container-org958f7dc" class="outline-4">
+<h4 id="org958f7dc">OLS from scratch: the optimisation approach</h4>
+<div class="outline-text-4" id="text-org958f7dc">
+<p>
+So far we computed OLS analytically. The same result can be obtained by minimising the mean squared error loss function directly. This is useful because the loss function can later be extended with penalty terms to give ridge or lasso.
+</p>
+</div>
+<div id="outline-container-org8135453" class="outline-5">
+<h5 id="org8135453">11. Generate data</h5>
+<div class="outline-text-5" id="text-org8135453">
+<div class="org-src-container">
+<pre class="src src-python"><code><span style="color: #531ab6;">from</span> scipy <span style="color: #531ab6;">import</span> optimize
+
+<span style="color: #005e8b;">sample_size</span> <span style="color: #000000;">=</span> 500
+<span style="color: #005e8b;">slope1</span> <span style="color: #000000;">=</span> <span style="color: #000000;">-</span>3.0
+<span style="color: #005e8b;">constant</span> <span style="color: #000000;">=</span> 1.0
+<span style="color: #005e8b;">x1</span> <span style="color: #000000;">=</span> np.random.normal(0, 1, sample_size)
+<span style="color: #005e8b;">x2</span> <span style="color: #000000;">=</span> np.random.normal(0, 1, sample_size)
+<span style="color: #005e8b;">y</span> <span style="color: #000000;">=</span> constant <span style="color: #000000;">+</span> slope1 <span style="color: #000000;">*</span> x1 <span style="color: #000000;">+</span> 3 <span style="color: #000000;">*</span> np.random.normal(0, 1, sample_size)
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org85d57eb" class="outline-5">
+<h5 id="org85d57eb">12. Define the OLS loss</h5>
+<div class="outline-text-5" id="text-org85d57eb">
+<p>
+The OLS estimator minimises the mean squared error:
+</p>
+
+<p>
+\[
+L(w) = \frac{1}{n} \sum_{i=1}^n \bigl(w_0 + w_1 x_{1i} + w_2 x_{2i} - y_i\bigr)^2
+\]
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><code><span style="color: #531ab6;">def</span> <span style="color: #721045;">loss_ols</span>(w):
+    <span style="color: #005e8b;">predictions</span> <span style="color: #000000;">=</span> w[0] <span style="color: #000000;">+</span> w[1] <span style="color: #000000;">*</span> x1 <span style="color: #000000;">+</span> w[2] <span style="color: #000000;">*</span> x2
+    <span style="color: #531ab6;">return</span> np.mean((predictions <span style="color: #000000;">-</span> y) <span style="color: #000000;">**</span> 2)
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orgb3e30cf" class="outline-5">
+<h5 id="orgb3e30cf">13. Minimise the loss</h5>
+<div class="outline-text-5" id="text-orgb3e30cf">
+<div class="org-src-container">
+<pre class="src src-python"><code><span style="color: #005e8b;">result</span> <span style="color: #000000;">=</span> optimize.minimize(loss_ols, x0<span style="color: #000000;">=</span>[0.0, 0.0, 0.0])
+<span style="color: #8f0075;">print</span>(<span style="color: #3548cf;">"Estimated coefficients:"</span>, result.x)
+</code></pre>
+</div>
+
+<p>
+<code>optimize.minimize</code> starts from the initial guess <code>x0</code> and finds the values of <code>w</code> that minimise <code>loss_ols</code>. You should recover values close to <code>constant=1</code>, <code>slope1=-3</code>, and <code>0</code> for the coefficient on <code>x2</code> (which was not included in the data-generating process).
+</p>
+</div>
+</div>
+<div id="outline-container-org689cb67" class="outline-5">
+<h5 id="org689cb67">14. Ridge and lasso penalties</h5>
+<div class="outline-text-5" id="text-org689cb67">
+<p>
+Ridge and lasso add a penalty on the coefficients to the loss function. This discourages the model from assigning large coefficients to variables that have little predictive power — a problem that becomes serious when you have many variables.
+</p>
+
+<p>
+<i>Ridge</i> uses a squared penalty:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><code><span style="color: #005e8b;">lam</span> <span style="color: #000000;">=</span> 1.0
+
+<span style="color: #531ab6;">def</span> <span style="color: #721045;">loss_ridge</span>(w):
+    <span style="color: #005e8b;">predictions</span> <span style="color: #000000;">=</span> w[0] <span style="color: #000000;">+</span> w[1] <span style="color: #000000;">*</span> x1 <span style="color: #000000;">+</span> w[2] <span style="color: #000000;">*</span> x2
+    <span style="color: #005e8b;">mse</span> <span style="color: #000000;">=</span> np.mean((predictions <span style="color: #000000;">-</span> y) <span style="color: #000000;">**</span> 2)
+    <span style="color: #005e8b;">penalty</span> <span style="color: #000000;">=</span> lam <span style="color: #000000;">*</span> np.<span style="color: #8f0075;">sum</span>(w[1:] <span style="color: #000000;">**</span> 2)   <span style="color: #595959;"># </span><span style="color: #595959;">do not penalise the intercept
+</span>    <span style="color: #531ab6;">return</span> mse <span style="color: #000000;">+</span> penalty
+</code></pre>
+</div>
+
+<p>
+<i>Lasso</i> uses an absolute-value penalty:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><code><span style="color: #531ab6;">def</span> <span style="color: #721045;">loss_lasso</span>(w):
+    <span style="color: #005e8b;">predictions</span> <span style="color: #000000;">=</span> w[0] <span style="color: #000000;">+</span> w[1] <span style="color: #000000;">*</span> x1 <span style="color: #000000;">+</span> w[2] <span style="color: #000000;">*</span> x2
+    <span style="color: #005e8b;">mse</span> <span style="color: #000000;">=</span> np.mean((predictions <span style="color: #000000;">-</span> y) <span style="color: #000000;">**</span> 2)
+    <span style="color: #005e8b;">penalty</span> <span style="color: #000000;">=</span> lam <span style="color: #000000;">*</span> np.<span style="color: #8f0075;">sum</span>(np.<span style="color: #8f0075;">abs</span>(w[1:]))
+    <span style="color: #531ab6;">return</span> mse <span style="color: #000000;">+</span> penalty
+</code></pre>
+</div>
+
+<p>
+The key difference: lasso can shrink coefficients exactly to zero (performing variable selection), while ridge only shrinks them toward zero. Experiment with different values of <code>lam</code> to see the effect.
+</p>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-orga1c6fae" class="outline-3">
+<h3 id="orga1c6fae"><span class="section-number-3">2.5.</span> Summary</h3>
+<div class="outline-text-3" id="text-2-5">
+<p>
+In this lecture we introduced statistical simulation as a practical complement to analytical theory. We illustrated the Central Limit Theorem by plotting sampling distributions of the mean, and showed that OLS slope estimates also have a distribution that widens with noise and narrows with sample size.
+</p>
+
+<p>
+We then implemented bootstrap hypothesis testing: by repeatedly reshuffling a combined sample under the null hypothesis, we obtained a p-value without any distributional assumption. Finally, we implemented OLS as a numerical optimisation problem and extended it to ridge and lasso by adding penalty terms to the loss function.
+</p>
+
+<div style="border-left:4px solid #1f3c88;padding:10px;margin:15px 0;background:#f5f7fa;">
+<strong>Key statistical takeaway</strong><br>
+When theory gives no closed-form answer — which is the norm in machine learning — simulation fills the gap. Generating your own data and running an experiment thousands of times is a reliable way to build intuition about uncertainty, bias, and the effects of model choices.
+</div>
+
+<div style="border-left:4px solid #2c7a7b;padding:10px;margin:15px 0;background:#eef6f6;">
+<strong>Key Python takeaway</strong><br>
+Vectorised <code>numpy</code> operations replace explicit Python loops and are orders of magnitude faster. The idioms introduced here — 2D random arrays, <code>axis</code> reductions, broadcasting, and fancy indexing — reappear throughout the rest of the course.
+</div>
+
+<p>
+<b>Looking ahead:</b> In the next lecture we move from simulated data to <b>real data</b>, using regression and empirical analysis to study economic questions with observational datasets.
+</p>
+</div>
+</div>
+<div id="outline-container-orgf5e5bfe" class="outline-3">
+<h3 id="orgf5e5bfe"><span class="section-number-3">2.6.</span> Review Questions</h3>
+<div class="outline-text-3" id="text-2-6">
+<p>
+Test your understanding. For each question, write the code in your own <code>marimo</code> notebook.
+</p>
+
+<hr />
+</div>
+<div id="outline-container-orgeef4046" class="outline-4">
+<h4 id="orgeef4046">Question 1: Distribution of the sample standard deviation</h4>
+<div class="outline-text-4" id="text-orgeef4046">
+<p>
+Above we looked at the distribution of the sample <i>mean</i>. The sample <i>standard deviation</i> \(s\) also has a distribution.
+</p>
+
+<p>
+a. Using the same setup as in section <a href="#org26450ba">Simulating sampling distributions</a>, simulate the distribution of \(s\) across <code>N_simulations</code> samples. Plot its histogram.
+b. What is the probability that \(s < 0.28\)? Compute this from the simulated distribution.
+c. How does the shape of the distribution of \(s\) change as you increase <code>sample_size</code>? Is it symmetric?
+</p>
+</div>
+</div>
+<div id="outline-container-orga00a947" class="outline-4">
+<h4 id="orga00a947">Hint</h4>
+<div class="outline-text-4" id="text-orga00a947">
+<details>
+<summary><strong>click here</strong></summary>
+<ul class="org-ul">
+<li>Replace <code>means = samples.mean(axis=1)</code> with <code>stds = samples.std(axis=1, ddof=1)</code>. The argument <code>ddof=1</code> gives the unbiased estimator.</li>
+<li><code>np.mean(stds &lt; 0.28)</code> gives the fraction of simulated standard deviations below 0.28.</li>
+</ul>
+</details>
+
+<hr />
+</div>
+</div>
+<div id="outline-container-orgf92af07" class="outline-4">
+<h4 id="orgf92af07">Question 2: OLS with correlated predictors</h4>
+<div class="outline-text-4" id="text-orgf92af07">
+<p>
+In the data-generating process above, <code>x1</code> and <code>x2</code> are independent. Now generate correlated predictors:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><code><span style="color: #005e8b;">x1</span> <span style="color: #000000;">=</span> np.random.normal(0, 1, sample_size)
+<span style="color: #005e8b;">x2</span> <span style="color: #000000;">=</span> 0.8 <span style="color: #000000;">*</span> x1 <span style="color: #000000;">+</span> np.sqrt(1 <span style="color: #000000;">-</span> 0.8<span style="color: #000000;">**</span>2) <span style="color: #000000;">*</span> np.random.normal(0, 1, sample_size)
+<span style="color: #005e8b;">y</span> <span style="color: #000000;">=</span> constant <span style="color: #000000;">+</span> slope1 <span style="color: #000000;">*</span> x1 <span style="color: #000000;">+</span> 3 <span style="color: #000000;">*</span> np.random.normal(0, 1, sample_size)
+</code></pre>
+</div>
+
+<p>
+a. Minimise the OLS loss with this correlated <code>x2</code>. How do the estimated coefficients change?
+b. Simulate the distribution of the estimated slope on <code>x1</code> for 1000 repetitions. How does correlation between <code>x1</code> and <code>x2</code> affect the spread of this distribution?
+</p>
+
+<hr />
+</div>
+</div>
+<div id="outline-container-org82f328a" class="outline-4">
+<h4 id="org82f328a">Question 3: Ridge regression and variable selection</h4>
+<div class="outline-text-4" id="text-org82f328a">
+<p>
+Use the setup from <a href="#org958f7dc">OLS from scratch: the optimisation approach</a> but now generate five predictors, of which only two have a non-zero true coefficient:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><code><span style="color: #005e8b;">n</span> <span style="color: #000000;">=</span> 200
+<span style="color: #005e8b;">X</span> <span style="color: #000000;">=</span> np.random.normal(0, 1, (n, 5))   <span style="color: #595959;"># </span><span style="color: #595959;">five predictors
+</span><span style="color: #005e8b;">true_w</span> <span style="color: #000000;">=</span> np.array([1.0, <span style="color: #000000;">-</span>3.0, 0.0, 0.0, 0.0])
+<span style="color: #005e8b;">y</span> <span style="color: #000000;">=</span> X @ true_w <span style="color: #000000;">+</span> np.random.normal(0, 1, n)
+</code></pre>
+</div>
+
+<p>
+a. Minimise the OLS loss. Do the estimated coefficients for the irrelevant predictors come out exactly zero?
+b. Minimise the ridge loss with \(\lambda = 1\). How does the result differ?
+c. Minimise the lasso loss with \(\lambda = 0.1\). Are any coefficients exactly zero?
+</p>
+</div>
+</div>
+<div id="outline-container-org5213b91" class="outline-4">
+<h4 id="org5213b91">Hint</h4>
+<div class="outline-text-4" id="text-org5213b91">
+<details>
+<summary><strong>click here</strong></summary>
+<ul class="org-ul">
+<li>The loss function now takes a vector <code>w</code> of length 5 and computes <code>X @ w</code> for the predictions.</li>
+<li>For lasso the gradient of <code>|w|</code> is undefined at zero, so <code>scipy.optimize.minimize</code> may not converge cleanly. Try the method <code>'L-BFGS-B'</code> which handles bounds and subgradients better.</li>
+</ul>
+</details>
+
+<hr />
+</div>
+</div>
+<div id="outline-container-org46630d0" class="outline-4">
+<h4 id="org46630d0">Question 4: One-sided vs two-sided bootstrap test</h4>
+<div class="outline-text-4" id="text-org46630d0">
+<p>
+The bootstrap test we implemented is <b>two-sided</b>: we ask whether \(|D_\text{boot}| \geq |D_\text{obs}|\). In some situations we have a directional hypothesis — for instance, we expect \(A > B\).
+</p>
+
+<p>
+a. Adapt the p-value computation to compute a <b>one-sided</b> p-value that tests whether the mean of \(A\) is specifically <i>larger</i> than the mean of \(B\).
+b. For a fixed \(\delta = 0.95\) and \(n = 50\), run the test 200 times and record the one-sided p-value each time. What fraction of tests reject at the 5% level? Is this what you expect?
+</p>
+
+<hr />
+</div>
+</div>
+<div id="outline-container-orgac83d75" class="outline-4">
+<h4 id="orgac83d75">Question 5: Bootstrap confidence interval</h4>
+<div class="outline-text-4" id="text-orgac83d75">
+<p>
+Instead of a hypothesis test, you can also use the bootstrap to construct a confidence interval for the difference in means.
+</p>
+
+<p>
+a. From the 10,000 bootstrap differences you computed, extract the 2.5th and 97.5th percentiles. This gives a 95% bootstrap confidence interval for the difference.
+b. Does this interval contain zero when \(\delta = 1\)? What about when \(\delta = 0.90\)?
+</p>
+</div>
+</div>
+<div id="outline-container-org707177b" class="outline-4">
+<h4 id="org707177b">Hint</h4>
+<div class="outline-text-4" id="text-org707177b">
+<details>
+<summary><strong>click here</strong></summary>
+<ul class="org-ul">
+<li><code>np.percentile(boot_diff, [2.5, 97.5])</code> gives the two endpoints of the interval.</li>
+<li>This is the <b>percentile</b> bootstrap CI. It is conceptually simple but there are more accurate variants (BCa, studentised) that you can explore if interested.</li>
+</ul>
+</details>
+
+<hr />
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-org737b66c" class="outline-2">
+<h2 id="org737b66c"><span class="section-number-2">3.</span> Course takeaway: simulation as a bridge to machine learning</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+These lectures show that the gap between classical econometrics and modern machine learning is smaller than it appears. OLS, the workhorse of econometrics, is just a specific loss function minimised by a simple algorithm. Ridge and lasso are OLS with an extra line of code. Neural networks are deeper versions of the same idea.
+</p>
+
+<p>
+By building everything from scratch using simulation and optimisation, you develop a type of understanding that no amount of reading about formulas can give. You see directly what the parameters do, how the estimates vary, and what happens when assumptions break down.
+</p>
+
+<hr />
+</div>
+</div>
+<div id="outline-container-org733f282" class="outline-2">
+<h2 id="org733f282"><span class="section-number-2">4.</span> Bibliography</h2>
+<div class="outline-text-2" id="text-4">
+<div class="csl-bib-body">
+</div>
+
+
+</main>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Date: August 2026</p>
+<p class="author">Author: Jan Boone</p>
+<p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>

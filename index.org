@@ -187,22 +187,16 @@ The app below has two parts. In the first part you choose a sample size $n$ and 
 In the second part you choose a true slope $\beta_1$, a noise level $\sigma$, and sample dimensions. The app runs $N$ OLS regressions and plots both the histogram of estimated slopes and a fan of 50 fitted regression lines. This illustrates that uncertainty about the slope translates directly into uncertainty about where the regression line lies — and that the uncertainty is largest far from the mean of $x$.
 
 #+BEGIN_EXPORT latex
-\url{https://marimo.app/gh/janboone/Datascience-for-economics-lectures/blob/main/marimo/lecture1_distributions.py}
+\url{https://janboone.github.io/datascience-marimo/lecture1\_distributions.html}
 #+END_EXPORT
 
 #+BEGIN_EXPORT html
-<iframe
-  src="https://marimo.app/gh/janboone/Datascience-for-economics-lectures/blob/main/marimo/lecture1_distributions.py"
-  allow="fullscreen">
-</iframe>
-
-<div class="fallback">
-  <p>
-    If the app does not load,
-    <a href="https://marimo.app/gh/janboone/Datascience-for-economics-lectures/blob/main/marimo/lecture1_distributions.py" target="_blank">
-      open it in a new tab
-    </a>.
-  </p>
+<div style="text-align:center;margin:20px 0;">
+  <a href="https://janboone.github.io/datascience-marimo/lecture1_distributions.html"
+     target="_blank"
+     style="background:#1f3c88;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:1em;">
+    ▶ Open app: Distribution of an Estimator
+  </a>
 </div>
 #+END_EXPORT
 
@@ -218,22 +212,16 @@ The left panel shows the raw samples and their means. The right panel shows the 
 Drag $\delta$ from $0.80$ toward $1.00$ to watch the p-value rise above $0.05$ as the effect becomes too small to detect with the given sample size.
 
 #+BEGIN_EXPORT latex
-\url{https://marimo.app/gh/janboone/Datascience-for-economics-lectures/blob/main/marimo/lecture1_bootstrap.py}
+\url{https://janboone.github.io/datascience-marimo/lecture1\_bootstrap.html}
 #+END_EXPORT
 
 #+BEGIN_EXPORT html
-<iframe
-  src="https://marimo.app/gh/janboone/Datascience-for-economics-lectures/blob/main/marimo/lecture1_bootstrap.py"
-  allow="fullscreen">
-</iframe>
-
-<div class="fallback">
-  <p>
-    If the app does not load,
-    <a href="https://marimo.app/gh/janboone/Datascience-for-economics-lectures/blob/main/marimo/lecture1_bootstrap.py" target="_blank">
-      open it in a new tab
-    </a>.
-  </p>
+<div style="text-align:center;margin:20px 0;">
+  <a href="https://janboone.github.io/datascience-marimo/lecture1_bootstrap.html"
+     target="_blank"
+     style="background:#1f3c88;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:1em;">
+    ▶ Open app: Bootstrap Hypothesis Test
+  </a>
 </div>
 #+END_EXPORT
 
