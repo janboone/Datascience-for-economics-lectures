@@ -1,0 +1,597 @@
+#+SETUPFILE: https://fniessen.github.io/org-html-themes/org/setup/html-theme-readtheorg.setup
+#+TITLE: Lectures Datascience for Economics
+#+AUTHOR: Jan Boone
+#+DATE: August 2026
+#+PROPERTY: header-args  :session lectures :async t  :results raw drawer
+#+PANDOC_OPTIONS: template:~/.local/share/pandoc/templates/eisvogel
+#+PANDOC_VARIABLES: titlepage=true
+#+PANDOC_OPTIONS: resource-path:.:figures
+#+PANDOC_OPTIONS: highlight-style:tango
+#+PANDOC_OPTIONS: pdf-engine:xelatex
+#+PANDOC_OPTIONS: include-in-header:header.tex
+#+PANDOC_VARIABLES: titlepage=true
+
+
+#+OPTIONS: toc:nil num:nil H:6 html-style:nil
+#+auto_tangle: nil
+
+#+LANGUAGE: en
+#+INFOJS_OPT: view:showall toc:t ltoc:t mouse:underline path:http://orgmode.org/org-info.js
+#+LATEX_HEADER: \renewcommand{\floatpagefraction}{.8}
+#+latex_header: \input{author.tex}
+#+latex_header: \setcounter{tocdepth}{1}
+#+latex_header: \hypersetup{urlcolor=blue}
+#+latex_header: \usepackage{hyperref}
+#+latex_engraved_theme: t
+#+EXPORT_SELECT_TAGS: export
+#+EXPORT_EXCLUDE_TAGS: noexport
+#+OPTIONS: toc:nil timestamp:nil num:2 ':t \n:nil @:t ::t |:t ^:{} _:{} *:t TeX:t LaTeX:t
+
+#+HTML_HEAD: <link rel="stylesheet" href="./css/Latex.css">
+#+HTML_HEAD: <link rel="stylesheet" href="https://latex.now.sh/prism/prism.css">
+#+HTML_HEAD: <script src="https://cdn.jsdelivr.net/npm/prismjs/prism.min.js"></script>
+
+#+HTML_HEAD: <style>
+#+HTML_HEAD: pre.src code {
+#+HTML_HEAD:   background: transparent !important;
+#+HTML_HEAD:   border: none !important;
+#+HTML_HEAD:   box-shadow: none !important;
+#+HTML_HEAD:   padding: 0 !important;
+#+HTML_HEAD: }
+#+HTML_HEAD: pre.src-python code {
+#+HTML_HEAD:   font-size: 1.1em !important;
+#+HTML_HEAD: }
+#+HTML_HEAD: </style>
+
+
+#+HTML_HEAD: <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+#+HTML_HEAD: <style>
+#+HTML_HEAD: body { font-family: Arial, sans-serif; margin: 0; background-color: #f5f7fa; line-height: 1.7; }
+#+HTML_HEAD: header { background-color: #1f3c88; color: white; padding: 25px; text-align: center; }
+#+HTML_HEAD: main { max-width: 950px; margin: 40px auto; padding: 30px; background: white; border-radius: 10px; box-shadow: 0 3px 12px rgba(0,0,0,0.1); }
+#+HTML_HEAD: h1 { margin-top: 0; margin-bottom: 15px; }
+#+HTML_HEAD: h2 { margin-top: 35px; margin-bottom: 10px; }
+#+HTML_HEAD: h3 { margin-top: 25px; }
+#+HTML_HEAD: iframe { width: 100%; height: 900px; border: none; border-radius: 8px; margin-top: 15px; margin-bottom: 15px; }
+#+HTML_HEAD: pre { padding: 14px; border-radius: 6px; background: #f7f7f7; overflow-x: auto; }
+#+HTML_HEAD: code { font-family: Consolas, Monaco, monospace; }
+#+HTML_HEAD: table { font-size: 0.95em; border-collapse: collapse; }
+#+HTML_HEAD: thead th { background:#1f3c88 !important; color:white !important; padding:8px; border:1px solid #ddd; }
+#+HTML_HEAD: tbody td { padding:8px; border:1px solid #ddd; }
+#+HTML_HEAD: figure, img { display: block; margin: 25px auto; max-width: 100%; }
+#+HTML_HEAD: .fallback { margin-top: 15px; text-align: center; }
+#+HTML_HEAD: .fallback a { color: #1f3c88; text-decoration: none; font-weight: bold; }
+#+HTML_HEAD: .fallback a:hover { text-decoration: underline; }
+#+HTML_HEAD: .section { margin-bottom: 40px; }
+#+HTML_HEAD: div[style*="border-left:4px solid #1f3c88"] { border-radius:6px; padding:14px; }
+#+HTML_HEAD: div[style*="border-left:4px solid #2c7a7b"] { border-radius:6px; padding:14px; }
+#+HTML_HEAD: </style>
+
+#+BEGIN_EXPORT html
+<main>
+#+END_EXPORT
+
+* Preamble
+:PROPERTIES:
+:UNNUMBERED: t
+:END:
+
+There are two versions of this document:
+- the interactive [[https://janboone.github.io/Datascience-for-economics-lectures/][html version]] which contains the interactive marimo apps
+- and the static [[https://janboone.github.io/Datascience-for-economics-lectures/index.pdf][pdf version]] which does not contain interactive apps but shows links to these apps
+
+The html version uses the [[https://github.com/fniessen/org-html-themes][ReadTheOrg]] theme and the pdf version the [[https://github.com/Wandmalfarbe/pandoc-latex-template][Eisvogel latex template]].
+
+* Marimo
+
+In the lectures we use [[https://marimo.io/][marimo notebooks]]. If you follow these lectures as a Tilburg University student, marimo is available at [[https://jupyterlab.uvt.nl/][jupyterlab server.]]
+
+Information on how to install marimo on your own computer can be found [[https://docs.marimo.io/getting_started/installation/][here]]. You can also use [[https://molab.marimo.io/notebooks][molab]].
+
+#+BEGIN_EXPORT latex
+\newpage
+#+END_EXPORT
+
+* Introduction
+:PROPERTIES:
+:UNNUMBERED: t
+:END:
+
+The goal of these lectures is to build intuition for statistical and machine-learning concepts through simulation. Rather than deriving results analytically, we generate data ourselves, repeat an experiment thousands of times, and read the answer directly from the resulting distribution. This approach — sometimes called *statistical hacking* — serves two purposes: you always know exactly where your data comes from, and you sharpen your Python skills along the way.
+
+Each lecture starts from a concrete economic or statistical question, introduces the Python tools needed to answer it through simulation, and then explains the code in detail. Interactive marimo apps let you experiment with the key parameters and see the effects immediately.
+
+The lectures build on each other. We begin with foundational ideas in statistics (distributions of estimators, bootstrapping, OLS) and move toward machine-learning techniques such as regularisation, neural networks, and treatment-effect estimation.
+
+#+BEGIN_EXPORT html
+<div style="border-left:4px solid #444;padding:10px;margin:20px 0;background:#f7f7f7;">
+<strong>How to work with these lectures</strong>
+<ul>
+<li>Read the economic and statistical explanation to understand the intuition.</li>
+<li>Open your own <code>marimo</code> notebook and type the Python code yourself rather than copying it.</li>
+<li>Experiment with the parameters in the interactive apps to see how the results change.</li>
+<li>Use the review questions to check whether you understand both the intuition and the implementation.</li>
+<li>If you get stuck, try debugging yourself first, then consult documentation, classmates, or an LLM.</li>
+</ul>
+</div>
+#+END_EXPORT
+
+#+CAPTION: Roadmap of the course: linking statistical concepts and Python tools
+#+NAME: tab:course-roadmap
+#+BEGIN_EXPORT html
+<div style="overflow-x:auto; margin:20px 0;">
+<table style="border-collapse:collapse; width:100%;">
+<thead>
+<tr style="background:#1f3c88;color:white;">
+<th style="padding:8px;border:1px solid #ddd;">Lecture</th>
+<th style="padding:8px;border:1px solid #ddd;">Topic</th>
+<th style="padding:8px;border:1px solid #ddd;">Statistics / Econometrics</th>
+<th style="padding:8px;border:1px solid #ddd;">Python</th>
+</tr>
+</thead>
+<tbody>
+<tr><td style="padding:8px;border:1px solid #ddd;">1</td><td style="padding:8px;border:1px solid #ddd;">Distributions and bootstrapping</td><td style="padding:8px;border:1px solid #ddd;">Sampling distributions, CLT, hypothesis testing, OLS</td><td style="padding:8px;border:1px solid #ddd;">numpy simulations, matplotlib, scipy.optimize</td></tr>
+</tbody>
+</table>
+</div>
+#+END_EXPORT
+
+--------------
+
+#+BEGIN_EXPORT latex
+\newpage
+\tableofcontents
+\newpage
+#+END_EXPORT
+
+* Lecture 1: Statistical Hacking — Distributions and Bootstrapping
+:PROPERTIES:
+:HTML_CONTAINER_CLASS: section
+:END:
+
+*Skills you learn in this lecture:* simulating sampling distributions, visualising histograms, implementing bootstrapping and OLS from scratch using Python and numpy.
+
+** Learning objectives
+
+After completing this lecture you should be able to:
+- explain why simulating a distribution is a useful alternative to analytical statistical theory
+- reproduce the Central Limit Theorem in Python by simulating sample means
+- describe what the sampling distribution of an OLS slope looks like and what determines its spread
+- implement a bootstrap permutation test to compare two group means without distributional assumptions
+- define the loss function for OLS in Python and minimise it numerically
+- explain the difference between ridge and lasso penalisation and implement both as modifications to the OLS loss
+
+** Introduction
+
+In your statistics and econometrics courses you have seen analytical results: the sample mean follows an approximately normal distribution by the Central Limit Theorem; the OLS slope has a t-distribution under certain assumptions. These results are elegant but limited. Modern machine-learning models are so complex that no such closed-form distributions exist for their estimated parameters. So how do you assess uncertainty?
+
+The answer is *simulation*. You write the statistical problem in Python, run it thousands of times, and read the distribution from the resulting histogram. This lecture introduces this way of thinking through three closely linked ideas:
+
+1. *Distributions of estimators* — how much does the sample mean or OLS slope vary from sample to sample?
+2. *Bootstrapping* — how can you test a hypothesis when you have only one sample and no knowledge of the underlying model?
+3. *OLS from scratch* — how does the optimisation problem behind OLS work, and how do ridge and lasso extend it?
+
+Because you generate all the data yourself, you always know the true answer and can check whether the simulation recovers it. That is what makes this approach so useful for building intuition.
+
+** Apps
+
+This lecture has two interactive apps. The first shows how the sampling distribution of the mean and the OLS slope change as you adjust the sample size and noise level. The second demonstrates bootstrap hypothesis testing: you control the effect size and watch whether the test detects it.
+
+*** Distribution of an estimator
+:PROPERTIES:
+:HTML_CONTAINER_CLASS: section
+:END:
+
+The app below has two parts. In the first part you choose a sample size $n$ and a number of simulations $N$. Each simulation draws a sample of size $n$ from the uniform distribution on $[0,1]$ and records the sample mean. The histogram of the $N$ means shows the sampling distribution of the estimator; the red curve is the theoretical normal from the Central Limit Theorem.
+
+In the second part you choose a true slope $\beta_1$, a noise level $\sigma$, and sample dimensions. The app runs $N$ OLS regressions and plots both the histogram of estimated slopes and a fan of 50 fitted regression lines. This illustrates that uncertainty about the slope translates directly into uncertainty about where the regression line lies — and that the uncertainty is largest far from the mean of $x$.
+
+#+BEGIN_EXPORT latex
+\url{https://marimo.app/gh/janboone/Datascience-for-economics-lectures/blob/main/marimo/lecture1_distributions.py}
+#+END_EXPORT
+
+#+BEGIN_EXPORT html
+<iframe
+  src="https://marimo.app/gh/janboone/Datascience-for-economics-lectures/blob/main/marimo/lecture1_distributions.py"
+  allow="fullscreen">
+</iframe>
+
+<div class="fallback">
+  <p>
+    If the app does not load,
+    <a href="https://marimo.app/gh/janboone/Datascience-for-economics-lectures/blob/main/marimo/lecture1_distributions.py" target="_blank">
+      open it in a new tab
+    </a>.
+  </p>
+</div>
+#+END_EXPORT
+
+*** Bootstrap hypothesis test
+:PROPERTIES:
+:HTML_CONTAINER_CLASS: section
+:END:
+
+Suppose we observe two groups $A$ and $B$ and want to know whether their means are significantly different. In the app, group $B$ is generated as $B = A \times \delta$ where $\delta \leq 1$, so a smaller $\delta$ means a larger effect. When $\delta = 1$ there is no difference; the null hypothesis is true.
+
+The left panel shows the raw samples and their means. The right panel shows the bootstrap null distribution: the distribution of mean differences you would see if both groups were actually drawn from the same population. The observed difference is marked in red; the shaded tails are the fraction that exceed it in magnitude — that fraction is the p-value.
+
+Drag $\delta$ from $0.80$ toward $1.00$ to watch the p-value rise above $0.05$ as the effect becomes too small to detect with the given sample size.
+
+#+BEGIN_EXPORT latex
+\url{https://marimo.app/gh/janboone/Datascience-for-economics-lectures/blob/main/marimo/lecture1_bootstrap.py}
+#+END_EXPORT
+
+#+BEGIN_EXPORT html
+<iframe
+  src="https://marimo.app/gh/janboone/Datascience-for-economics-lectures/blob/main/marimo/lecture1_bootstrap.py"
+  allow="fullscreen">
+</iframe>
+
+<div class="fallback">
+  <p>
+    If the app does not load,
+    <a href="https://marimo.app/gh/janboone/Datascience-for-economics-lectures/blob/main/marimo/lecture1_bootstrap.py" target="_blank">
+      open it in a new tab
+    </a>.
+  </p>
+</div>
+#+END_EXPORT
+
+** Python Code Explanation
+
+In this section we explain the Python code for the models. Open a =marimo= notebook alongside this document and type the code yourself — do not copy and paste. Getting errors and fixing them is the fastest way to learn.
+
+*** Simulating sampling distributions
+
+**** 1. Import libraries and set parameters
+
+We use =numpy= for numerical computation and =matplotlib= for plotting. Type these imports at the top of your notebook.
+
+#+begin_src python
+import numpy as np
+import matplotlib.pyplot as plt
+
+N_simulations = 5000   # number of samples to draw
+sample_size = 10        # observations per sample
+#+end_src
+
+**** 2. Generate the data
+
+The key idea: instead of drawing one sample, we draw =N_simulations= samples at once by creating a 2D array (matrix). Each row is one sample; each column is one observation within that sample.
+
+#+begin_src python
+samples = np.random.uniform(0, 1, (N_simulations, sample_size))
+means = samples.mean(axis=1)
+#+end_src
+
+~np.random.uniform(low, high, size)~ draws uniformly distributed random numbers. The argument ~(N_simulations, sample_size)~ gives a matrix with =N_simulations= rows and =sample_size= columns.
+
+~.mean(axis=1)~ takes the mean /across columns/ (axis 1), so we get one mean per row — one per simulation. Compare this to ~.mean(axis=0)~ which would average across rows.
+
+**** 3. Plot the histogram
+
+#+begin_src python :results graphics file output :file ./figures/sampling_distribution_mean.png
+fig, ax = plt.subplots(figsize=(8, 4))
+ax.hist(means, bins=60, density=True, alpha=0.6, color="steelblue", label="Simulated means")
+ax.set_xlabel("Sample mean")
+ax.set_ylabel("Density")
+ax.set_title(f"Sampling distribution of the mean (n={sample_size})")
+ax.legend()
+#+end_src
+
+Setting ~density=True~ normalises the histogram so that the total area equals 1, which makes it comparable to a probability density function. The ~alpha~ parameter controls transparency (0 = invisible, 1 = opaque).
+
+**** 4. Overlay the theoretical normal
+
+For a sample drawn from Uniform[0,1], the population mean is $\mu = 0.5$ and the population variance is $\sigma^2 = 1/12$. The standard error of the sample mean is therefore $\text{SE} = 1/\sqrt{12n}$. By the Central Limit Theorem, the sampling distribution of the mean is approximately $\mathcal{N}(0.5,\, \text{SE}^2)$ for large $n$.
+
+#+begin_src python
+se = 1.0 / np.sqrt(12 * sample_size)
+x = np.linspace(0.2, 0.8, 300)
+pdf = (1.0 / (se * np.sqrt(2 * np.pi))) * np.exp(-0.5 * ((x - 0.5) / se) ** 2)
+ax.plot(x, pdf, "r-", lw=2, label=f"Theoretical N(0.5, {se:.4f}²)")
+ax.legend()
+#+end_src
+
+We compute the normal PDF manually using the formula $f(x) = \frac{1}{\sigma\sqrt{2\pi}} e^{-\frac{(x-\mu)^2}{2\sigma^2}}$. Overlaying it on the histogram checks whether the CLT approximation is good for the chosen ~sample_size~.
+
+-----
+
+*** Distribution of the OLS slope
+
+To simulate the distribution of an OLS slope, we need to generate many (x, y) pairs, fit a regression to each, and record the slope.
+
+**** 5. Generate data with broadcasting
+
+#+begin_src python
+N_simulations = 1000
+sample_size = 20
+true_slope = 0.5
+true_intercept = 1.0
+noise = 0.5
+
+x = np.random.normal(0, 1, (N_simulations, sample_size))
+eps = np.random.normal(0, noise, (N_simulations, sample_size))
+y = true_intercept + true_slope * x + eps
+#+end_src
+
+Here ~true_slope * x~ multiplies every element of the matrix ~x~ by the scalar ~true_slope~. This is called *broadcasting*: numpy automatically extends scalar operations to match the shape of the array.
+
+**** 6. Compute OLS slopes without a loop
+
+The OLS slope formula for a simple regression is $\hat\beta_1 = \frac{\sum(x_i - \bar x)(y_i - \bar y)}{\sum(x_i - \bar x)^2}$. We can compute this for all simulations at once:
+
+#+begin_src python
+x_c = x - x.mean(axis=1, keepdims=True)   # demean each row
+y_c = y - y.mean(axis=1, keepdims=True)
+
+slopes = (x_c * y_c).sum(axis=1) / (x_c ** 2).sum(axis=1)
+#+end_src
+
+The argument ~keepdims=True~ ensures the mean has shape ~(N_simulations, 1)~ instead of ~(N_simulations,)~, so that subtracting it from the ~(N_simulations, sample_size)~ matrix ~x~ broadcasts correctly.
+
+-----
+
+*** Bootstrapping
+
+**** 7. Generate two groups
+
+#+begin_src python
+sample_size = 50
+delta = 0.95         # B = A * delta; delta < 1 means B is lower than A
+A = 10 + np.random.normal(0, 1, sample_size)
+B = A * delta
+observed_difference = A.mean() - B.mean()
+#+end_src
+
+**** 8. Combine the samples
+
+Under the null hypothesis (H₀: both groups come from the same distribution), the group labels are arbitrary. We combine the two samples:
+
+#+begin_src python
+AB = np.concatenate([A, B])
+#+end_src
+
+**** 9. Run the permutation test (vectorised)
+
+We randomly relabel the combined sample =N_boot= times and record the difference in means each time. Using ~np.argsort~ on a uniform random matrix gives a vectorised permutation — no Python loop required:
+
+#+begin_src python
+N_boot = 10000
+rng = np.random.default_rng()
+
+# Each row of perm_indices is a random permutation of 0 … 2n-1
+perm_indices = np.argsort(rng.uniform(size=(N_boot, 2 * sample_size)), axis=1)
+
+# First n columns → group A; remaining n columns → group B
+boot_diff = (AB[perm_indices[:, :sample_size]].mean(axis=1)
+             - AB[perm_indices[:, sample_size:]].mean(axis=1))
+#+end_src
+
+~AB[perm_indices[:, :sample_size]]~ uses *fancy indexing*: for each of the =N_boot= rows we select =sample_size= elements of =AB= according to the permuted indices.
+
+**** 10. Compute the p-value
+
+#+begin_src python
+p_value = np.mean(np.abs(boot_diff) >= np.abs(observed_difference))
+print(f"p-value: {p_value:.4f}")
+#+end_src
+
+~np.abs(boot_diff) >= np.abs(observed_difference)~ produces a boolean array; taking its mean gives the fraction of bootstrap differences that are at least as extreme as the observed one. That fraction is the (two-sided) p-value.
+
+-----
+
+*** OLS from scratch: the optimisation approach
+
+So far we computed OLS analytically. The same result can be obtained by minimising the mean squared error loss function directly. This is useful because the loss function can later be extended with penalty terms to give ridge or lasso.
+
+**** 11. Generate data
+
+#+begin_src python
+from scipy import optimize
+
+sample_size = 500
+slope1 = -3.0
+constant = 1.0
+x1 = np.random.normal(0, 1, sample_size)
+x2 = np.random.normal(0, 1, sample_size)
+y = constant + slope1 * x1 + 3 * np.random.normal(0, 1, sample_size)
+#+end_src
+
+**** 12. Define the OLS loss
+
+The OLS estimator minimises the mean squared error:
+
+$$
+L(w) = \frac{1}{n} \sum_{i=1}^n \bigl(w_0 + w_1 x_{1i} + w_2 x_{2i} - y_i\bigr)^2
+$$
+
+#+begin_src python
+def loss_ols(w):
+    predictions = w[0] + w[1] * x1 + w[2] * x2
+    return np.mean((predictions - y) ** 2)
+#+end_src
+
+**** 13. Minimise the loss
+
+#+begin_src python
+result = optimize.minimize(loss_ols, x0=[0.0, 0.0, 0.0])
+print("Estimated coefficients:", result.x)
+#+end_src
+
+~optimize.minimize~ starts from the initial guess ~x0~ and finds the values of ~w~ that minimise ~loss_ols~. You should recover values close to ~constant=1~, ~slope1=-3~, and ~0~ for the coefficient on ~x2~ (which was not included in the data-generating process).
+
+**** 14. Ridge and lasso penalties
+
+Ridge and lasso add a penalty on the coefficients to the loss function. This discourages the model from assigning large coefficients to variables that have little predictive power — a problem that becomes serious when you have many variables.
+
+/Ridge/ uses a squared penalty:
+
+#+begin_src python
+lam = 1.0
+
+def loss_ridge(w):
+    predictions = w[0] + w[1] * x1 + w[2] * x2
+    mse = np.mean((predictions - y) ** 2)
+    penalty = lam * np.sum(w[1:] ** 2)   # do not penalise the intercept
+    return mse + penalty
+#+end_src
+
+/Lasso/ uses an absolute-value penalty:
+
+#+begin_src python
+def loss_lasso(w):
+    predictions = w[0] + w[1] * x1 + w[2] * x2
+    mse = np.mean((predictions - y) ** 2)
+    penalty = lam * np.sum(np.abs(w[1:]))
+    return mse + penalty
+#+end_src
+
+The key difference: lasso can shrink coefficients exactly to zero (performing variable selection), while ridge only shrinks them toward zero. Experiment with different values of ~lam~ to see the effect.
+
+** Summary
+
+In this lecture we introduced statistical simulation as a practical complement to analytical theory. We illustrated the Central Limit Theorem by plotting sampling distributions of the mean, and showed that OLS slope estimates also have a distribution that widens with noise and narrows with sample size.
+
+We then implemented bootstrap hypothesis testing: by repeatedly reshuffling a combined sample under the null hypothesis, we obtained a p-value without any distributional assumption. Finally, we implemented OLS as a numerical optimisation problem and extended it to ridge and lasso by adding penalty terms to the loss function.
+
+#+BEGIN_EXPORT html
+<div style="border-left:4px solid #1f3c88;padding:10px;margin:15px 0;background:#f5f7fa;">
+<strong>Key statistical takeaway</strong><br>
+When theory gives no closed-form answer — which is the norm in machine learning — simulation fills the gap. Generating your own data and running an experiment thousands of times is a reliable way to build intuition about uncertainty, bias, and the effects of model choices.
+</div>
+#+END_EXPORT
+
+#+BEGIN_EXPORT html
+<div style="border-left:4px solid #2c7a7b;padding:10px;margin:15px 0;background:#eef6f6;">
+<strong>Key Python takeaway</strong><br>
+Vectorised <code>numpy</code> operations replace explicit Python loops and are orders of magnitude faster. The idioms introduced here — 2D random arrays, <code>axis</code> reductions, broadcasting, and fancy indexing — reappear throughout the rest of the course.
+</div>
+#+END_EXPORT
+
+*Looking ahead:* In the next lecture we move from simulated data to *real data*, using regression and empirical analysis to study economic questions with observational datasets.
+
+** Review Questions
+
+Test your understanding. For each question, write the code in your own =marimo= notebook.
+
+-----
+
+*** Question 1: Distribution of the sample standard deviation
+
+Above we looked at the distribution of the sample /mean/. The sample /standard deviation/ $s$ also has a distribution.
+
+a. Using the same setup as in section [[*Simulating sampling distributions][Simulating sampling distributions]], simulate the distribution of $s$ across =N_simulations= samples. Plot its histogram.
+b. What is the probability that $s < 0.28$? Compute this from the simulated distribution.
+c. How does the shape of the distribution of $s$ change as you increase =sample_size=? Is it symmetric?
+
+*** Hint
+#+BEGIN_EXPORT html
+<details>
+<summary><strong>click here</strong></summary>
+#+END_EXPORT
+- Replace ~means = samples.mean(axis=1)~ with ~stds = samples.std(axis=1, ddof=1)~. The argument ~ddof=1~ gives the unbiased estimator.
+- ~np.mean(stds < 0.28)~ gives the fraction of simulated standard deviations below 0.28.
+#+BEGIN_EXPORT html
+</details>
+#+END_EXPORT
+
+-----
+
+*** Question 2: OLS with correlated predictors
+
+In the data-generating process above, ~x1~ and ~x2~ are independent. Now generate correlated predictors:
+
+#+begin_src python
+x1 = np.random.normal(0, 1, sample_size)
+x2 = 0.8 * x1 + np.sqrt(1 - 0.8**2) * np.random.normal(0, 1, sample_size)
+y = constant + slope1 * x1 + 3 * np.random.normal(0, 1, sample_size)
+#+end_src
+
+a. Minimise the OLS loss with this correlated ~x2~. How do the estimated coefficients change?
+b. Simulate the distribution of the estimated slope on ~x1~ for 1000 repetitions. How does correlation between ~x1~ and ~x2~ affect the spread of this distribution?
+
+-----
+
+*** Question 3: Ridge regression and variable selection
+
+Use the setup from [[*OLS from scratch: the optimisation approach][OLS from scratch: the optimisation approach]] but now generate five predictors, of which only two have a non-zero true coefficient:
+
+#+begin_src python
+n = 200
+X = np.random.normal(0, 1, (n, 5))   # five predictors
+true_w = np.array([1.0, -3.0, 0.0, 0.0, 0.0])
+y = X @ true_w + np.random.normal(0, 1, n)
+#+end_src
+
+a. Minimise the OLS loss. Do the estimated coefficients for the irrelevant predictors come out exactly zero?
+b. Minimise the ridge loss with $\lambda = 1$. How does the result differ?
+c. Minimise the lasso loss with $\lambda = 0.1$. Are any coefficients exactly zero?
+
+*** Hint
+#+BEGIN_EXPORT html
+<details>
+<summary><strong>click here</strong></summary>
+#+END_EXPORT
+- The loss function now takes a vector ~w~ of length 5 and computes ~X @ w~ for the predictions.
+- For lasso the gradient of ~|w|~ is undefined at zero, so ~scipy.optimize.minimize~ may not converge cleanly. Try the method ~'L-BFGS-B'~ which handles bounds and subgradients better.
+#+BEGIN_EXPORT html
+</details>
+#+END_EXPORT
+
+-----
+
+*** Question 4: One-sided vs two-sided bootstrap test
+
+The bootstrap test we implemented is *two-sided*: we ask whether $|D_\text{boot}| \geq |D_\text{obs}|$. In some situations we have a directional hypothesis — for instance, we expect $A > B$.
+
+a. Adapt the p-value computation to compute a *one-sided* p-value that tests whether the mean of $A$ is specifically /larger/ than the mean of $B$.
+b. For a fixed $\delta = 0.95$ and $n = 50$, run the test 200 times and record the one-sided p-value each time. What fraction of tests reject at the 5% level? Is this what you expect?
+
+-----
+
+*** Question 5: Bootstrap confidence interval
+
+Instead of a hypothesis test, you can also use the bootstrap to construct a confidence interval for the difference in means.
+
+a. From the 10,000 bootstrap differences you computed, extract the 2.5th and 97.5th percentiles. This gives a 95% bootstrap confidence interval for the difference.
+b. Does this interval contain zero when $\delta = 1$? What about when $\delta = 0.90$?
+
+*** Hint
+#+BEGIN_EXPORT html
+<details>
+<summary><strong>click here</strong></summary>
+#+END_EXPORT
+- ~np.percentile(boot_diff, [2.5, 97.5])~ gives the two endpoints of the interval.
+- This is the *percentile* bootstrap CI. It is conceptually simple but there are more accurate variants (BCa, studentised) that you can explore if interested.
+#+BEGIN_EXPORT html
+</details>
+#+END_EXPORT
+
+-----------
+#+BEGIN_EXPORT latex
+\newpage
+#+END_EXPORT
+
+* Course takeaway: simulation as a bridge to machine learning
+
+These lectures show that the gap between classical econometrics and modern machine learning is smaller than it appears. OLS, the workhorse of econometrics, is just a specific loss function minimised by a simple algorithm. Ridge and lasso are OLS with an extra line of code. Neural networks are deeper versions of the same idea.
+
+By building everything from scratch using simulation and optimisation, you develop a type of understanding that no amount of reading about formulas can give. You see directly what the parameters do, how the estimates vary, and what happens when assumptions break down.
+
+--------------------
+
+#+BEGIN_EXPORT latex
+\newpage
+#+END_EXPORT
+
+
+* Bibliography
+#+cite_export: csl ./chicago-author-date.csl
+#+bibliography:~/Nextcloud2/Literature/references.bib
+#+print_bibliography:
+
+
+#+BEGIN_EXPORT html
+</main>
+#+END_EXPORT
