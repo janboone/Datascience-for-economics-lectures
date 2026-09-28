@@ -9,7 +9,7 @@
 
 import marimo
 
-__generated_with = "0.20.4"
+__generated_with = "0.13.6"
 app = marimo.App(width="medium")
 
 
@@ -25,24 +25,25 @@ def _():
 def _(mo):
     mo.md(
         """
-        # Distribution of an Estimator
+    # Distribution of an Estimator
 
-        Statistical estimators — like the sample mean or an OLS slope — are themselves random
-        variables. Each time you draw a new sample, you get a slightly different estimate.
-        **Statistical hacking** means we study these distributions not with analytical formulas,
-        but by running many simulations and observing the resulting histogram.
+    Statistical estimators — like the sample mean or an OLS slope — are themselves random
+    variables. Each time you draw a new sample, you get a slightly different estimate.
+    **Statistical hacking** means we study these distributions not with analytical formulas,
+    but by running many simulations and observing the resulting distribution.
 
-        This app has two parts:
-        1. **Sample mean distribution** — illustrating the Central Limit Theorem
-        2. **OLS slope distribution** — showing how regression estimates vary across samples
-        """
+    This app has two parts:
+
+    1. **Sample mean distribution** — illustrating the Central Limit Theorem
+    2. **OLS slope distribution** — showing how regression estimates vary across samples
+    """
     )
     return
 
 
 @app.cell
 def _(mo):
-    mo.md("## Part 1: Distribution of the Sample Mean")
+    mo.md("""## Part 1: Distribution of the Sample Mean""")
     return
 
 
@@ -50,13 +51,13 @@ def _(mo):
 def _(mo):
     mo.md(
         """
-        We draw many samples of size *n* from the uniform distribution on [0, 1] and compute
-        the mean of each sample. The histogram of these means shows the *sampling distribution*
-        of the estimator.
+    We draw many $N$ samples of size $n$ from the uniform distribution on $[0, 1]$ and compute
+    the mean of each sample. A uniform distribution has mean $\\mu = 0.5$ and standard deviation $\\sigma = 1/\\sqrt{12}$. The histogram of these $N$ means shows the *sampling distribution*
+    of the estimator.
 
-        **Theory:** for large *n*, the Central Limit Theorem guarantees this distribution
-        approaches a normal with mean 0.5 and standard error SE = 1/√(12·n).
-        """
+    **Theory:** for large *n*, the Central Limit Theorem shows that this distribution
+    converges to a normal distribution with mean 0.5 and standard error $1/\\sqrt{12n}$ (the well known $\\sigma/\\sqrt{n}$).
+    """
     )
     return
 
@@ -67,7 +68,7 @@ def _(mo):
         2, 200, value=10, step=2, label="Sample size (n)"
     )
     n_sim_slider = mo.ui.slider(
-        500, 15000, value=5000, step=500, label="Number of simulations"
+        500, 15000, value=5000, step=500, label="Number of simulations (N)"
     )
     mo.hstack([sample_size_slider, n_sim_slider], justify="start", gap=2)
     return n_sim_slider, sample_size_slider
@@ -99,7 +100,7 @@ def _(n_sim_slider, np, plt, sample_size_slider):
     ax1.set_title("Sampling distribution of the mean")
     ax1.legend()
     fig1
-    return fig1, means, n, N, theoretical_se
+    return n, theoretical_se
 
 
 @app.cell
@@ -108,9 +109,10 @@ def _(mo, n, theoretical_se):
         mo.md(
             f"""
             With n = **{n}** observations per sample:
+
             - Theoretical standard error: **SE = 1/√(12·{n}) = {theoretical_se:.4f}**
             - The distribution is centred on 0.5 (the true population mean).
-            - Increase *n* to see the distribution narrow — this is the Central Limit Theorem.
+            - Increase *n* to see the distribution narrow.
             - The red curve is the theoretical normal; it matches the histogram even for moderate *n*.
             """
         ),
@@ -121,7 +123,13 @@ def _(mo, n, theoretical_se):
 
 @app.cell
 def _(mo):
-    mo.md("---\n## Part 2: Distribution of the OLS Slope Estimator")
+    mo.md(
+        """
+    ---\n## Part 2: Distribution of the OLS Slope Estimator
+
+    Above we draw repeated samples from a distribution and calculate the mean. Then we plot the distribution of the means. In this part we do the same for an estimated slope of an OLS regression. Clearly, drawing samples is a bit more involved as we need to draw both values for the independent variable $x$ and for the dependent variable $y$. But otherwise the logic here is the same as above.
+    """
+    )
     return
 
 
@@ -129,13 +137,18 @@ def _(mo):
 def _(mo):
     mo.md(
         """
-        We repeatedly draw samples, fit a simple OLS regression y = β₀ + β₁x + ε,
-        and record the estimated slope β̂₁. The histogram shows how much the slope estimate
-        varies across samples — and therefore how uncertain our estimate is.
+    We draw $n$ samples from the stochastic process $y = \\beta_0 + \\beta_1 x + \\varepsilon$. That is, we draw $n$ values of $x$ as above and draw $n$ values for $\\varepsilon$, then calculate the $y$ values using the equations with our chosen values for $\\beta_0,\\beta_1$. We then repeat this process $N$ times.
 
-        The right panel shows 50 fitted regression lines drawn from this distribution.
-        Notice how the uncertainty is largest far from the mean of *x*.
-        """
+    A simple way to store these $N$ repetitions of $n$ samples is to create a matrix $X$ with $n$ columns for the samples and $N$ rows for the repetitions. Similarly for $Y$.
+
+    Then for each row in these matrices $X$ and $Y$ we run an OLS regression $y = b_0 + b_1 x + e$. In this way we derive $N$ values for the estimated slope parameter $b_1$. These $N$ values for $b_1$ form a distribution which we can plot in a histogram. The histogram shows how much the slope estimate
+    varies across samples — and therefore how uncertain our estimate is.
+
+    The right panel shows 50 fitted regression lines drawn from this distribution.
+    Notice how the uncertainty is largest far from the mean of $x$.
+
+    For the simulations below you can use the sliders to select the slope $\\beta_1$, the standard deviation $\\sigma$ of $\\varepsilon$, the sample size $n$ and the number of repetitions $N$. In the simulations we set the intercept $\\beta_0$ equal to 1.0.
+    """
     )
     return
 
@@ -162,7 +175,14 @@ def _(mo):
 
 
 @app.cell
-def _(n_ols_sim_slider, n_ols_slider, noise_slider, np, plt, true_slope_slider):
+def _(
+    n_ols_sim_slider,
+    n_ols_slider,
+    noise_slider,
+    np,
+    plt,
+    true_slope_slider,
+):
     true_slope = true_slope_slider.value
     sigma = noise_slider.value
     n_ols = n_ols_slider.value
@@ -220,7 +240,7 @@ def _(n_ols_sim_slider, n_ols_slider, noise_slider, np, plt, true_slope_slider):
     axes[1].legend()
 
     fig2
-    return fig2, slope_se, slopes_hat, intercepts_hat
+    return slope_se, true_slope
 
 
 @app.cell
@@ -229,6 +249,7 @@ def _(mo, slope_se, true_slope):
         mo.md(
             f"""
             With these settings, the OLS slope estimate has:
+
             - **Mean:** {true_slope:.2f} (the estimator is unbiased — it centres on the true value)
             - **Standard error:** σ/√n ≈ **{slope_se:.4f}** (smaller n → more spread)
             - The fan of lines is widest far from x = 0 because small errors in slope are amplified.
