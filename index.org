@@ -149,6 +149,7 @@ The lectures build on each other. We begin with foundational ideas in statistics
 * Lecture 1: Statistical Hacking — Distributions and Bootstrapping
 :PROPERTIES:
 :HTML_CONTAINER_CLASS: section
+:CUSTOM_ID: lecture-hacking
 :END:
 
 *Skills you learn in this lecture:* simulating sampling distributions, visualising histograms, implementing bootstrapping and OLS from scratch using Python and numpy.
@@ -635,42 +636,43 @@ b. Does this interval contain zero when $\delta = 1$? What about when $\delta = 
 * Lecture 2: Variable selection and causality
 :PROPERTIES:
 :HTML_CONTAINER_CLASS: section
+:CUSTOM_ID: lecture-causality
 :END:
 
-*Skills you learn in this lecture:* recognising the multiple testing problem, reading and reasoning with directed acyclic graphs (DAGs), and simulating fork, pipe, and collider structures in Python to see how controlling for variables changes OLS estimates.
+*Skills you learn in this lecture:* recognizing that significance is not a variable selection criterion, reading and reasoning with directed acyclic graphs (DAGs), simulating fork, pipe, and collider structures in Python to see how controlling for variables changes OLS estimates.
 
 
 ** Learning Objectives
 
 After completing this lecture you should be able to:
-- explain the multiple testing problem and why significance is not a valid criterion for selecting variables
+- explain why significance is not a valid criterion for selecting variables
 - define a directed acyclic graph (DAG) and use it to describe a causal structure
 - distinguish fork, pipe, and collider structures and state which variables should (not) be controlled for in each case
-- simulate fork, pipe, and collider data in Python using numpy
+- simulate fork, pipe, and collider data in Python using =numpy=
 - compute OLS coefficients for simple and multiple regressions from scratch and interpret how they change when a control variable is added or removed
 
 ** Introduction
 
-In your statistics and econometrics courses you have learned that OLS measures correlations. A regression coefficient tells you how $Y$ changes when $X$ changes /on average in the data/, but it does not say whether there is a causal relationship. In economics, causal questions matter enormously: if you advise the government to adopt policy $X$ because it will raise $Y$, you need to be sure that $X$ actually /causes/ $Y$, not just that the two are correlated.
+In your statistics and econometrics courses you have learned that OLS measures correlations. A regression coefficient tells you how $Y$ changes with changing values for $X$, but it does not say whether there is a causal relationship. In economics, causal questions matter enormously: if you advise the government to adopt policy $X$ because it will raise $Y$, you need to be sure that $X$ actually /causes/ $Y$, not just that the two are correlated.
 
 Two common but mistaken shortcuts that researchers use when they move from correlations to causal claims are the following.
 
-First, some people select control variables based on statistical significance: add a variable, check whether it is significant, keep it if yes. The xkcd cartoon in Figure ref:fig:significance_xkcd illustrates the absurdity of this approach. If you test 20 unrelated variables at the 5% level, you expect one to appear significant purely by chance. The first app in this lecture lets you explore this /multiple testing problem/ directly.
+First, some people select control variables based on statistical significance: add a variable, check whether it is significant, keep it if yes. The xkcd cartoon in Figure ref:fig:significance_xkcd illustrates the absurdity of this approach. If you test 20 unrelated variables at the 5% level, you expect one to appear significant purely by chance. The first app in this lecture lets you explore this [[https://en.wikipedia.org/wiki/Multiple_comparisons_problem][multiple testing problem]] directly.
 
 #+caption: Significance cannot be used for variable selection (in case you need [[https://www.explainxkcd.com/wiki/index.php/882:_Significant][an explanation]]).
 #+attr_latex: scale=0.3
 #+name: fig:significance_xkcd
 [[https://imgs.xkcd.com/comics/significant.png]]
 
-Second, and more subtly, even if you have the right variable in mind as a control, adding it to a regression can either fix a problem or make it dramatically worse -- depending on the causal structure. A third variable $Z$ can play three fundamentally different roles:
+Second, and more subtly, even if you have the right variable in mind as a control, adding it to a regression can either fix a problem or make it dramatically worse; depending on the causal structure. A third variable $Z$ can play three fundamentally different roles:
 
 - the *fork* — $Z$ causes both $X$ and $Y$; failing to control for $Z$ creates a spurious correlation between $X$ and $Y$
-  - a simple example is the correlation between the consumption of ice cream and the number of people drowned in a day; can you guess what $Z$ is here?
+  - a simple example is the correlation between the consumption of ice cream and the number of people drowned on a given day; can you guess what $Z$ is here?
 - the *pipe* — $Z$ mediates the causal effect of $X$ on $Y$; controlling for $Z$ blocks the causal path you are trying to measure
   - an economic example: you want to know the effect of education on income; should you control for (un)employment?
 - the *collider* — both $X$ and $Y$ cause $Z$; controlling for $Z$ induces a spurious correlation between $X$ and $Y$ where none existed
-  - 
-  - below we analyze two more examples; one with simulated and one with real data.
+  - suppose running $X$ and cycling $Y$ skills are uncorrelated in the student population; let $Z$ denote membership of the university's elite [[https://en.wikipedia.org/wiki/Duathlon][duathlon]] team. What is the correlation between $X$ and $Y$ conditional on $Z$? Hint: consider a team member with low $X$.
+  - as the collider is the least intuitive of the three, below we analyze two more examples; one with simulated and one with real data.
 
 Each of these three structures is represented by a directed acyclic graph (DAG): a diagram with variable names as nodes and arrows showing the direction of causation. The second app lets you switch between the three DAG types and see how the OLS coefficient of $X$ changes when you add $Z$ to the regression.
 
@@ -726,49 +728,57 @@ Increase the effect strength $\gamma$ to make the bias more visible, or reduce t
 
 In this section we explain the key ideas behind the two apps. Open a =marimo= notebook alongside this document and type the code yourself.
 
-We focus on the statistical logic — how to simulate each causal structure and how to compute OLS coefficients from scratch. The interactive sliders and dropdown in the apps are added on top of exactly this code.
+We focus on the statistical logic — how to simulate each causal structure and how to compute OLS coefficients from scratch. The interactive elements (sliders etc.) in the apps are added on top of this code.
 
 *** Multiple testing
 
-**** Simulate many null variables
+**** Simulate many "null variables"
 
-We generate $k$ variables that have no true effect on $Y$ and run /one/ multiple regression of $Y$ on all $k$ variables simultaneously. The design matrix $\mathbf{X}$ has shape $(n,\, k+1)$: a column of ones for the intercept and one column per variable.
+We generate $k$ variables that have no effect on $Y$ and run a multiple regression of $Y$ on all $k$ variables. The matrix $\mathbf{X}$ has shape $(n,\, k+1)$: $n$ observations in our (simulated) sample, a column of ones for the intercept and one column per variable.
 
 #+begin_src python
 import numpy as np
 
-n, k = 100, 50         # sample size and number of candidate variables
+n, k = 100, 50    
 Y = np.random.normal(0, 1, n)
 X = np.random.normal(0, 1, (n, k))
 #+end_src
 
+
 **** Compute t-statistics for the multiple regression
 
-OLS gives $\hat\beta = (\mathbf{X}^\top \mathbf{X})^{-1} \mathbf{X}^\top Y$ and the covariance matrix of $\hat\beta$ is $\hat\sigma^2 (\mathbf{X}^\top \mathbf{X})^{-1}$ where $\hat\sigma^2 = \text{RSS}/(n - k - 1)$.
+OLS gives $\hat\beta = (\mathbf{X}^\top \mathbf{X})^{-1} \mathbf{X}^\top Y$ and the covariance matrix of $\hat\beta$ is $\hat\sigma^2 (\mathbf{X}^\top \mathbf{X})^{-1}$ where $\hat\sigma^2 = \text{RSS}/(n - k - 1)$ and $RSS$ denotes Residual Sum of Squares.
+
+For ease of reference we provide the shape of the vector/matrix in a comment on the same line. In a later lecture we come back to matrix operations like multiplication =@=, transform =T=, =solve= and =inv=.
 
 #+begin_src python
 Xmat = np.column_stack([np.ones(n), X])              # (n, k+1)
-beta = np.linalg.solve(Xmat.T @ Xmat, Xmat.T @ Y)   # (k+1,)
-resid = Y - Xmat @ beta
-sigma2 = np.sum(resid ** 2) / (n - k - 1)           # df = n - k - 1
-cov_beta = sigma2 * np.linalg.inv(Xmat.T @ Xmat)    # (k+1, k+1)
-se = np.sqrt(np.diag(cov_beta))                      # (k+1,)
+beta = np.linalg.solve(Xmat.T @ Xmat, Xmat.T @ Y)    # (k+1,)
+resid = Y - Xmat @ beta                              # (n,)
+sigma2 = np.sum(resid ** 2) / (n - k - 1)            # df = n - k - 1
+cov_beta = sigma2 * np.linalg.inv(Xmat.T @ Xmat)     # (k+1, k+1)
+se = np.sqrt(np.diag(cov_beta))                      # (k+1,) standard errors
 t_stats = beta[1:] / se[1:]                          # (k,); slopes only
 #+end_src
 
-The vector ~t_stats~ holds one t-statistic per variable, each testing $H_0: \beta_j = 0$. Under the null, each $t_j \sim t_{n-k-1}$; for $n = 100$ and $k = 50$ the critical value at 5\% is still well approximated by 1.96.
 
-#+begin_src python
+The vector ~t_stats~ holds one t-statistic per variable, each testing $H_0: \beta_j = 0$. Under the null, each $t_j \sim t_{n-k-1}$; for $n = 100$ and $k = 50$ the critical value at 5\% is approximated by 1.96.
+
+#+begin_src python :results output
 n_significant = np.sum(np.abs(t_stats) > 1.96)
 print(f"{n_significant} out of {k} variables are 'significant' at 5%")
 print(f"Expected: {0.05 * k:.1f}")
 #+end_src
 
+#+RESULTS:
+: 4 out of 50 variables are 'significant' at 5%
+: Expected: 2.5
+
 Every significant result here is a false discovery — by construction.
 
 **** Distribution of false discoveries across repetitions
 
-One run gives one draw from the distribution of false discoveries. To see the full distribution we repeat the simulation $N = 10{,}000$ times and record $n_{\text{sig}}$ for each draw.
+One run gives one draw from the distribution of false discoveries. To see the full distribution we repeat the simulation $N = 10{,}000$ times and record the number of significant variables for each draw.
 
 #+begin_src python
 N = 10_000
@@ -785,17 +795,20 @@ for i in range(N):
     counts[i] = int(np.sum(np.abs(beta_i[1:] / se_i) > 1.96))
 #+end_src
 
-Because each t-test is approximately independent and rejects with probability $\alpha = 5\%$ under the null, the count $n_{\text{sig}}$ follows a $\text{Binomial}(k,\, \alpha)$ distribution with mean $k\alpha$ and variance $k\alpha(1-\alpha)$.
+#+RESULTS:
+: None
 
-#+begin_src python
-from math import comb
+Because each t-test is approximately independent and rejects with probability $\alpha = 5\%$ under the null, the count of significant variables follows a $\text{Binomial}(k,\, \alpha)$ distribution with mean $k\alpha$ and variance $k\alpha(1-\alpha)$.
+
+#+begin_src python :results graphics file output :file ./figures/distribution_signif_variables.png
+from scipy.stats import binom
 import matplotlib.pyplot as plt
 
 alpha = 0.05
 xs = np.arange(counts.max() + 2)
 
 sim_probs   = np.array([(counts == x).mean() for x in xs])
-binom_probs = np.array([comb(k, x) * alpha**x * (1 - alpha)**(k - x) for x in xs])
+binom_probs = np.array([binom.pmf(x,k,alpha) for x in xs])
 
 fig, ax = plt.subplots(figsize=(8, 4))
 ax.bar(xs - 0.2, sim_probs,   width=0.35, alpha=0.75,
@@ -807,14 +820,16 @@ ax.set_ylabel("Probability")
 ax.set_title("Distribution of false discoveries — simulation vs. Binomial")
 ax.legend()
 plt.tight_layout()
-plt.show()
 #+end_src
+
+#+RESULTS:
+[[file:./figures/distribution_signif_variables.png]]
 
 -----
 
 *** Simulating fork, pipe, and collider
 
-For all three structures we need a helper function that computes OLS coefficients for a simple or multiple regression using numpy linear algebra. The design matrix $\mathbf{X}$ collects a column of ones (the intercept) and the predictor columns; $\hat\beta = (\mathbf{X}^\top \mathbf{X})^{-1} \mathbf{X}^\top Y$.
+For all three structures it is convenient to define a helper function that computes OLS coefficients for a simple or multiple regression using =numpy= linear algebra. As above, the matrix $\mathbf{X}$ starts with a column of ones (the intercept) and the predictor columns. The estimated coefficients are given by $\hat\beta = (\mathbf{X}^\top \mathbf{X})^{-1} \mathbf{X}^\top Y$.
 
 #+begin_src python
 def ols(Y, *Xs):
@@ -823,23 +838,30 @@ def ols(Y, *Xs):
     return np.linalg.solve(Xmat.T @ Xmat, Xmat.T @ Y)
 #+end_src
 
+
 **** The fork
 
 $Z$ causes both $X$ and $Y$; there is no direct effect from $X$ to $Y$.
 
-#+begin_src python
+As mentioned in the app: if there is an effect between two variables, we assume the effect equals $\gamma$. Here we set $\gamma = 1$.
+
+#+begin_src python :results output
 n = 1000
 gamma = 1.0
 Z = np.random.normal(0, 1, n)
 X = gamma * Z + np.random.normal(0, 1, n)    # Z causes X
-Y = gamma * Z + np.random.normal(0, 1, n)    # Z causes Y (no X effect)
+Y = gamma * Z + np.random.normal(0, 1, n)    # Z causes Y
 
-coef_without_z = ols(Y, X)          # Y ~ X: biased, coefficient of X != 0
-coef_with_z    = ols(Y, X, Z)       # Y ~ X + Z: correct, coefficient of X ~ 0
+coef_without_z = ols(Y, X)          # Y ~ X: biased
+coef_with_z    = ols(Y, X, Z)       # Y ~ X + Z: correct
 
 print(f"Y ~ X:     coef of X = {coef_without_z[1]:.3f}")
 print(f"Y ~ X + Z: coef of X = {coef_with_z[1]:.3f}")
 #+end_src
+
+#+RESULTS:
+: Y ~ X:     coef of X = 0.454
+: Y ~ X + Z: coef of X = -0.020
 
 The bivariate regression picks up the spurious correlation created by $Z$. Adding $Z$ removes it.
 
@@ -847,50 +869,53 @@ The bivariate regression picks up the spurious correlation created by $Z$. Addin
 
 $X$ causes $Z$ which causes $Y$; the causal effect of $X$ on $Y$ is fully mediated by $Z$.
 
-#+begin_src python
+#+begin_src python :results output
 X = np.random.normal(0, 1, n)
 Z = gamma * X + np.random.normal(0, 1, n)    # X causes Z
 Y = gamma * Z + np.random.normal(0, 1, n)    # Z causes Y
 
-coef_without_z = ols(Y, X)     # correct: captures total causal effect gamma^2
-coef_with_z    = ols(Y, X, Z)  # incorrect: Z is the mechanism, coefficient ~ 0
+coef_without_z = ols(Y, X)     # correct
+coef_with_z    = ols(Y, X, Z)  # incorrect
 
 print(f"Y ~ X:     coef of X = {coef_without_z[1]:.3f}  (true total effect ~ {gamma**2:.2f})")
 print(f"Y ~ X + Z: coef of X = {coef_with_z[1]:.3f}  (mechanism is blocked)")
 #+end_src
 
-An economic example: the effect of schooling on poverty is partly mediated through income. Controlling for income makes schooling look irrelevant — but the real effect exists; it works through income.
+#+RESULTS:
+: Y ~ X:     coef of X = 1.091  (true total effect ~ 1.00)
+: Y ~ X + Z: coef of X = 0.069  (mechanism is blocked)
+
+An economic example: the effect of schooling on income is partly mediated through employment: schooling helps you to find employment. Controlling for employment makes schooling look less relevant, but the real effect exists; it works through employment.
 
 **** The collider
 
 $X$ and $Y$ are independent. Both cause $Z$. Conditioning on $Z$ induces a spurious negative correlation between $X$ and $Y$.
 
-#+begin_src python
+#+begin_src python :results output
 X = np.random.normal(0, 1, n)
-Y = np.random.normal(0, 1, n)               # truly independent of X
-Z = gamma * X + gamma * Y + np.random.normal(0, 1, n)   # both cause Z
+Y = np.random.normal(0, 1, n)               
+Z = gamma * X + gamma * Y + np.random.normal(0, 1, n) 
 
-coef_without_z = ols(Y, X)     # correct: coefficient of X ~ 0
-coef_with_z    = ols(Y, X, Z)  # wrong: coefficient of X is negative
+coef_without_z = ols(Y, X)     # correct
+coef_with_z    = ols(Y, X, Z)  # wrong
 
 print(f"Y ~ X:     coef of X = {coef_without_z[1]:.3f}  (correct, near zero)")
 print(f"Y ~ X + Z: coef of X = {coef_with_z[1]:.3f}  (spurious negative!)")
 #+end_src
 
-The intuition: if we hold $Z = \gamma X + \gamma Y$ fixed, then a higher $X$ must be offset by a lower $Y$ to keep $Z$ constant. So within any slice of $Z$, $X$ and $Y$ are negatively correlated — a pure artefact of conditioning.
+#+RESULTS:
+: Y ~ X:     coef of X = 0.018  (correct, near zero)
+: Y ~ X + Z: coef of X = -0.484  (spurious negative!)
+
+The intuition: if we hold $Z = \gamma X + \gamma Y$ fixed, then a higher $X$ must be offset by a lower $Y$ to keep $Z$ constant. So within any slice of $Z$, $X$ and $Y$ are negatively correlated which is a pure artifact of conditioning.
+
+Finally, we consider the collider in two situations where there is correlation between $X$ and $Y$: first with simulated and then with real data.
 
 **** collider bias with simulated data
 
+Many people have the intuition that adding a control variable to a regression (especially when it turns out to be significant) is a good idea. However, this intuition is wrong if it is applied without thinking. The pipe and collider above are examples where this reasoning is incorrect. Here we consider a collider in a more elaborate example.
 
-Many people have the intuition that adding a control variable to a
-regression (especially when it turns out to be signficant) is a good
-idea. However, this intuition is wrong if it is applied without
-thinking. The pipe above is a first example where this reasoning is
-incorrect. The collider is a second case.
-
-We use here the education example by Richard McElreath to illustrate
-this point (see
-[[https://www.youtube.com/watch?v=l_7yIUqWBmE][Richard McElreath 's lecture 6]]).
+We use here the education example by [cite/text/c:@mcelreath-2020-statis-rethin] to illustrate this point (see [[https://www.youtube.com/watch?v=l_7yIUqWBmE][Richard McElreath 's lecture 6]]).
 Consider the educational achievements of three generations in one
 family: the grandparent, the parent and the (grand)child. We are
 interested in the effect of the grandparent's education on the
@@ -904,7 +929,7 @@ which, in turn, leads to more educated grandchild. The thing we are
 interested in is whether there is a direct effect from the grandparent
 on the child, /controlling/ for the parent's education.
 
-#+caption: collider
+#+caption: A collider in a more complicated context.
 [[./figures/Collider.png]]
 
 We know that the parent's education has a positive effect on the child's
@@ -919,9 +944,9 @@ grandparent effect? E.g. because the grandparent is babysitting and a
 more educated grandparent reads Hamlet with the 5 year old grandchild.
 That is fun and can boost the child's educational achievement.
 
-Another important component of education is the neighborhood where the
+Another important component of education is the neighbourhood where the
 child grows up. We denote this variable \(U\). In the code we assume
-that the parent and child grow up in the same neighborhood (have the
+that the parent and child grow up in the same neighbourhood (have the
 same \(U\) effect). \(U\) is drawn from a standard normal distribution
 and the effect on education is given through a multiplication by the
 factor =alpha=.
@@ -929,7 +954,7 @@ factor =alpha=.
 In addition to this, we assume that there is a random component as well
 which differs between parent and child.
 
-#+caption: collider
+#+caption: The education example from [cite/text/c:@mcelreath-2020-statis-rethin].
 [[./figures/Collider2.png]]
 
 The code below, generates this data and a dataframe =df_collider= that
@@ -938,150 +963,143 @@ stores this data.
 Look carefully at the code: is there a direct effect from the
 grandparent to the grandchild's educational achievement?
 
-We generate two dataframes: =df_collider= is the one that is observed
-and used in the analysis by the researcher.
+We create the dataframe =df_collider= which contains the observable variables $X,Y,Z$ and the unobserved neighbourhood effect $U$.
 
-We will use =df_collider_2= to illustrate why one can get incorrect
-results from analyzing =df_collider=. The problem is that the researcher
-does not have access to =df_collider_2= but we can analyze
-=df_colldier_2= for “educational purposes” to illustrate why problems
-arise.
 
-#+begin_src python
+#+begin_src python :results output
+import pandas as pd
+import statsmodels.formula.api as smf
 sample_size = 5000
 alpha = 0.5
-X = tf.random.normal([sample_size])
-U = tf.random.normal([sample_size])
-Z = X + alpha*U+0.4*tf.random.normal([sample_size])
-Y = Z + alpha*U+0.4*tf.random.normal([sample_size])
+X = np.random.normal(size=sample_size)
+U = np.random.normal(size=sample_size)
+Z = X + alpha*U+0.4*np.random.normal(size=sample_size)
+Y = Z + alpha*U+0.4*np.random.normal(size=sample_size)
 
-df_collider = pd.DataFrame({'X':X, 'Y':Y, 'Z':Z})
-df_collider_2 = pd.DataFrame({'X':X, 'Y':Y, 'Z':Z, 'U':U})
+df_collider = pd.DataFrame({'X':X, 'Y':Y, 'Z':Z, 'U':U})
 print(df_collider.head())
-print(df_collider_2.head())
 #+end_src
 
-*Question* Find the (direct) effect of the grandparent (\(X\)) on the
-grandchild's educational achievement (\(Y\)) conditional on the parent's
-education (\(Z\)).
+#+RESULTS:
+:           X         Y         Z         U
+: 0  0.004069 -2.603567 -1.244448 -2.173826
+: 1  0.383663 -0.350389  0.125116 -0.755560
+: 2 -1.539065 -0.910385 -1.668699  0.770156
+: 3  0.129300  0.430064  0.863400 -0.128971
+: 4  1.076587  2.027661  1.898336  1.184124
 
-The effect of the grandparent's educational achievement (\(X\)) on the
-child's achievement is negative and significant.
+Now we run the regression of $Y$ on $X$ controlling for $Z$.
 
-*Question* Where does this negative effect come from? How is this even
-possible?
+#+begin_src python :results output
+results = smf.ols('Y ~ X + Z', data=df_collider).fit()
+print(results.summary())
 
-*Question* Find the direct effect of \(X\) on \(Y\). Which sign does
-this effect have? What is the interpretation?
-
-To understand the negative effect of \(X\) on \(Y\), let's think about
-what it means to “control for parental education \(Z\)”.
-
-To visualize what happens, we condition on \(Z\) by focusing on a narrow
-band of \(Z\) observations. In other words, we condition on \(Z\) by
-focusing on a subsample where the \(Z\) values are (almost) the same. We
-do this by creating a column =selected= in our dataframe.
-
-#+begin_src python
-df_collider['selected'] = np.abs(df_collider.Z)<0.05
-df_collider.head()
 #+end_src
 
-*Question* Plot \(X\) against \(Y\) for all the data (in blue) and for
-the values of \(Z\) where \(|Z|<0.05\) (in orange).
+#+RESULTS:
+#+begin_example
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:                      Y   R-squared:                       0.889
+Model:                            OLS   Adj. R-squared:                  0.889
+Method:                 Least Squares   F-statistic:                 2.011e+04
+Date:                Tue, 29 Sep 2026   Prob (F-statistic):               0.00
+Time:                        13:20:24   Log-Likelihood:                -3727.7
+No. Observations:                5000   AIC:                             7461.
+Df Residuals:                    4997   BIC:                             7481.
+Df Model:                           2                                         
+Covariance Type:            nonrobust                                         
+==============================================================================
+                 coef    std err          t      P>|t|      [0.025      0.975]
+------------------------------------------------------------------------------
+Intercept      0.0107      0.007      1.487      0.137      -0.003       0.025
+X             -0.6131      0.013    -45.863      0.000      -0.639      -0.587
+Z              1.6152      0.011    142.881      0.000       1.593       1.637
+==============================================================================
+Omnibus:                        0.695   Durbin-Watson:                   1.936
+Prob(Omnibus):                  0.706   Jarque-Bera (JB):                0.737
+Skew:                          -0.010   Prob(JB):                        0.692
+Kurtosis:                       2.944   Cond. No.                         3.52
+==============================================================================
 
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+#+end_example
 
-*Exercise* Do the graph above again for 2 different ranges of \(Z\) in
-the same figure.
+It turns out that grandparent education $X$ has a negative effect on the grandchild's educational achievement $Y$. How is that possible?
 
-*Question* Give the intuition why there is a negative correlation
-between \(X\) and \(Y\) with the orange dots. [hint: what do you know
-about orange dots with low \(X\) and about orange dots with high \(X\)?]
-
-If you cannot answer this question yet, consider the following
-interactive graph.
-
-
-To better understand what is happening here, we are going to use
-=df_collider_2=. In particular, in the combined figure below, we again
-provide a scatter plot of =X= vs =Y=. Now the color indicates the level
-of =Z= associated with the observation; darker colors indicate higher
-values of =Z=. The size of the point (circle) indicates the level of =U=
-(that the researcher cannot see in =df_collider=).
-
-To better illustrate what is happening, we use an interactive plot made
+To illustrate what is happening, we use an interactive plot made
 with [[https://altair-viz.github.io/][altair]].
 
-To condition on =Z= (as we do in a multiple regression), we can drag a
-rectangle in the bottom histogram. That is, drag the rectangle so that
-you “capture” a bar in the histogram. This selection of \(Z\) turns blue
-and you can drag the selection up and down (conditioning on different
-values of \(Z\)).
+To condition on =Z= (as we do in a multiple regression), we can drag vertically an interval for $Z$ in the bottom histogram. This selection of \(Z\) turns blue in the scatter plot above and you can drag the selection up and down (conditioning on different values of \(Z\)).
 
-Move this selection up and down and see what happens. In particular: *
-how does =Z= vary in the figure? E.g. where are the high values of =Z=?
-What is the interpretation of this? * for a selection of =Z= in the
-bottom histogram, what is the relation between =X= and =Y=? * for this
-selection, how does =U= vary in the figure? That is, for a given
-selection of \(Z\) what is the size of the circles? What is the
-interpretation?
+Move this selection up and down and see what happens. In particular:
+- for a selection of =Z= in the bottom histogram, what is the relation between =X= and =Y= in the scatter plot?
+- for this selection, how does =U= vary in the figure? That is, for a given selection of \(Z\) what is the size of the circles? What is the interpretation? For given $Z$, as grandparent education $X$ is low, what is the size of the $U$ circles?
 
-*Question* Give the intuition why there is a negative correlation
-between =X= and =Y= for a selection of =Z=; that is, conditional on =Z=.
-
-*Exercise* What is the risk of saying: I have run a regression and
-controlled for all effects that I had variables for?
 
 #+begin_src python
+import altair as alt
+
 interval = alt.selection_interval(encodings=['y'])
 
-fig = alt.Chart(df_collider_2).mark_point().encode(
-  x='X',
-  y='Y',
-  color=alt.condition(interval, 'Z', alt.value('lightgreen')),
-  size = 'U'
-).properties(
-    selection=interval
-
+fig = (
+    alt.Chart(df_collider)
+    .mark_point()
+    .encode(
+        x='X',
+        y='Y',
+        color=alt.condition(
+            interval,
+            alt.value('steelblue'),
+            alt.value('lightgreen')
+        ),
+        size='U'
+    )
+    .add_params(interval)
 )
 
-
-
-hist = alt.Chart(df_collider_2).mark_bar().encode(
-    x='count()',
-    y=alt.Y('Z',bin=True),
-    color=alt.condition(interval, 'Z', alt.value('lightgrey'))
-).properties(
-    selection=interval
-
+hist = (
+    alt.Chart(df_collider)
+    .mark_bar()
+    .encode(
+        x='count()',
+        y=alt.Y('Z', bin=True),
+        color=alt.condition(
+            interval,
+            alt.value('steelblue'),
+            alt.value('lightgrey')
+        )
+    )
+    .add_params(interval)
 )
 
 chart_collider = fig & hist
-
-chart_collider.save('ChartCollider.html')
+chart_collider.save('./figures/ChartCollider.html')
 #+end_src
+
+
+
+#+begin_export html
+<iframe src="./figures/ChartCollider.html" width="800" height="600"></iframe>
+#+end_export
+
+
 
 
 **** collider bias with real data
 
-In this section we consider a collider example using real (not simulated) data. This example is based on [cite/text/c:@downey-2023-probab-overt-it]:
-- [[denote:20240713T110907][probably overthinking low birthweight paradox]]
-- https://allendowney.github.io/ProbablyOverthinkingIt/birthweight.html
+[cite/text/c:@downey-2023-probab-overt-it chapter 7] discusses a great example of collider bias suggesting (incorrectly) that mothers who smoke during pregnancy have a "protective effect" on their babies if these happen to have low birth weight.
+- you can watch his presentation: [[https://www.youtube.com/watch?v=8rUm46mk0Yo&t=964s][probably overthinking low birthweight paradox]]
+- or look at the notebook: https://allendowney.github.io/ProbablyOverthinkingIt/birthweight.html
+- the website of the book: https://greenteapress.com/wp/probably-overthinking-it/
 
-The Low Birthweight Paradox was born in 1971, when Jacob Yerushalmy, a researcher at U.C. Berkeley, published “The relationship of parents’ cigarette smoking to outcome of pregnancy – implications as to the problem of inferring causation from observed associations”. As the title suggests, the paper is about the relationship between smoking during pregnancy, the weight of babies at birth, and mortality in the first month of life.
+If you want to run this code on the Tilburg university server, you can access the data with:
 
-Based on data from about 13,000 babies born near San Francisco between 1960 and 1967, Yerushalmy reported that
-- Babies of mothers who smoked were about 6% lighter at birth.
-- Smokers were about twice as likely to have babies lighter than 2500 grams, which is considered “low birthweight”.
-- Low-birthweight babies were much more likely to die within a month of birth: the mortality rate was 174 per 1000 for low-birthweight babies and 7.8 per 1000 for others.
-
-These results were not surprising. At that time, it was well known that children of smokers were lighter at birth, and that low-birthweight babies were more likely to die.
-
-We use 1991 data from https://www.cdc.gov/nchs/data_access/vitalstatsonline.htm
-    
-#+begin_src python :display plain
-df = pd.read_csv('./data/lbw_data.csv')
-subset = df.dropna(subset=["tobacco", "birthweight"])
+#+begin_src python :display output
+from zipfile import ZipFile
+zip_file = ZipFile('./data/lbw_data.csv.zip')
+df = pd.read_csv(zip_file.open('lbw_data.csv'))
 df.head()
 #+end_src
 
@@ -1093,141 +1111,7 @@ df.head()
 : 3           3      1.0       2778.0  False  False  (2750, 3000]
 : 4           4      2.0       3175.0  False  False  (3000, 3250]
 
-- with "tobacco" 1.0 means smoker; 2.0 non-smoker
-- "birthweight" is in grams
-- "mort" indicates whether or not baby died
-- "lbw" low birth weight if weight is below 2500
-- "bin" we will use below
-
-
-On the university server we uploaded the zip file of this data:
-
-#+begin_src python :display plain
-from zipfile import ZipFile
-zip_file = ZipFile('./data/lbw_data.csv.zip')
-df = pd.read_csv(zip_file.open('lbw_data.csv'))
-df.head()
-#+end_src
-
-
-
-#+begin_src python :display plain
-subset.groupby("tobacco")["birthweight"].mean()
-#+end_src
-
-#+RESULTS:
-: tobacco
-: 1.0    3145.189278
-: 2.0    3370.030102
-: Name: birthweight, dtype: float64
-
-Children of smokers (1.0) have lower birthweight than for non-smokers (2.0); mortality among 1000 babies
-
-#+begin_src python :display plain
-subset.groupby("tobacco")["mort"].mean()*1000
-#+end_src
-
-#+RESULTS:
-: tobacco
-: 1.0    11.874562
-: 2.0     7.710689
-: Name: mort, dtype: float64
-
-
-Children of smokers (1.0) have higher mortality rate than for non-smokers (2.0)
-
-
-
-#+begin_src python :results graphics file output :file ./figures/birthweights.png
-sn.kdeplot(data=subset,x="birthweight", hue="tobacco",common_norm=False) 
-plt.axvline(2500, color="gray", ls=":", alpha=0.5);
-#+end_src
-
-#+RESULTS:
-[[file:./figures/birthweights.png]]
-
-
-Can we find a bad effect of smoking on child mortality controlling for lbw?
-
-#+begin_src python :display plain
-mortality_lbw = subset.groupby(["tobacco","lbw"])["mort"].mean()*1000
-mortality_lbw
-#+end_src
-
-#+RESULTS:
-: tobacco  lbw  
-: 1.0      False     5.651406
-:          True     60.138756
-: 2.0      False     3.146364
-:          True     74.851271
-: Name: mort, dtype: float64
-
-- for low birth weight children, smoking mothers reduce mortality
-- protective effect of smoking?
-
-
-
-#+begin_src python :display plain
-bins = np.arange(1000, 5000, 250)
-table = pd.pivot_table(subset, index="bin", columns="tobacco", values="mort")
-table *= 1000
-table.index = bins[:-1] + np.diff(bins) / 2
-table
-#+end_src
-
-#+RESULTS:
-#+begin_example
-tobacco         1.0         2.0
-1125.0   102.376600  106.864725
-1375.0    65.099458   72.467402
-1625.0    43.963878   48.194837
-1875.0    31.085935   32.530380
-2125.0    22.160247   20.968439
-2375.0    16.087278   13.399794
-2625.0     9.483955    7.970344
-2875.0     7.015749    4.987658
-3125.0     5.610098    3.629459
-3375.0     5.005695    2.534403
-3625.0     3.994581    2.394741
-3875.0     4.040855    1.983212
-4125.0     3.064351    1.966262
-4375.0     4.212744    2.005241
-4625.0     5.084083    2.539889
-#+end_example
-
-
-#+begin_src python :results graphics file output :file ./figures/lbw_paradox.png
-plt.plot(table.index,table[1.0]-table[2.0])
-plt.xlabel("birth-weight (grams)")
-plt.ylabel("difference in mortality rate per 1000")
-plt.title("Difference infant mortality smoking vs non-smokin
-                                mothers\n by birth weight");
-#+end_src
-
-#+RESULTS:
-[[file:./figures/lbw_paradox.png]]
-
-
-- babies of smoking mothers have
-  - lower birthweight
-  - higher mortality
-- when controlling for low birthweight, babies of smoking mothers have lower mortality
-  - protective effect of smoking?
-  - LBW (low birth weight) paradox
-  - if the baby has LBW, doctor is relieved to hear that the mother smokes
-  - smoking mother is "better" than LBW caused by genetic defect
-  - if we cannot control for other causes of LBW, LBW is a collider
-  - we should *not* control for LBW
-  - the idea that "invites" controlling for LBW is to see whether there is an additional effect of smoking on mortality (even among babies of normal weight)
-
-[[./figures/DAG_low_birthweight_paradox.png]]
-- LBW is a collider; by controling for LBW we open the backdoor path:
-  - LBW is collider because two arrows point into it: Smoking -> LBW <- Unknown
-  - smoking -> LBW -> Unknown -> mortality
-- with the DAG above: if we would like to know the effect of LBW on Mortality:
-  - Smoking and Unkown are confounders
-  - to understand the effect of LBW on mortality, we need to control for Smoking and Unknown
-
+Then follow Allen Downey's presentation/notebook/book chapter.
 
 
 
@@ -1235,9 +1119,9 @@ plt.title("Difference infant mortality smoking vs non-smokin
 
 This lecture introduced two practical pitfalls in variable selection and causal interpretation.
 
-The multiple testing problem shows that significance alone is not a reliable guide to variable selection: if you test many variables, some will appear significant by chance, with an expected false-discovery rate of exactly $\alpha$.
+The multiple testing problem shows that significance is not a reliable guide to variable selection: if you test many variables, some will appear significant by chance, with an expected false-discovery rate of exactly significance level $\alpha$.
 
-The fork, pipe, and collider show that whether to control for a third variable $Z$ depends entirely on the causal structure. Controlling for a fork variable is correct. Controlling for a pipe mediator or a collider is incorrect — it either blocks a causal path or introduces a spurious correlation that was not there before. Reading off the DAG which variables to control for is therefore an important practical skill.
+The fork, pipe, and collider show that whether to control for a third variable $Z$ depends entirely on the causal structure. Controlling for a fork variable is correct. Controlling for a pipe mediator or a collider is incorrect; it either blocks a causal path or introduces a spurious correlation that was not there before.
 
 #+BEGIN_EXPORT html
 <div style="border-left:4px solid #1f3c88;padding:10px;margin:15px 0;background:#f5f7fa;">
@@ -1253,7 +1137,7 @@ Significance of a coefficient does not mean the variable belongs in your model. 
 </div>
 #+END_EXPORT
 
-/Looking ahead:/ In the next lecture we move from correlation and causality to prediction, and look at how machine-learning models handle many predictors and the risk of overfitting.
+/Looking ahead:/ In the next lecture we cover a number of "technical" Python topics that we need for later lectures on datascience methods.
 
 ** Review Questions
 
@@ -1325,25 +1209,180 @@ plt.legend();
 
 -----
 
-*** Question 4: Treatment effects
+*** TODO Question 4: Treatment effects
 
-One approach to estimating causal treatment effects is to use an instrument — a variable $W$ that affects the treatment $X$ but has no direct effect on the outcome $Y$ (it only affects $Y$ through $X$). This is the instrumental variables (IV) approach.
 
-Consider the following data-generating process:
+One of the complications when using IV to find causal effects is that treatment effects can differ between subgroups and that these subgroups react differently to the treatment/instrument. Our discussion here is based on Chapter 4 of Angrist and Pischke (2009).
 
-#+begin_src python
-n = 2000
-W = np.random.normal(0, 1, n)             # instrument
-U = np.random.normal(0, 1, n)             # unobserved confounder
-X = 0.8 * W + 0.6 * U + np.random.normal(0, 1, n)   # treatment
-Y = 1.5 * X + 0.8 * U + np.random.normal(0, 1, n)   # outcome
-#+end_src
+We will consider this in the context of unemployed who are offered a training program. To understand the effects, we will again generate our own data such that we know exactly what all the relevant effects are. The question is then, how do we get these effects from the data.
 
-The true causal effect of $X$ on $Y$ is 1.5. $U$ is an unobserved confounder (it affects both $X$ and $Y$), so OLS of $Y \sim X$ is biased.
+As before, the learning goals of this section are two fold: (i) learn how to program your own data generating process in python and (ii) understand the statistical issue under considerarion: heterogenous treatment effects.
 
-a. Estimate the OLS coefficient of $X$ in $Y \sim X$. Is it close to 1.5?
-b. The IV estimator is $\hat\beta_{IV} = \frac{\text{Cov}(W, Y)}{\text{Cov}(W, X)}$ (numerically: use ~np.cov~). Compute it and compare to the true effect.
-c. Two-stage least squares (2SLS): in the first stage regress $X \sim W$ and save the fitted values $\hat X$; in the second stage regress $Y \sim \hat X$. Does this also recover the true effect?
+The government introduces a training program for unemployed. The treatment variable $D_i$ denotes whether (1) or not (0) individual $i$ received training. The instrument $Z_i$ that we use is whether (1) or not (0) $i$ is invited to join the training. 
+
+We have three groups of unemployed:
+
+- compliers join the training if and only if they are invited to do so: $D_i = 1 (0)$ iff $Z_i = 1 (0)$;
+- always-takers join the training whether or not they are invited to do so: $D_i =1$ irrespective of $Z_i$;
+- never-takers never join the training: $D_i = 0$ irrespective of $Z_i$.
+
+Note that in this training context, the always-takers are a bit "odd": how can you join a training program where you are not supposed to be. The never-takers make more sense in this context: some people may not attend the training even though they were invited to do so. We will not worry about this; the point is that we can conceptually distinguish these groups.
+
+We are interested in the effect of the training program on earnings. We denote by $\beta$ the expected earnings without training. The expected earnings with training is denoted by $\beta+\tau$. Hence, $\tau$ denotes the treatment effects.
+
+Let $j \in \{c,a,n \}$ denote whether an individual is a complier, always-taker or never-taker. We assume that $\beta_j$ and $\tau_j$ vary with $j$.
+
+In particular we assume that the earnings effect for someone in group $j$ is drawn from a normal distribution with mean $\mu = \beta_j$ and standard deviation $\sigma =1$ in case of no training and the effect of training is drawn from a normal distribution with mean $\mu = \tau_j$ and standard deviation $\sigma =1$.
+
+Below we will consider different configurations for $\beta_j, \tau_j$ and see how they affect the estimated effects.
+
+**Exercise** Read the code below and explain what it does. E.g. can you explain how earnings depend on whether someone was invited for the training program?
+
+
+```python
+def accept_complier(invited):
+    return invited
+
+def accept_always(invited):
+    return np.ones_like(invited)
+
+def accept_never(invited):
+    return np.zeros_like(invited)
+
+N_simulations = 10000
+fraction_training = 0.2 # 20% of agents are invited to the training
+types = ['complier','always_taker', 'never_taker']
+β = {'complier': 1, 'always_taker': 2, 'never_taker': 1}
+τ = {'complier': 3, 'always_taker': 4, 'never_taker': 1}
+n = {'complier': 0.5, 'always_taker': 0.25, 'never_taker': 0.25}
+accept = {'complier': accept_complier, 'always_taker': accept_always, 'never_taker': accept_never}
+earnings_without = {}
+training_effect = {}
+earnings = {}
+invited = {}
+trained = {}
+df = pd.DataFrame()
+def data_simulation(β = β, τ=τ, n = n):
+    for j in types:
+        earnings_without[j] = np.random.normal(loc = β[j], scale = 1.0, size = int(n[j]*N_simulations))
+        training_effect[j] = np.random.normal(loc = τ[j], scale = 1.0, size = int(n[j]*N_simulations))
+        invited[j] = np.random.binomial(1,fraction_training,size = int(n[j]*N_simulations))
+        trained[j] = accept[j](invited[j])
+        earnings[j] = earnings_without[j]+ trained[j]*training_effect[j]
+    column_invited = np.concatenate([invited[j] for j in types],axis=0)
+    column_trained = np.concatenate([trained[j] for j in types],axis=0)
+    column_earnings = np.concatenate([earnings[j] for j in types],axis=0)
+    df = pd.DataFrame({'invited':column_invited, 'trained':column_trained,'earnings':column_earnings})
+    return df
+ 
+df = data_simulation()
+df.head()
+```
+
+We have a dataset now with indicators for who was invited to a training and who attended a training.
+
+We would like to learn the effect of training on earnings.
+
+**Question** Which of the parameters above could we hope to recover? $\tau_c,\tau_a,\tau_n$?
+
+**Question** Hence, if we do some calculations with the data, which number do we want to see?
+
+**Question** Compare the average earnings of people with training with the average earnings of people without training. Is this the number that you expected? Why (not)?
+
+
+**Exercise** Where does this number come from?
+
+**Question** Perhaps we should use the instrument whether someone is invited or not: compare average earnings of people with and without an invitation to the training.
+
+**Question** Does it help if we compare:
+- people with training and an invitation to training *with*
+- people without training and no invitation to training
+
+
+We have seen now that we have no hope of recovering the relevant training effect in the set-up above. So the question is: when can we recover the relevant parameters? That is, what assumptions are needed?
+
+To see how you can analyze this with the set-up above, let's program two obvious cases where this works.
+
+**Question** Explain for each case *why* it works.
+
+
+```python
+n = {'complier': 1.0, 'always_taker': 0.0, 'never_taker': 0.0}
+df_compliers_only = data_simulation(n=n)
+np.mean(df_compliers_only[df_compliers_only.trained==1].earnings)-np.mean(df_compliers_only[df_compliers_only.trained==0].earnings)
+```
+
+
+```python
+β = {'complier': 1, 'always_taker': 1, 'never_taker': 1}
+τ = {'complier': 3, 'always_taker': 3, 'never_taker': 3}
+df_homog = data_simulation(β=β,τ=τ)
+np.mean(df_homog[df_homog.trained==1].earnings)-np.mean(df_homog[df_homog.trained==0].earnings)
+```
+
+For a less obvious case where we can retrieve relevant parameters, we will use Angrist and Pischke (2009: chapter 4). In particular, we will verify Theorem 4.4.2.
+
+We work with one sided noncompliance. That is, we allow for never-takers but not for always-takers. 
+
+According to Theorem 4.4.2 the effect of treatment on the treated can be found as:
+
+$$
+\frac{E(Y_i|Z_i=1)-E(Y_i|Z_i=0)}{Prob(D_i=1|Z_i=1)}
+$$
+
+We first create the dataframe.
+
+
+```python
+n = {'complier': 0.5, 'always_taker': 0.0, 'never_taker': 0.5}
+df_one_sided = data_simulation(n=n)
+
+```
+
+**Question** Calculate $Prob(D_i = 1|Z_i =1)$ and denote this `correction_term`.
+
+
+**Question** Calculate $\frac{E(Y_i|Z_i=1)-E(Y_i|Z_i=0)}{Prob(D_i=1|Z_i=1)}$.
+
+
+**Question** Which parameter have we recovered?
+
+
+## Probability of treatment
+
+Consider a situation which is simpler than the one above in the sense that there are no always-takers, nor never-takers.
+
+However, now the instrument ("invited") $Z$ causes the probability of training to increase from 0.2 to 0.6. 30% of people get invited.
+
+**Exercise** Copy/paste python code from the analysis above to generate a dataframe using that $Z_i=1$ implies that the probability of treatment increases from 0.2 to 0.6
+
+**Exercise** Suppose we can observe whether someone received training or not. Use this to calculate the effect of training on earnings.
+
+
+Suppose we cannot observe whether someone actually did the training or not (e.g. whether or not someone invested effort in the training). We only know ("from a previous study") that explicitly inviting someone for the training ("nudge") increases the probability that they invest training effort from 0.2 to 0.6.
+
+**Exercise** Use the dataframe above to verify what the effect of the nudge is. Call this the `correction_term`. What value should the correction term have?
+
+
+Angrist and Pischke (2009: chapter 4) Theorem 4.4.1 (LATE Theorem; local average treatment effect) claims that (under some assumptions), we can calculate the effect of training on earnings as:
+
+$$
+\frac{E(Y_i|Z_i=1)-E(Y_i|Z_i=0)}{E(D_i|Z_i=1)-E(D_i|Z_i=0)}
+$$
+
+**Exercise** Use this expression to calculate the effect of training on earnings.
+
+
+Now we are going to use an IV estimation to find the same result. Run the following two regressions.
+
+
+```python
+results_first_stage = smf.ols('trained ~ invited', data=df_prob).fit()
+results_second_stage = smf.ols('earnings ~ invited', data=df_prob).fit()
+```
+
+**Exercise** Use these regressions to calculate the effect of training on earning.
+
 
 *** Hint
 #+BEGIN_EXPORT html
@@ -1367,7 +1406,7 @@ In this lecture we consider a number of more technical aspects of datascience in
 - tensors
 - broadcasting
 - indexing
-- matrix operations
+- matrix operations: =@, T, np.linalg.solve, .inv, np.diag=
 - programming a regression in tensorflow: because we will use tensorflow for estimating neural networks, there is some advantage in understanding the tensorflow syntax a bit more.
 
 
@@ -1406,9 +1445,7 @@ going to be useful later on when we will try to understand neural
 networks more deeply.
 
 Machine learning packages tend to have a “backbone” that implements
-tensors. E.g. Keras allows you to work with either
-[[http://www.deeplearning.net/software/theano/][Theano]] or
-[[https://www.tensorflow.org/][tensorflow]].
+tensors.
 
 ** Tensors
 :PROPERTIES:
@@ -2729,7 +2766,10 @@ plt.legend();
 [[file:./figures/underfit_polynomial.png]]
 
 
-
+**** TODO ridge and lasso
+- back to lecture 2: we can use ridge and lasso as (mechanical) variable selection
+- reduce overfitting
+- hyper-parameter tuning: too high a penalty and we underfit: delete variables that  actually have an effect
 
 
 * Lecture 5: Neural network
