@@ -762,7 +762,7 @@ t_stats = beta[1:] / se[1:]                          # (k,); slopes only
 #+end_src
 
 
-The vector ~t_stats~ holds one t-statistic per variable, each testing $H_0: \beta_j = 0$. Under the null, each $t_j \sim t_{n-k-1}$; for $n = 100$ and $k = 50$ the critical value at 5\% is approximated by 1.96.
+The vector ~t_stats~ holds one t-statistic per variable, each testing $H_0: \beta_j = 0$. Under the null, each $t_j \sim t_{n-k-1}$; for $n = 100$ and $k = 50$ the critical value at 5% is approximated by 1.96.
 
 #+begin_src python :results output
 n_significant = np.sum(np.abs(t_stats) > 1.96)
@@ -1401,506 +1401,212 @@ results_second_stage = smf.ols('earnings ~ invited', data=df_prob).fit()
 \newpage
 #+END_EXPORT
 * Lecture 3: Tensors, broadcasting, indexing, matrix operations
-
-In this lecture we consider a number of more technical aspects of datascience in Python:
-- tensors
-- broadcasting
-- indexing
-- matrix operations: =@, T, np.linalg.solve, .inv, np.diag=
-- programming a regression in tensorflow: because we will use tensorflow for estimating neural networks, there is some advantage in understanding the tensorflow syntax a bit more.
-
-
-
-
-In the past, when you worked with data, you would usually have
-2-dimensional data: columns for the different variables and rows for the
-different observations. That is, the data is represented as a matrix.
-
-However, “big data” is not necessarily structured in such a neat way.
-Data can have higher dimensions. We will start with data on images. An
-image has two dimensions of itself. Hence a dataset with images has 3
-dimensions: one dimension for the identifier of the image and then x-y
-coordinates for the image itself.
-
-If the dataset consists of movie-clips, we have an additional dimension:
-time.
-
-In economics, when we look at GDP, our observation would be GDP of the
-UK in 2010, GDP of the UK in 2011, GDP of Belgium in 2010 etc. This can
-be represented as a matrix.
-
-But now suppose we believe the development of GDP is important. Our
-observation would be GDP of the UK in 2010-2018. This gives 3
-dimensional data. The observation is GDP in the period.
-
-To deal with higher dimensional data, we need “tensors”. A tensor
-generalizes a matrix to higher dimensions.
-
-We will now have a technical interlude to explain what tensors are and
-what you can do with them. We describe some functions that can be
-applied to tensors. To motivate these functions, we will build our first
-neural network. The point here is not so much to explain how neural
-networks work but more to show you that the functions we consider are
-going to be useful later on when we will try to understand neural
-networks more deeply.
-
-Machine learning packages tend to have a “backbone” that implements
-tensors.
-
-** Tensors
 :PROPERTIES:
-:CUSTOM_ID: tensors
+:HTML_CONTAINER_CLASS: section
+:CUSTOM_ID: lecture-tensors
 :END:
 
-- tensors are vectors/matrices that capture multidimensional data
-- we tend to think in two dimensional tables ("excel") but some phenomena have higher dimensions than 2
-- a set of images, say we want to separate images of cats and dogs
-- one observation has two dimensions (x and y axis), say I have 50*50 "pixels"
-- if I have 3000 observations, my data has dimensions 3000*50*50
-- you cannot do this in excel...
-- to deal with such data in python, we need tensors
-- we introduce tensors in =numpy= and explain how you can work with them (e.g. add them together, multiply them)
-- this is different than with matrices:
-  - I can multiply an $n*m$ and $k*l$ matrix if and only if $m=k$
-  - this is *not* true for multiplying tensors
-- an important concept with tensors is: broadcasting
-- with tensors you will use (the attribute) =.shape= a lot
-- you will learn how to select observations from a tensor using slicing and indexing
+*Skills you learn in this lecture:* working with multi-dimensional arrays (tensors), selecting data with slicing and fancy indexing, combining arrays with broadcasting, performing matrix algebra, and understanding gradient descent — the algorithm behind neural network training.
 
+** Learning Objectives
 
+After completing this lecture you should be able to:
+- use =.shape=, =.ndim=, and =.reshape= to inspect and transform =numpy= arrays of any dimension
+- select subsets of arrays using slicing notation and boolean (fancy) indexing
+- apply broadcasting rules to combine arrays of different shapes without explicit loops
+- perform matrix operations with =numpy=: product =@=, transpose =.T=, inverse and rank via =numpy.linalg=
+- implement gradient descent from scratch and explain how the learning rate controls convergence to the OLS solution
 
+** Introduction
 
-As mentioned, in most of the empirical analyses that you have done, an
-observation is a one dimensional vector. E.g. you have data on
-inflation, unemployment, gdp growth for country-year combinations. Then
-for the UK in 2000, our data consists of the one dimensional vector
-=[inflation, unemployment, gdp growth]=. If you have 100 observations
-like this, you can represent them in a matrix. Each row is an
-observation and the columns will be
-=[coutry, year, inflation, unemployment, gdp growth]=. Hence we have a
-two dimensional dataset with 100 rows and 5 columns.
+In Lectures 1 and 2 we worked with one- and two-dimensional arrays: vectors of observations and matrices with rows as observations and columns as variables. Real-world data often has a more complicated structure than that. An image is a 2D grid of pixel intensities; a dataset of images adds a third dimension for the image index. A panel of incomes across countries, ages and time periods can be viewed as a 3D array. Machine learning frameworks handle this kind of data through /tensors/; =numpy= arrays generalized to any number of dimensions.
 
-In big data, there are usually higher dimension observations. One of the
-“classic” datasets in machine learning is
-[[https://en.wikipedia.org/wiki/MNIST_database][the MNIST dataset.]]
-This dataset consists of handwritten numbers and their corresponding
-label (e.g. when the handwritten number is 5, the label for this image
-=5=). We will see an example shortly. This called a classification
-problem: based on a picture of the handwritten number, we need to
-classify the pricture as being either 0, 1, ..., 9.
+Three technical tools make tensor computations easy to handle; once you master them. /Slicing/ and /indexing/ let you extract subsets of a tensor in a single expression without loops. /Broadcasting/ lets you combine arrays of different shapes by automatically stretching the smaller array to match the larger one; this replaces many nested loops with a single vectorized expression. /Matrix operations/ are the language of linear algebra: the matrix product =@=, the transpose =.T=, and the inverse via =numpy.linalg= underpin OLS, regularized regression, and covariance matrices.
 
-The point is that a handwritten number is a two dimensional observation.
-For each x-y comination, we get the grey-scale of this point/pixel. To
-illustrate this, consider the 5th image from the training dataset
-(python starts numbering at 0); we plot the handwritten image (which is
-2 dimensional) and print its label.
+The second half of the lecture introduces /gradient descent/, the optimization algorithm inside TensorFlow, PyTorch, and every modern neural network library. We implement it from scratch for a simple linear regression: rather than solving the normal equations analytically, we minimize the mean squared error by iteratively nudging the slope and intercept in the direction that reduces the loss. The interactive app lets you watch this process in real time and experiment with the learning rate.
 
-This data is already split in a train and test set. The idea is that we
-train our model on the train data and then use the test data (which the
-model has never seen before) to evaluate the fit of the model. We will
-elaborate on this below.
+** Apps
 
-#+begin_src python
-(train_images, train_labels), (test_images, test_labels) = datasets.mnist.load_data()
-#+end_src
+This lecture has two interactive apps. The first lets you enter two $3 \times 3$ matrices and observe matrix operations: addition, subtraction, multiplication, transposition, and inverse. The second app runs gradient descent for a small linear regression and shows both the loss surface and the convergence path.
 
-#+begin_src python
-plt.imshow(train_images[4],cmap=plt.cm.binary)
-plt.show()
-print(train_labels[4])
-#+end_src
-
-If you want to “see” what the data look like, uncomment the next cell
-and evaluate it.
-
-#+begin_src python
-#train_images[4]
-#+end_src
-
-Indeed, the handwritten number is 9, which equals its label.
-
-What are the dimensions for this dataset. Let's use =shape= to find out.
-Friendly warning, when you go into machine learning, you will be using
-=shape= a lot!
-
-#+begin_src python
-train_images.shape
-#+end_src
-
-That is, we have 60,000 images in the train-set and each image is of the
-form 28 by 28 (pixels).
-
-As an illustration, the dimensions of the first image in the dataset
-=train_images=.
-
-#+begin_src python
-train_images[0].shape
-#+end_src
-
-** Tensors in numpy
+*** Interactive matrix operations
 :PROPERTIES:
-:CUSTOM_ID: tensors-in-numpy
-:END:
-As mentioned, well known machine learning backends are theano and
-tensorflow. For reasons that we do not worry about here, these are not
-immediately straightforward to work with (but we have used some
-tensorflow already above). We can play around with dimensions in “good
-old” numpy as well. Properties that we can use in numpy, like
-broadcasting, can be used in theano and tensorflow as well.
-
-As numpy is “more direct” to work with, we will practice this with
-numpy.
-
-*Remark* Although you are always encouraged to play around with code to
-see what happens, this is especially the case with tensors. To
-familiarize yourself with tensors, change the code that we use below;
-e.g. create a 10 dimensional vector out of the data. You can check for
-yourself whether the code generates what you expect it to generate. If
-not, and you cannot figure out what happens, ask us!
-
-First, we create the vector =x= with 100 random numbers.
-
-#+begin_src python
-x = np.random.normal(0,1,size=100)
-#+end_src
-
-*Question* Use =shape= to find the shape of the vector =x=.
-
-
-As you can see, =x= has 100 elements in one dimension and no other
-dimension. Put differently, =x= is one-dimensional as a tensor.
-
-This we can verify using =ndim=:
-
-#+begin_src python
-x.ndim
-#+end_src
-
-*Do not panic:* The following sentence will be a bit confusing when you
-first read it, but you will get used to it later. If you would plot the
-vector =x= it would be a /vector/ in a 100-dimensional space. Hence it
-is a 100 dimensional vector, but a 1 dimensional tensor.
-
-To understand this better, let's consider a two dimensional (2D) tensor.
-This is what we usually call a matrix:
-
-#+begin_src python
-x2 = x.reshape(25,4)
-print(x2.ndim)
-print(x2.shape)
-#+end_src
-
-By evaluating =x2= we see that this indeed “looks like” a matrix.
-
-In terms of python, we can see the two dimensions as follows: * each row
-has four elements (columns) separated by comma's (=,=) in between square
-brackets, like =[1,2,3,4]=; * then between square brackets, we have 25
-of such rows; again rows separated by comma's.
-
-#+begin_src python
-x2
-#+end_src
-
-Note how the =reshape= method turns the 100 elements of the
-1-dimensional vector =x=into a matrix with 25 “rows” and 4 “columns”.
-This matrix is 2-dimensional.
-
-*Question* Create a 3-dimensional vector =x3= out of =x= with shape 4 by
-5 by 5. Check the dimensions and shape of =x3=.
-
-
-One way to think about =x3= is as four \(5*5\) images. The numpy
-representation of this is as follows:
-
-#+begin_src python
-x3
-#+end_src
-
-With =np.newaxis= we can add a dimension to a vector without adding or
-re-arranging data. This works as follows:
-
-#+begin_src python
-x4 = x3[:,:,:,np.newaxis]
-print(x4.ndim)
-print(x4.shape)
-#+end_src
-
-Now if you evaluate =x4=, it looks a lot like =x3=. But if you look
-carefully there is an additional pair of square brackets =[]=.
-
-You may wonder why it is useful to add a =newaxis= to a tensor.
-Actually, one good reason for this is broadcasting.
-
-
-#+begin_src jupyter-python
-A = np.arange(24).reshape(2,3,4)
-A.shape
-#+end_src
-
-#+RESULTS:
-| 2 | 3 | 4 |
-
-#+begin_src jupyter-python
-print(A[0,:,:])
-print('\n')
-print(A[1,:,:])
-#+end_src
-
-#+RESULTS:
-: [[ 0  1  2  3]
-:  [ 4  5  6  7]
-:  [ 8  9 10 11]]
-: 
-: 
-: [[12 13 14 15]
-:  [16 17 18 19]
-:  [20 21 22 23]]
-
-
-#+begin_src jupyter-python
-A[0,1,:]
-#+end_src
-
-#+RESULTS:
-: array([4, 5, 6, 7])
-
-
-Recall matrix multiplication: we multiply a (2,3) matrix and (3,1) vector and the result is a (2,1) vector:
-
-#+begin_src jupyter-python
-B = np.random.normal(0,1,size=(2,3))
-C = np.random.normal(0,1,size=(3,1))
-B @ C
-#+end_src
-
-#+RESULTS:
-: array([[ 4.52124598],
-:        [-2.5195251 ]])
-
-
-But multiplying *tensors* B and C gives an error:
-
-#+begin_src jupyter-python
-B*C
-#+end_src
-
-Construct a three dimensional tensor
-
-#+begin_src jupyter-python
-tensor_3d = np.arange(8).reshape(2,2,2)
-tensor_3d
-#+end_src
-
-#+RESULTS:
-: array([[[0, 1],
-:         [2, 3]],
-:
-:        [[4, 5],
-:         [6, 7]]])
-
-
-
-***** question:
-- What is the shape of =tensor_3d=?
-- What does a 3-D vector look like?
-
-***** answer
-
-#+begin_src jupyter-python
-print(np.ndim(tensor_3d))
-print(np.shape(tensor_3d))
-#+end_src
-
-#+RESULTS:
-: 3
-: (2, 2, 2)
-
-- A 3D vector is e.g. $b = (1,2,3)$
-- is not the same as a 3D tensor!
-
-***** question: which of the following tensors can be added and why?
-
-#+begin_src jupyter-python
-x = np.arange(24).reshape(2,12)
-y = np.arange(36).reshape(3,1,12)
-z = np.arange(12).reshape(2,3,2)
-#+end_src
-
-#+RESULTS:
-
-#+begin_src jupyter-python
-# x + y
-# x + z
-# y + z
-# x + y + z
-#+end_src
-
-#+RESULTS:
-
-***** question: add dimensions to $x,y,z$ so that they can be added.
-
-***** answer
-
-#+begin_src jupyter-python
-print((x+y).shape)
-print((x+z[:,:,:,None]).shape)
-print((y+z[:,:,:,None]).shape)
-print((x+y+z[:,:,:,None]).shape)
-#+end_src
-
-#+RESULTS:
-: (3, 2, 12)
-: (2, 3, 2, 12)
-: (2, 3, 2, 12)
-: (2, 3, 2, 12)
-
-***** question: use selections from the following tensor $x$ to get the arrays:
-
-- =[0,1,2]=
-- =[6,8]=
-- =[4,10]=
-- =[11,10,9]=
-- =[7,8,9,10,11]=
-- =[4,5,6,7,8,9]=
-
-
-#+begin_src jupyter-python
-x = np.arange(12).reshape(2,2,3)
-#+end_src
-
-#+RESULTS:
-
-***** answer
-
-#+begin_src jupyter-python
-print(x[0,0,:])
-print(x[1,0,::2])
-print(x[:,1,1])
-print(x[1,1,::-1])
-print(x[x>6])
-print(x[(x>3)&(x<10)])
-#+end_src
-
-#+RESULTS:
-: [0 1 2]
-: [6 8]
-: [ 4 10]
-: [11 10  9]
-: [ 7  8  9 10 11]
-: [4 5 6 7 8 9]
-
-
-
-** Broadcasting
-:PROPERTIES:
-:CUSTOM_ID: broadcasting
+:HTML_CONTAINER_CLASS: section
 :END:
 
+Enter values for two $3 \times 3$ matrices $A$ and $B$. The app instantly displays their sum, difference, matrix products $AB$ and $BA$ (where these two matrix products are usually not the same), the transpose $A^\top$, the determinant and rank of $A$, and the inverse $A^{-1}$ -- provided $A$ has full rank. Try setting one row of $A$ to a linear combination of another row to see the inverse become undefined.
 
-When multiplying tensors, the dimensions need to be same or satisfy the broadcasting rules:
-- start "from the right"
-- either the dimensions are the same
-- or one of the dimensions is equal to 1
+#+BEGIN_EXPORT latex
+\url{https://janboone.github.io/datascience-marimo/lecture3\_matrices.html}
+#+END_EXPORT
 
-#+begin_src jupyter-python
-print(A * B[:,:,np.newaxis])
-print('\n')
-print((B[:,:,np.newaxis]).shape)
+#+BEGIN_EXPORT html
+<div style="text-align:center;margin:20px 0;">
+  <a href="https://janboone.github.io/datascience-marimo/lecture3_matrices.html"
+     target="_blank"
+     style="background:#1f3c88;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:1em;">
+    ▶ Open app: Interactive Matrix Operations
+  </a>
+</div>
+#+END_EXPORT
+
+*** Gradient descent for linear regression
+:PROPERTIES:
+:HTML_CONTAINER_CLASS: section
+:END:
+
+The app generates 60 observations from a known linear relationship and asks gradient descent (starting at slope $= 0$, intercept $= 0$) to recover the best-fit line. The left panel shows the mean squared error $L(m, b)$ as a contour plot (representing a bowl in 3D) with the gradient-descent path overlaid. The OLS estimate sits at the bottom of the bowl (lowest point). The right panel tracks the loss at each iteration.
+
+Use the sliders to vary the learning rate $\eta$ and the number of steps. With small $\eta$ the algorithm converges slowly; push $\eta$ too high and the updates overshoot and the algorithm diverges.
+
+#+BEGIN_EXPORT latex
+\url{https://janboone.github.io/datascience-marimo/lecture3\_gradient\_descent.html}
+#+END_EXPORT
+
+#+BEGIN_EXPORT html
+<div style="text-align:center;margin:20px 0;">
+  <a href="https://janboone.github.io/datascience-marimo/lecture3_gradient_descent.html"
+     target="_blank"
+     style="background:#1f3c88;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:1em;">
+    ▶ Open app: Gradient Descent for Linear Regression
+  </a>
+</div>
+#+END_EXPORT
+
+** Python Code Explanation
+
+Open a =marimo= notebook alongside this document and type the code yourself. We build up from basic tensor manipulation to gradient descent.
+
+*** Tensors and shape
+
+A /tensor/ is a =numpy= array with one or more dimensions. Every array has a =.shape= attribute --a tuple giving its size along each axis-- and =.ndim= for the number of dimensions.
+
+#+begin_src python :results output
+import numpy as np
+
+x = np.random.normal(0, 1, 100)       # 1-D tensor: 100 numbers
+print(x.shape, x.ndim)               
+
+M = np.random.normal(0, 1, (4, 5))   # 2-D tensor (a matrix)
+print(M.shape, M.ndim)                
+
+T = np.random.normal(0, 1, (3, 28, 28))   # 3-D: 3 images of 28×28 pixels
+print(T.shape, T.ndim)                 
 #+end_src
 
+#+RESULTS:
+: (100,) 1
+: (4, 5) 2
+: (3, 28, 28) 3
 
+Use =.reshape= to reorganize the elements without changing their values, as long as the total count stays the same.
 
-Broadcasting is one of the things in python that are rather complicated
-to understand at first, but which is extremely useful and powerful once
-you “get it”. Let's start with an example.
+#+begin_src python :results output
+x2 = x.reshape(10, 10)     
+x3 = x.reshape(4, 5, 5)   
+print(x2.shape)            
+print(x3.shape)            
+#+end_src
 
-Suppose you have estimated a fixed effect model. In your data there are
-i = 0,1,...,9 individuals and t = 0,1,2 periods. The vector =I= consists
-of 10 individual fixed effects and the vector =T= has 3 time fixed
-effects. Hence, our prediction for indiv. =i= in time period =t=
-(ignoring other explanatory variables) is \(y_{it}=I_i+T_t\).
+#+RESULTS:
+: (10, 10)
+: (4, 5, 5)
 
-How can we calculate the vector =y=? When you first think of this, you
-may have ideas for a “double loop”: one loop over \(i\) and one over
-\(T\). In fact no loops are necessary at all, making the code “very
-readable”.
+=np.newaxis= inserts a dimension of size 1; useful for broadcasting. The slicing notation =x[:5]= means: take the 5 first elements of =x= along axis zero.
 
-We will define the vectors \(I\) and \(T\) in such an (artificial) way
-that you can immediately verify whether we get the sum of the effects
-right.
+#+begin_src python :results output
+col = x[:5, np.newaxis]      
+row = x[:5][np.newaxis, :]  
+print(col.shape, row.shape)
+#+end_src
 
-*Question* What do the vectors \(I\) and \(T\) look like? Can they be
-added in this way?
+#+RESULTS:
+: (5, 1) (1, 5)
+
+Instead of =np.newaxis= you can also use =None= like =x[:5, None]=.
+
+*** Slicing and indexing
+
+Slicing uses the notation =start:stop:step= for each dimension, separated by commas. =:= means "all elements". The notation =::2= then means "every other element".
 
 #+begin_src python
-I = np.arange(0,100,10)
-T = np.arange(0,3)
+x = np.arange(1, 101).reshape(10, 10)   # 10×10 matrix, values 1 to 100
+
+x[0, :]           # first row, all columns
+x[:, 4]           # fifth column (index starts at 0)
+x[:2, :2]         # top-left 2×2 block
+x[0, 5:]          # second half of the first row
+x[0, 5::2]        # every other element from that half
+x[1::2, 1::2]     # every other row and column, starting from index 1
 #+end_src
 
 
-Because of the simplistic numbers that we have chosen, it is easy to see
-that e.g. \(y_{91} = 91\) with \(i=9\) and \(t=1\).
+The last command yields:
 
-We will use the “broadcasting trick” and check whether our trick works.
-Then we explain broadcasting.
+: array([[ 12,  14,  16,  18,  20],
+:        [ 32,  34,  36,  38,  40],
+:        [ 52,  54,  56,  58,  60],
+:        [ 72,  74,  76,  78,  80],
+:        [ 92,  94,  96,  98, 100]])
+
+/Fancy indexing/ selects elements using a boolean array.
 
 #+begin_src python
-y = I[:,np.newaxis]+T[np.newaxis,:]
+x[x > 50]                       # values exceeding 50, as a 1-D array
+x[(x >= 30) & (x <= 40)]        # & for "and", | for "or"
 #+end_src
 
-#+begin_src python
-y
+The last command gives:
+: array([30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40])
+
+Boolean masks from one array can select from another of the same shape. The classic use: colour scatter-plot points by sign.
+
+
+#+begin_src python :results graphics file output :file ./figures/colored_sin.png
+t = np.linspace(0, 2 * np.pi, 300)
+y = np.sin(t)
+import matplotlib.pyplot as plt
+plt.plot(t[y >= 0], y[y >= 0], "b")   # positive part: blue
+plt.plot(t[y < 0],  y[y < 0],  "r")   # negative part: red
 #+end_src
 
-This seems to have worked!
+#+RESULTS:
+[[file:./figures/colored_sin.png]]
 
-To understand what happens here, evaluate =I[:,np.newaxis]= and
-=T[np.newaxis,:]= separately.
+*** Broadcasting
 
+Broadcasting lets =numpy= combine arrays of different shapes by stretching dimensions of size 1 to match the other array. The broadcasting rule: check from the rightmost dimension leftward whether:
 
-In words, =I= is a column vector: only one column and 10 rows and =T= is
-a row vector: 3 columns and only 1 row.
+1. Dimensions of equal size: fine.
+2. One dimension equals 1: fine
+3. Neither of the above: error.
 
-*Question* Check the shape of these vectors to see whether this
-description is correct.
+A practical example from panel econometrics: individual fixed effects $I_i$ and time effects $T_t$, giving predictions $y_{it} = I_i + T_t$.
 
+#+begin_src python :results output
+I = np.arange(0, 100, 10)    # 10 individual effects, shape (10,)
+T = np.arange(3)              # 3 time effects, shape (3,)
 
-Adding these two vectors together using broadcasting leads to an element
-by element addition of the vectors.
-
-In fact, we have used a simple form of broadcasting before in our python
-classes. See, for instance,
-
-#+begin_src python
-T + 1
+y = I[:, np.newaxis] + T[np.newaxis, :]   # (10,1) + (1,3) → (10,3)
+print(y.shape)                # (10, 3)
+print(y[9, 1])                # 91 = 90 + 1  ✓
 #+end_src
 
-This is simple since 1 has no dimension.
+#+RESULTS:
+: (10, 3)
+: 91
 
-Read
-[[https://docs.scipy.org/doc/numpy/user/theory.broadcasting.html#array-broadcasting-in-numpy][this article on broadcasting]]
-and
-[[https://docs.scipy.org/doc/numpy/user/basics.broadcasting.html][this one]]
-to learn more about it.
+No nested loop over $i$ and $t$ — a single expression covers all 30 combinations.
 
-To see whether two tensors can be added, we start looking at the end. In
-particular, as the latter article states, when “operating on two arrays,
-NumPy compares their shapes element-wise. It starts with the trailing
-dimensions, and works its way forward. Two dimensions are compatible
-when
-
-1. they are equal, or
-2. one of them is 1”
-
-Let's consider a number of examples.
+Practice broadcasting yourself by defining two tensors:
 
 #+begin_src python
 x = np.random.normal(0,1,size=100)
 y = np.random.normal(0,1,size=100)
 #+end_src
 
-*Question* Which of the following can be added? First, think about it.
-Then check by running the code in a cell.
+and then asking which of the following can be added? First, think about it.
+Then check by running the code in a cell (see whether or not you get an error).
 
 - =x+y=
 - =x.reshape(10,10)+y=
@@ -1910,427 +1616,166 @@ Then check by running the code in a cell.
 - =x.reshape(10,10)+y.reshape(5,10,2)=
 - =x.reshape(10,10)+y.reshape(100,1,1)=
 
+For more information on broadcasting check this [[https://numpy.org/doc/stable/user/basics.broadcasting.html][numpy documentation]].
 
-** Slicing and (fancy) indexing
+
+*** Matrix operations
+
+The key matrix operations in =numpy= with $k$ by $l$ matrix $A$ and $m$ by $n$ matrix $B$:
+
+| Expression | Meaning |
+|---|---|
+| =A @ B= | matrix product (must be the case that $l=m$) |
+| =A * B= | element-wise product (shapes must broadcast) |
+| =A.T= | transpose |
+| =np.linalg.solve(A, b)= | solve $Ax = b$ ($A$ must be a square matrix: $k=l$) |
+| =np.linalg.inv(A)= | matrix inverse $A^{-1}$, must be square |
+| =np.linalg.det(A)= | determinant |
+| =np.linalg.matrix_rank(A)= | rank |
+| =np.diag(v)= | diagonal matrix from vector, or extract diagonal |
+
+Matrix product =@= differs from element-wise multiplication =*=. By doing the calculations by hand, check the following:
+
+#+begin_src python :results output
+A = np.array([[1, 2], [3, 4]])
+B = np.array([[0, 1], [1, 0]])
+
+print(A * B)
+print("---------")
+print(A @ B)   
+#+end_src
+
+#+RESULTS:
+: [[0 2]
+:  [3 0]]
+: ---------
+: [[2 1]
+:  [4 3]]
+
+Before we try to calculate $A^{-1}$, let's check whether $A$ has full rank:
+
+#+begin_src python :results output
+print(np.linalg.det(A))
+print(np.linalg.matrix_rank(A))
+print(np.linalg.inv(A))
+#+end_src
+
+#+RESULTS:
+: -2.0000000000000004
+: 2
+: [[-2.   1. ]
+:  [ 1.5 -0.5]]
+
+As $\det(A) \neq 0$, $A$ has full rank; and, indeed, the rank of $A$ equals 2 (which is max. rank for a 2 by 2 matrix). Hence, we can calculate the inverse of $A$.
+
+We can check whether the inverse is correct:
+
+#+begin_src python
+np.linalg.inv(A) @ A
+#+end_src
+
+#+RESULTS:
+: array([[1.00000000e+00, 0.00000000e+00],
+:        [1.11022302e-16, 1.00000000e+00]])
+
+
+
+As we saw in the previous lecture, we can write OLS in matrix form as $\hat\beta = (X^\top X)^{-1} X^\top y$ and covariance matrix $\hat\sigma^2(X^\top X)^{-1}$.
+
+We first simulate our own data: $n$ observations and 4 $x$ variables. We then define $y$; what are the slope variable and what is the intercept?
+
+#+begin_src python :results output
+n, k = 200, 4
+X    = np.random.normal(0, 1, (n, k))
+y    = X @ np.array([1, 0.5, -0.5, 0.3]) + np.random.normal(0, 1, n)
+#+end_src
+
+
+We define the matrix $X$ with observations, derive our estimated coefficients $\hat \beta$, calculate the residuals which we need for the standard errors:
+
+#+begin_src python :results output
+Xmat     = np.column_stack([np.ones(n), X])
+beta_hat = np.linalg.solve(Xmat.T @ Xmat, Xmat.T @ y)
+resid    = y - Xmat @ beta_hat
+sigma2   = np.sum(resid ** 2) / (n - k - 1)
+se       = np.sqrt(np.diag(sigma2 * np.linalg.inv(Xmat.T @ Xmat)))
+print("estimates:  ", beta_hat.round(3))
+print("std errors: ", se.round(3))
+#+end_src
+
+#+RESULTS:
+: estimates:   [-0.059  1.043  0.487 -0.388  0.353]
+: std errors:  [0.073 0.067 0.073 0.07  0.08 ]
+
+A square $n \times n$ matrix $A= X^\top X$ is invertible if and only if det$(A) \neq 0$ or equivalently rank$(A) = n$. In statistics, a near-zero determinant indicates /multicollinearity/: one predictor is a linear combination of the others.
+
+*** Gradient descent from scratch
 :PROPERTIES:
-:CUSTOM_ID: slicing-and-fancy-indexing
+:header-args: :session assignment_NN :python ~/my_env/tf_env/bin/python3  :async t  
 :END:
 
-Slicing and indexing:
+The OLS formula $\hat\beta = (X^\top X)^{-1} X^\top y$ minimizes the MSE analytically. For models with no closed-form solution (like a neural network) we use /gradient descent/: start somewhere and step downhill.
 
-#+begin_src jupyter-python
-A[:,:2,:2]
+For simple linear regression $\hat y = mx + b$ the MSE loss is
+
+$$L(m, b) = \frac{1}{n}\sum_i (y_i - m x_i - b)^2$$
+
+The gradients are
+
+$$\frac{\partial L}{\partial m} = \frac{2}{n}\sum_i (m x_i + b - y_i)\,x_i, \qquad \frac{\partial L}{\partial b} = \frac{2}{n}\sum_i (m x_i + b - y_i)$$
+
+Update rule with learning rate $\eta$: $m \leftarrow m - \eta\,\partial L/\partial m$ and similarly for $b$. Here we set a seed (42) to make sure that your results will be the same as the ones below. We start our gradient descent at $(m,b) = (0,0)$ and use learning rate $\eta = 0.3$. Note that we use the derivatives of $L$ derived above in our updating of $m$ and $b$.
+
+#+begin_src python :results output
+import numpy as np
+import tensorflow as tf
+
+rng = np.random.default_rng(42)
+n   = 60
+x   = np.sort(rng.uniform(0, 2, n))
+y   = 0.5 * x + 0.3 + rng.normal(0, 0.2, n)
+
+# OLS:
+Xmat  = np.column_stack([np.ones(n), x])
+b_hat = np.linalg.solve(Xmat.T @ Xmat, Xmat.T @ y)
+print(f"OLS: intercept = {b_hat[0]:.4f}, slope = {b_hat[1]:.4f}")
+
+# Gradient descent starting from (m, b) = (0, 0):
+lr, m, b = 0.3, 0.0, 0.0
+for step in range(200):
+    resid = (m * x + b) - y
+    m -= lr * 2 * np.mean(resid * x)
+    b -= lr * 2 * np.mean(resid)
+
+print(f"GD:  intercept = {b:.4f}, slope = {m:.4f}")
 #+end_src
 
 #+RESULTS:
-: array([[[ 0,  1],
-:         [ 4,  5]],
-: 
-:        [[12, 13],
-:         [16, 17]]])
+: OLS: intercept = 0.2868, slope = 0.4728
+: GD:  intercept = 0.2868, slope = 0.4728
 
-selecting entries with booleans:
+In TensorFlow the same loop is written with =tf.Variable=, =tf.GradientTape= (which computes gradients automatically), and =assign_sub= (which does the subtraction update in-place). We will see this syntax when we build neural networks. For now, consider the following example which is copied from [[https://www.youtube.com/watch?v=Yyv-ng0_OTU&t=506s][this SciPy 2019 Tutorial]].
 
-#+begin_src jupyter-python
-A[A>5]
-#+end_src
-
-
-
-Sometimes you want to have a subset from your data; e.g. to divide your
-data in a train and test set.
-
-In python, subsets are created using slicing.
-
-To see how slicing works, let's create an “easy” matrix to work with.
-
-*Question* create a matrix =x= of the form:
-
-#+begin_example
-array([[  1,   2,   3,   4,   5,   6,   7,   8,   9,  10],
-       [ 11,  12,  13,  14,  15,  16,  17,  18,  19,  20],
-       [ 21,  22,  23,  24,  25,  26,  27,  28,  29,  30],
-       [ 31,  32,  33,  34,  35,  36,  37,  38,  39,  40],
-       [ 41,  42,  43,  44,  45,  46,  47,  48,  49,  50],
-       [ 51,  52,  53,  54,  55,  56,  57,  58,  59,  60],
-       [ 61,  62,  63,  64,  65,  66,  67,  68,  69,  70],
-       [ 71,  72,  73,  74,  75,  76,  77,  78,  79,  80],
-       [ 81,  82,  83,  84,  85,  86,  87,  88,  89,  90],
-       [ 91,  92,  93,  94,  95,  96,  97,  98,  99, 100]])
-#+end_example
-
-
-We start with single elements, to make sure we understand indexing of an
-array.
-
-*Question* Use indexing on =x= to get: * =55= * =1= * =100= (and do this
-in two different ways)
-
-
-Now we want a series of elements. For this we use slicing notation. To
-get the first row, we do
-
-#+begin_src python
-x[0,:]
-#+end_src
-
-That is, we take the first element in the first dimension (a row) and
-then all elements (=:=) in the other dimension (columns).
-
-*Question* Give the fifth column.
-
-
-#+begin_src python
-To get the second half of the first row:
-#+end_src
-
-#+begin_src python
-x[0,5:]
-#+end_src
-
-To get every other element from this part of the row:
-
-#+begin_src python
-x[0,5::2]
-#+end_src
-
-To get the top left 2*2 matrix:
-
-#+begin_src python
-x[:2,:2]
-#+end_src
-
-Finally, to get the diagonal:
-
-#+begin_src python
-x[range(10),range(10)]
-#+end_src
-
-*Question* What does the following slicing operation do?
-
-#+begin_src python
-x[1::2,1::2]
-#+end_src
-
-YOUR ANSWER HERE
-
-*Question* Use slicing to get the following: *
-=[81, 82, 83, 84, 85, 86, 87, 88, 89, 90]= *
-=[ 3, 13, 23, 33, 43, 53, 63, 73, 83, 93]= *
-
-#+begin_example
-[[56 57]
- [66 67]]
-#+end_example
-
-- 
-
-#+begin_example
-[[23 25 27]
- [43 45 47]
- [63 65 67]]
-#+end_example
-
-- the first row in reverse order: =[10  9  8  7  6  5  4  3  2  1]=
-
-
-We can also use a condition to select elements from a tensor. That is,
-we create a boolean mask (with =True= and =False=) and then only the
-=True= elements are selected. This is called fancy indexing.
-
-Let's start simple.
-
-#+begin_src python
-test = np.arange(5)
-mask = test > 2
-test[mask]
-#+end_src
-
-#+begin_src python
-mask
-#+end_src
-
-There is no need to define the =mask= separetely, the following works as
-well:
-
-#+begin_src python
-test[test>2]
-#+end_src
-
-*Question* Select from =x= the values between 50 and 60.
-
-[hint: use =&= as =and=]
-
-#+begin_src python
-# YOUR CODE HERE
-raise NotImplementedError()
-#+end_src
-
-When two tensors \(x,y\) have the same dimensions, we can select from
-\(x\) based on a condition for \(y\).
-
-To illustrate this, we create three vectors =x,y,z=.
-
-#+begin_src python
-x = np.random.normal(size=10)
-y = np.random.normal(size=10)
-z = np.random.normal(size=10)
-#+end_src
-
-*Question* Plot =x= against =y= and color points with \(z>0.5\) orange.
-
-selecting data using masks:
-
-#+begin_src jupyter-python
-range_x = np.arange(0,2*np.pi,0.01)
-range_y = np.sin(range_x)
-#+end_src
-
-#+RESULTS:
-
-Plot =sin(x)=, where positive values for =y= are blue and negative ones are red.
-
-
-
-#+begin_src jupyter-python :file ./figures/sin_two_colors.png
-y_positive = range_y > 0
-plt.plot(range_x,range_y,c='r')
-plt.plot(range_x[y_positive],range_y[y_positive],c='b');
-#+end_src
-
-
-** Matrix notation
-
-To make sure that we are all on the same page in terms of matrices:
-- a matrix $A$ has $m$ rows and $n$ columns; $B$ is $n \times k$
-- we will look at the 4 operators: add, subtract, multiply and divide
-
-
-#+begin_src jupyter-python
-A = np.array([[1,2],[3,4]])
-B = np.array([[10,11],[12,13]])
-b = np.array([2,3]).reshape(2,1)
-c = np.array([2,3]).reshape(1,2)
-
-#+end_src
-
-#+RESULTS:
-
-To add matrices, they have to be of the same shape:
-
-#+begin_src jupyter-python
-A + B
-#+end_src
-
-#+RESULTS:
-: array([[11, 13],
-:        [15, 17]])
-
-With matrices the addition $A+b$ is not well-defined.
-
-To subtract matrices:
-
-#+begin_src jupyter-python
-A - B
-#+end_src
-
-#+RESULTS:
-: array([[-9, -9],
-:        [-9, -9]])
-
-Matrix multiplication $A*B$ we must have $(n \times m) * (m \times k)$ yields a $n \times k$ matrix:
-
-
-#+begin_src jupyter-python
-print(np.dot(A,b))
-print(A @ b)
-print(np.dot(A,c))
-#+end_src
-
-#+RESULTS:
-:RESULTS:
-: [[ 8]
-:  [18]]
-: [[ 8]
-:  [18]]
-: [[ 2  6]
-:  [ 6 12]]
-# [goto error]
-: 
-: ValueErrorTraceback (most recent call last)
-: <ipython-input-27-7abcc6636c83> in <module>
-:       2 print(A @ b)
-:       3 print(A*c)
-: ----> 4 print(np.dot(A,c))
-: 
-: <__array_function__ internals> in dot(*args, **kwargs)
-: 
-: ValueError: shapes (2,2) and (1,2) not aligned: 2 (dim 1) != 1 (dim 0)
-:END:
-
-#+begin_src jupyter-python
-A @ B
-#+end_src
-
-#+RESULTS:
-: array([[34, 37],
-:        [78, 85]])
-
-outer product: (2 by 1) * (1 by 2) gives 2 by 2 matrix
-
-#+begin_src jupyter-python
-b @ c
-#+end_src
-
-#+RESULTS:
-: array([[4, 6],
-:        [6, 9]])
-
-inner product:
-
-#+begin_src jupyter-python
-c @ b
-#+end_src
-
-#+RESULTS:
-: array([[13]])
-
-use matrix transform to calculate inner product of a vector with itself:
-
-#+begin_src jupyter-python
-print(b.T)
-print(b.T @ b)
-#+end_src
-
-#+RESULTS:
-: [[2 3]]
-: [[13]]
-
-#+begin_src jupyter-python
-print(A)
-print(A.T)
-#+end_src
-
-#+RESULTS:
-: [[1 2]
-:  [3 4]]
-: [[1 3]
-:  [2 4]]
-
-#+begin_src jupyter-python
-C = np.arange(6).reshape(2,3)
-print(C)
-print(C.T)
-#+end_src
-
-#+RESULTS:
-: [[0 1 2]
-:  [3 4 5]]
-: [[0 3]
-:  [1 4]
-:  [2 5]]
-
-#+begin_src jupyter-python
-d = np.arange(3).reshape(3,1)
-C @ d
-#+end_src
-
-#+RESULTS:
-: array([[ 5],
-:        [14]])
-
-
-**** ridge using matrix notation
-
-
-#+begin_src jupyter-python
-def loss_ridge(b,λ):
-    y_pred = X @ b
-    return (y-y_pred).T @ (y-y_pred)/len(y) + λ * b.T @ b
-
-nobs = 1000
-X = np.random.normal(0,1,size=(nobs, 20))
-beta = np.zeros(20)
-e = np.random.normal(0,1,size= nobs)
-y = np.dot(X, beta) + e
-
-optimize.minimize(lambda b: loss_ridge(b,10),[0]*X.shape[1]).x
-
-#+end_src
-
-#+RESULTS:
-: array([-5.68804441e-03,  1.95296940e-03,  3.20648264e-03,  1.53175163e-03,
-:         7.73268151e-04, -9.30610786e-04, -8.21372579e-05, -1.87389845e-03,
-:        -1.13605827e-03,  1.85988677e-03, -1.43368991e-03,  1.01479310e-03,
-:        -5.28211218e-04, -1.15846173e-03,  3.30601316e-03,  3.09943379e-03,
-:         1.74189778e-03,  1.33378708e-03, -3.99225614e-03, -3.81307088e-03])
-
-** Tensorflow regression
-:PROPERTIES:
-:CUSTOM_ID: intermezzo-tensorflow-regression
-:END:
-Before we do classification in tensorflow, let's quickly look at a
-simple regression example. In this way you can get used to the notation
-and syntax of tensorflow, while looking at something (regression) that
-you already fully understand (we hope...).
-
-This example is copied from
-[[https://www.youtube.com/watch?v=E0-mp5UlWzo][this SciPy 2019 Tutorial]]
-starting at 14:30.
-
-A minimal example of linear regression in TensorFlow 2.0, written from
-scratch without using any built-in layers, optimizers, or loss
-functions. We'll create a few points on a scatter plot, then find the
-best fit line using the equation =y = m * x + b=.
-
-We create our own dataset. The function =make_noisy_data= has default
-values for its parameters. Hence, we can call it without parameters. But
-we can also specify a different value, like \(m = 2.0\). It is a good
-exercise to play around with these parameter values.
-
-#+begin_src python
-def make_noisy_data(m=0.1, b=0.3, n=100):
-    x = tf.random.uniform(shape=(n,))
-    noise = tf.random.normal(shape=(len(x),), stddev=0.01)
-    y = m * x + b + noise
-    return x, y
-
-x_train, y_train = make_noisy_data()
-
-
-
-
-#+end_src
-
-*Question* Plot the training data.
-
-#+begin_src python
-# YOUR CODE HERE
-raise NotImplementedError()
-#+end_src
-
-Next we define the tensorflow variables =m,b= and give them a starting
-value. Tensorflow now knows that =m,b= are variables that will be varied
-(trained) later on.
+We define the tensorflow variables =m,b= and give them a starting value. Tensorflow now knows that =m,b= are variables that will be varied (trained) later on.
 
 #+begin_src python
 m = tf.Variable(0.)
 b = tf.Variable(0.)
 #+end_src
 
-We can look at the variables, but they are not “easy to look at” as they
-contain more information than just the value. If we are only interested
-in the value, we can use the =numpy()= method on the variable.
 
-#+begin_src python
+We can look at the variables, but they are not “easy to look at” as they contain more information than just the value. If we are only interested in the value, we can use the =numpy()= method on the variable.
+
+#+begin_src python :results output
 print(m)
 print(m.numpy())
 #+end_src
 
-We define a function that predicts =y= for given =x=. Note that tf
-“knows” that =m,b= are variables because of the way we defined these
-variables above. Hence, they are not explicitly mentioned in the
-function definition as variables.
+#+RESULTS:
+: <tf.Variable 'Variable:0' shape=() dtype=float32, numpy=0.0>
+: 0.0
+
+We define a function that predicts =y= for given =x=. Note that =tf= “knows” that =m,b= are variables because of the way we defined these variables above. Hence, they are not explicitly mentioned in the function definition as variables.
 
 #+begin_src python
 def predict(x):
@@ -2338,50 +1783,35 @@ def predict(x):
     return y
 #+end_src
 
+We define our loss function: sum of squared differences between =y_pred= and =y_true=.
+
 #+begin_src python
 def squared_error(y_pred, y_true):
     return tf.reduce_mean(tf.square(y_pred - y_true)) 
 #+end_src
 
-Our error measure is sum of squared differences between =y_pred= and
-=y_true=.
 
-To see what =reduce_mean= does, consider the following example. If the
-tensor =vector= has more than 1 dimension, you can specify the axis
-along which the reduction needs to take place.
+To see what =reduce_mean= does, consider the following example. If the tensor =vector= has more than 1 dimension, you can specify the axis along which the reduction needs to take place.
 
-#+begin_src python
+#+begin_src python :results output
 vector = tf.constant([[1., 2., 3., 4.]])
 print(tf.reduce_mean(vector).numpy())
 #+end_src
 
-*Question* Before we train the model, i.e. with our starting values for
-=m,b=, calculate the =squared error= that we have.
+#+RESULTS:
+: 2.5
 
-#+begin_src python
-# YOUR CODE HERE
-raise NotImplementedError()
-#+end_src
+As above, we use gradient descent to gradually improve our guess for =m= and =b=.
 
-Machine learning is all about reducing the loss (incorrect predictions).
-Most algorithms calculate the derivative of the loss function w.r.t. the
-parameters of the model. Then change the parameters in such a way that
-the loss is indeed reduced. We program a very simple gradient descent
-algorithm.
-
-We use gradient descent to gradually improve our guess for =m= and =b=.
-At each step, we'll nudge them a little bit in the right direction to
-reduce the loss.
-
-#+begin_src python
-learning_rate = 0.05
+#+begin_src python :results output
+learning_rate = 0.3
 steps = 200
 
 for i in range(steps):
   
     with tf.GradientTape() as tape:
-        predictions = predict(x_train)
-        loss = squared_error(predictions, y_train)
+        predictions = predict(x)
+        loss = squared_error(predictions, y)
     
     gradients = tape.gradient(loss, [m, b])
   
@@ -2392,17 +1822,23 @@ for i in range(steps):
         print("Step %d, Loss %f" % (i, loss.numpy()))
 #+end_src
 
-Two things in the code above are new: =GradientTape= and =assign_sub=.
-We will discuss these briefly.
+#+RESULTS:
+#+begin_example
+Step 0, Loss 0.698773
+Step 20, Loss 0.022170
+Step 40, Loss 0.022144
+Step 60, Loss 0.022143
+Step 80, Loss 0.022143
+Step 100, Loss 0.022143
+Step 120, Loss 0.022143
+Step 140, Loss 0.022143
+Step 160, Loss 0.022143
+Step 180, Loss 0.022143
+#+end_example
 
-More information on GradientTape can be found
-[[https://www.tensorflow.org/versions/r2.0/api_docs/python/tf/GradientTape][here]]
-where you select API: r2.0 (beta), to get the right version.
+Two things in the code above are new: =GradientTape= and =assign_sub=. We will discuss these briefly. More information on =GradientTape= can be found [[https://www.tensorflow.org/versions/r2.0/api_docs/python/tf/GradientTape][here]]. The idea is that tensorflow calculates the gradient for us; we do not take the derivative of $L$ w.r.t. $m,b$ ourselves (as we did in the =numpy= code above).
 
-As a simple example to get an idea of what it does, we work with the
-function \(z^2\). =gradient= calculates the derivative (it does so
-analytically) and fills in the value, in this case 3.0. Hence, the
-derivative equals \(2*z = 6.0\) at \(z=3.0\).
+As a simple example to get an idea of what it does, we work with the function \(z^2\). =gradient= calculates the derivative (it does so analytically) and fills in the value, in this case 3.0. Hence, the derivative equals \(2*z = 6.0\) at \(z=3.0\).
 
 #+begin_src python
 z = tf.Variable(3.0)
@@ -2415,64 +1851,140 @@ tape.gradient(value, [z])
 
 #+end_src
 
-*Question* Define the function \(z_1^2+z_2^2-4z_1 z_2\) and calculate
-its derivatives w.r.t. \(z_1,z_2\) in the point
-\(z_1 = 1.0, z_2 = -2.0\).
+#+RESULTS:
+| <tf.Tensor: | shape= | nil | dtype=float32 | numpy=6.0> |
 
-#+begin_src python
-# YOUR CODE HERE
-raise NotImplementedError()
-#+end_src
 
-=assign_sub= subtracts the value from the variable:
+Finally, =assign_sub= subtracts the value from the variable. It is the equivalent of $z -= 1.0$:
 
 #+begin_src python
 z = tf.Variable(3.0)
 z.assign_sub(1.0)
 #+end_src
 
-As you know from the Taylor expansion of \(f(x)\) around \(x=a\), we can
-write:
+#+RESULTS:
+: <tf.Variable 'UnreadVariable' shape=() dtype=float32, numpy=2.0>
 
-\[
-f(x) = f(a) + f'(a)(x-a)
-\]
 
-Hence, if you try to minimize the function \(f\), you should “walk” in
-the direction where \(f\) is falling in \(x\). The size of your step is
-determined by =learning_rate=. Big steps imply that you walk fast in the
-right direction, but you may jump over the minimum. With a small step
-size you are less likely to jump over the minimum, but it may take
-longer to get there.
 
-If \(f'(x) >0\) and we want to minimize \(f\), we should reduce \(x\) to
-get closer to the minimum. Hence, our algorithm would do:
-\(x_1 = x_0 - f'(a)*\varepsilon\) where \(\varepsilon > 0\) is the
-learning rate.
+** Summary
 
-This is exactly what the code
-=m.assign_sub(gradients[0] * learning_rate)= does.
+This lecture introduced the technical Python toolkit needed for machine learning.
 
-Note that there are some issues here with local and global minima that
-we will not worry about.
+/Tensors/ are =numpy= arrays with any number of dimensions; =.shape= reveals their structure, and =.reshape= reorganizes elements without copying data. /Slicing/ and /fancy indexing/ extract any subset in a single expression. /Broadcasting/ eliminates loops when combining arrays of different shapes.
 
-Back to our regression problem, the values for the parameters that we
-have found are:
+/Matrix algebra/ underpins OLS and much of statistics: =@= for matrix products, =.T= for transposition, =np.linalg.solve= and =np.linalg.inv= for solving systems. A matrix is invertible if and only if it has full rank (det $\neq$ 0); near-zero determinants signal multicollinearity.
+
+/Gradient descent/ minimizes a loss function iteratively. The learning rate $\eta$ controls the trade-off between speed and stability: too small means slow convergence; too large means divergence. This is the same algorithm used by =TensorFlow= and =PyTorch= to train neural networks.
+
+#+BEGIN_EXPORT html
+<div style="border-left:4px solid #1f3c88;padding:10px;margin:15px 0;background:#f5f7fa;">
+<strong>Key statistical takeaway</strong><br>
+OLS is the analytical solution to the same minimization problem that gradient descent solves numerically. Understanding gradient descent makes generalization easier: add (hidden) layers, change the loss function, and you have a neural network trained the same way.
+</div>
+#+END_EXPORT
+
+#+BEGIN_EXPORT html
+<div style="border-left:4px solid #2c7a7b;padding:10px;margin:15px 0;background:#eef6f6;">
+<strong>Key Python takeaway</strong><br>
+<code>A @ B</code>, <code>A.T</code>, <code>np.linalg.solve</code>, broadcasting with <code>np.newaxis</code>, and boolean fancy indexing are the building blocks of efficient array code. If you find yourself writing a nested loop over array elements, ask first whether broadcasting can replace it.
+</div>
+#+END_EXPORT
+
+/Looking ahead:/ In the next lecture we study overfitting and underfitting and see why splitting data into train and test sets is essential whenever the model is flexible enough to memorize the training data.
+
+** Review Questions
+
+Test your understanding. For each question, write the code in your own =marimo= notebook.
+
+-----
+
+*** Question 1: Slicing and fancy indexing on panel data
+
+Suppose you have simulated a small panel dataset: 500 observations on 8 variables. Variable 0 is a binary indicator (0/1), variable 3 is income, and variable 7 is an outcome of interest.
 
 #+begin_src python
-print ("m: %f, b: %f" % (m.numpy(), b.numpy()))
+import numpy as np
+
+rng = np.random.default_rng(0)
+data = rng.normal(0, 1, (500, 8))
+data[:, 0] = (rng.uniform(0, 1, 500) > 0.5).astype(float)   # binary
 #+end_src
 
-*Question* Plot the regression line together with the data in one
-figure.
+Using only slicing and fancy indexing (no loops):
+
+a. Extract variables 3 and 7 for the first 100 observations.
+b. Select all rows where variable 0 equals 1 (the "treated" group).
+c. Among the treated group, compute the mean of variable 7 and compare it to the mean of variable 7 in the untreated group.
+d. Select all rows where variable 3 (income) is above its 75th percentile. Hint: =np.percentile=.
+
+-----
+
+*** Question 2: Sampling distributions without loops
+
+In Lecture 1 we plotted the sampling distribution of the mean by drawing many samples. Use broadcasting to simulate =R = 10_000= draws of the sample mean for /each/ of the sample sizes $n \in \{10, 50, 100, 500\}$ simultaneously — with no Python loop over either =R= or =n=.
+
+a. Generate a matrix of shape =(R, n_max)= of i.i.d. draws from $\mathcal{N}(0,1)$ where =n_max = 500=. Then use slicing to obtain the sample mean for each $n$ and each repetition.
+   Hint: for sample size $n$, the sample mean of repetition $r$ is =data[r, :n].mean()=. Can you compute all of these without a loop?
+b. For each $n$, plot the histogram of the =R= sample means and verify that the spread decreases as $n$ grows.
+c. Verify numerically that the standard deviation of the sample mean is approximately $1/\sqrt{n}$.
+
+-----
+
+*** Question 3: Multicollinearity and the matrix inverse
+
+Start with the OLS example from the Python Code Explanation section (=n=200=, =k=4= predictors). Then add a fifth predictor that is /exactly/ the sum of predictors 1 and 2.
 
 #+begin_src python
-# YOUR CODE HERE
-raise NotImplementedError()
+X_extra = np.column_stack([X, X[:, 0] + X[:, 1]])   # 5th column is linear combo
+Xmat_extra = np.column_stack([np.ones(n), X_extra])
 #+end_src
 
+a. Compute =np.linalg.det(Xmat_extra.T @ Xmat_extra)= and =np.linalg.matrix_rank(Xmat_extra)=. What do you observe?
+b. Try to call =np.linalg.solve(Xmat_extra.T @ Xmat_extra, Xmat_extra.T @ y)=. What happens?
+c. Add a tiny amount of noise to the fifth column: =X_extra[:, 4] += 1e-6 * rng.normal(size=n)=. Recompute the determinant and solve. Does OLS now run? What do the estimated coefficients look like?
 
+This illustrates why near-multicollinearity is dangerous even when =solve= does not error: the estimates become unstable.
 
+-----
+
+*** Question 4: Batched OLS with =np.matmul=
+
+In this question you run $N$ OLS regressions simultaneously — one per dataset — using numpy tensor operations on the last two dimensions, with no Python loop.
+
+Generate $N = 500$ datasets, each with $n = 100$ observations and $k = 3$ predictors (plus intercept). The true slope vector for all datasets is $\beta = (1,\; 0.5,\; -0.5,\; 0.3)^\top$ (intercept first).
+
+#+begin_src python
+N, n, k = 500, 100, 3
+rng = np.random.default_rng(7)
+X_all = rng.normal(0, 1, (N, n, k))   # shape (N, n, k)
+y_all = X_all @ np.array([0.5, -0.5, 0.3]) + 1.0 + rng.normal(0, 1, (N, n))
+#+end_src
+
+a. Add an intercept column to =X_all= so that it has shape =(N, n, k+1)=. Hint: =np.ones((N, n, 1))= and =np.concatenate=.
+b. Compute =XTX= of shape =(N, k+1, k+1)= using =np.matmul= (or =@=) on the last two dimensions. Remember that "X transpose times X" requires transposing the /last two/ dimensions of =X_all=. Use =np.swapaxes(X_all, -1, -2)= to do this without rearranging the batch dimension.
+c. Similarly compute =XTy= of shape =(N, k+1)= or =(N, k+1, 1)=.
+d. Solve all $N$ systems $(\mathbf{X}^\top \mathbf{X})\hat\beta = \mathbf{X}^\top y$ in one call using =np.linalg.solve=. The result =beta_hat= should have shape =(N, k+1)=. Verify that =beta_hat.mean(axis=0)= is close to the true coefficients.
+
+**** Hint: how to prompt an LLM
+
+If you get stuck on parts (b)–(d), use the following prompt (adapted to what you have already tried):
+
+#+begin_quote
+I have a numpy tensor =X_all= of shape =(N, n, p)= (N datasets, n observations each, p predictors) and a tensor =y_all= of shape =(N, n)=. I want to compute the OLS coefficient vector $\hat\beta = (X^\top X)^{-1} X^\top y$ for all N datasets simultaneously using =np.matmul= or =@=, without any Python loop. The result should have shape =(N, p)=. How do I transpose only the last two dimensions of =X_all=, form =X'X= and =X'y=, and then solve the N linear systems at once?
+#+end_quote
+
+After you get a working solution, check that it gives the same answer as a loop:
+
+#+begin_src python
+beta_loop = np.array([
+    np.linalg.solve(X_all[i].T @ X_all[i], X_all[i].T @ y_all[i])
+    for i in range(N)
+])
+print(np.allclose(beta_hat, beta_loop))   # should print True
+#+end_src
+
+-----
 
 * Lexture 4: Overfitting and underfitting
 :PROPERTIES:
@@ -4130,1523 +3642,6 @@ plt.legend();
 - The key idea is purely economic: we take the **derivative of profit w.r.t. own output** with `GradientTape` and train the net so those derivatives are (on average) zero.
 - `softplus` just ensures \(x_i \ge 0\) without if-statements.
 - You can change demand/cost by editing the three one-liners: `price`, `C1`, `C2`.
-
-
-* Getting Data from Python
-
-
-
-#+begin_src jupyter-python
-
-EU_countries = ['Belgium', 'Bulgaria', 'Czechia', 'Denmark',
-'Germany (until 1990 former territory of the FRG)', 'Germany','Estonia',
-'Ireland', 'Greece', 'Spain', 'France', 'Croatia', 'Italy',
-'Cyprus', 'Latvia', 'Lithuania', 'Luxembourg', 'Hungary', 'Malta',
-'Netherlands', 'Austria', 'Poland', 'Portugal', 'Romania',
-'Slovenia', 'Slovakia', 'Finland', 'Sweden', 'United Kingdom',
-'Iceland', 'Liechtenstein', 'Norway', 'Switzerland',
-'Bosnia and Herzegovina']
-
-#+end_src
-
-#+RESULTS:
-
-** Mortality
-
-
-**** TODO first update eurostat package AND restart kernel and import packages again
-
-#+begin_src jupyter-python
-!pip install -U eurostat
-#+end_src
-
-
-The [[https://ec.europa.eu/eurostat/data/database?node_code=hlth_cd_apr][Eurostat website]] has a browser where you can look for data. Here we are looking for data on mortality. You can click on the link to the data browser to see the [[https://ec.europa.eu/eurostat/databrowser/view/hlth_cd_apr/default/table?lang=en][details of the variable]]. At the top-left of the screen you can see the name of the variable in the line "=online data code: hlth_cd_apr=". The name of this variable we use below in the =get_data_df= method.
-
-So we call this method and collect the information in the dataframe =df=. Then we check what =df= looks like:
-
-#+begin_src jupyter-python :display plain
-import eurostat
-df = eurostat.get_data_df('hlth_cd_apr')
-df.head()
-#+end_src
-
-#+RESULTS:
-#+begin_example
-  freq mortalit sex    icd10 unit geo\TIME_PERIOD  2011  2012  2013  2014  \
-0    A     PRVT   F  A00-A09   NR              AT   7.0  12.0   9.0   6.0   
-1    A     PRVT   F  A00-A09   NR              BE  25.0  11.0  20.0  26.0   
-2    A     PRVT   F  A00-A09   NR              BG   5.0   4.0  10.0  11.0   
-3    A     PRVT   F  A00-A09   NR              CH  14.0  14.0   9.0   9.0   
-4    A     PRVT   F  A00-A09   NR              CY   6.0   1.0   1.0   0.0   
-
-   2015  2016  2017  2018  2019  2020  
-0   5.0  15.0  10.0   8.0   6.0  13.0  
-1  26.0  27.0  45.0  26.0  44.0  39.0  
-2  13.0   7.0   4.0   3.0   4.0   5.0  
-3   5.0  13.0  13.0  11.0  14.0  10.0  
-4   0.0   0.0   2.0   2.0   3.0   3.0  
-#+end_example
-
-
-We would like to get our data into the following shape:
-
-| country | year | sex | Preventable  mortality | Treatable  mortality |
-|---------+------+-----+------------------------+----------------------|
-| Austria | 2011 | F   |                  95.29 |                67.41 |
-| Austria | 2011 | M   |                 248.50 |                96.86 |
-| Austria | 2012 | F   |                  96.16 |                69.72 |
-| Austria | 2012 | M   |                 252.28 |                91.45 |
-| Austria | 2013 | F   |                  93.22 |                66.84 |
-
-Hence we need to use pandas to get from our initial =df= to a dataframe like this table.
-
-We have a number of columns with abbreviations in them and then we have data for the years 2011-2017. Use the website of the variable to figure out what the abbreviations mean. To illustrate, the column =mortalit= gives three measures of mortality:
-
-#+begin_src jupyter-python
-df.mortalit.unique()
-#+end_src
-
-#+RESULTS:
-: array(['PRVT', 'TOTAL', 'TRT'], dtype=object)
-
-We will be interested in preventable 'PRVT' and treatable 'TRT' mortality.
-
-First, let's change the country column =geo\time= and use country names instead of abbreviations. We need to "escape" the '\' symbol to make sure pandas reads '\' literally (not as a symbol). That is why we have '\\' in the code below. We use the =eurostat_dictionary= to turn the country abbreviations into country names.
-
-Note that to change the column name we use =.rename=; to change values in a row, we use =.replace=. The replacements are provided using a python dictionary: ={'old_name':'new_name'}=.
-
-If you are wondering why we use =inplace=True=, just run the code block without this to see the difference.
-
-#+begin_src jupyter-python :display plain
-df.rename({'geo\\TIME_PERIOD':'geo'},inplace=True,axis=1)
-df['country'] = df['geo'].replace(eurostat_dictionary)
-df.head()
-#+end_src
-
-#+RESULTS:
-#+begin_example
-  freq mortalit sex    icd10 unit geo  2011  2012  2013  2014  2015  2016  \
-0    A     PRVT   F  A00-A09   NR  AT   7.0  12.0   9.0   6.0   5.0  15.0   
-1    A     PRVT   F  A00-A09   NR  BE  25.0  11.0  20.0  26.0  26.0  27.0   
-2    A     PRVT   F  A00-A09   NR  BG   5.0   4.0  10.0  11.0  13.0   7.0   
-3    A     PRVT   F  A00-A09   NR  CH  14.0  14.0   9.0   9.0   5.0  13.0   
-4    A     PRVT   F  A00-A09   NR  CY   6.0   1.0   1.0   0.0   0.0   0.0   
-
-   2017  2018  2019  2020      country  
-0  10.0   8.0   6.0  13.0      Austria  
-1  45.0  26.0  44.0  39.0      Belgium  
-2   4.0   3.0   4.0   5.0     Bulgaria  
-3  13.0  11.0  14.0  10.0  Switzerland  
-4   2.0   2.0   3.0   3.0       Cyprus  
-#+end_example
-
-Now we will select the values that we are interested in: only EU countries, both males and females, both preventable and treatable mortality, unit of measurement rate 'RT' (not number 'NR') and all diseases (e.g. not the subset "[A00-A09] Intestinal infectious diseases").
-
-For selection, we can use ==== or =.isin()=. With numbers we can also use smaller/greater than =<,>= etc.
-
-After this selection, we can drop some columns to make the dataframe a bit easier to handle.
-
-#+begin_src jupyter-python :display plain
-df = df[df.country.isin(EU_countries) & (df.sex.isin(["M","F"]) )\
-        & (df.mortalit.isin(["PRVT","TRT"]))\
-        & (df.unit == "RT") & (df.icd10 == "TOTAL")]
-df.drop(["unit","icd10","geo"],axis=1,inplace=True)
-df.head()
-#+end_src
-
-#+RESULTS:
-#+begin_example
-     freq mortalit sex    2011    2012    2013    2014    2015    2016  \
-6300    A     PRVT   F   95.29   96.16   93.22   93.95   97.52   96.39   
-6301    A     PRVT   F  101.35   99.97  100.34   95.40   99.71   94.13   
-6302    A     PRVT   F  119.32  126.17  119.29  129.04  128.32  120.14   
-6303    A     PRVT   F   73.75   74.02   73.85   72.70   69.37   68.91   
-6304    A     PRVT   F   57.31   49.38   47.75   54.65   55.67   49.98   
-
-        2017    2018    2019    2020      country  
-6300   92.94   93.14   94.81   99.09      Austria  
-6301   93.42   92.83   92.39  113.63      Belgium  
-6302  121.87  119.05  120.05  177.73     Bulgaria  
-6303   68.45   71.15   67.12   72.59  Switzerland  
-6304   46.69   50.87   49.03   54.90       Cyprus  
-#+end_example
-
-#+begin_src jupyter-python :display plain
-df.columns
-#+end_src
-
-#+RESULTS:
-: Index(['freq', 'mortalit', 'sex', '2011', '2012', '2013', '2014', '2015',
-:        '2016', '2017', '2018', '2019', '2020', 'country'],
-:       dtype='object')
-
-Now we want to "move" the years into rows. Unfortunately, the column names are strings like '2020', not the integer 2020.
-
-- Pandas' [[https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.melt.html][melt method]] helps us to get the years in a column =year=
-- the mortality rates in a column =rate=
-- columns 2011-2017 (=np.arange(2011,2018)= in the code) become row values in the column =year=
-- this column =year= together with the identifier variables uniquely identifies a row
-- values for PRVT and TRT are given in the column =rate=.
-
-#+begin_src jupyter-python :display plain
-df = pd.melt(df,id_vars=['country','sex','mortalit'],
-                        value_vars= ["{}".format(year) for year in\
-                                     np.arange(2011,2021)],
-                        var_name='year',
-                        value_name='rate')
-df.head()
-#+end_src
-
-#+RESULTS:
-:        country sex mortalit  year    rate
-: 0      Austria   F     PRVT  2011   95.29
-: 1      Belgium   F     PRVT  2011  101.35
-: 2     Bulgaria   F     PRVT  2011  119.32
-: 3  Switzerland   F     PRVT  2011   73.75
-: 4       Cyprus   F     PRVT  2011   57.31
-
-- we want to have two columns (i.e. two variables); one corresponds to PRVT, the other to TRT
-- we use [[https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.unstack.html][unstack]]: put the identifying columns in an order such that the last column refers to =mortalit= which contains the two values PRVT and TRT
-- these columns become the index of the dataframe
-- unstack the dataframe on the last column of the index, which is the default value of =unstack()=
-- pivots the column =mortalit= into two separate columns PRVT and TRT.
-
-#+begin_src jupyter-python :display plain
-df.set_index(['country','year','sex','mortalit'],inplace=True)
-df = df.unstack()
-df.head()
-#+end_src
-
-#+RESULTS:
-:                     rate       
-: mortalit            PRVT    TRT
-: country year sex               
-: Austria 2011 F     95.29  67.41
-:              M    248.50  96.86
-:         2012 F     96.16  69.72
-:              M    252.28  91.45
-:         2013 F     93.22  66.84
-
-- reset the index  and rename the columns
-
-#+begin_src jupyter-python :display plain
-df.reset_index(inplace=True)
-df.columns = [' '.join(col).strip() for col in df.columns.values]
-df.rename({'rate PRVT':'Preventable mortality',\
-           'rate TRT':'Treatable mortality'},\
-          inplace=True,axis=1)
-df.head()
-#+end_src
-
-#+RESULTS:
-:    country  year sex  Preventable mortality  Treatable mortality
-: 0  Austria  2011   F                  95.29                67.41
-: 1  Austria  2011   M                 248.50                96.86
-: 2  Austria  2012   F                  96.16                69.72
-: 3  Austria  2012   M                 252.28                91.45
-: 4  Austria  2013   F                  93.22                66.84
-
-
-** GDP per capita
-
-Go to this [[https://ec.europa.eu/eurostat/data/database?node_code=nama_10_pc][page]] to find the variable name for "Main GDP aggregates per capita":
-
-
-#+begin_src jupyter-python :display plain
-df_n = eurostat.get_data_df('nama_10_pc')
-df_n.rename({'geo\\TIME_PERIOD':'geo'},inplace=True,axis=1)
-df_n['country'] = df_n['geo'].replace(eurostat_dictionary)
-df_n.drop(["{}".format(year) for year in np.arange(1975,2011)],axis=1,\
-          inplace=True)
-df_n.head()
-#+end_src
-
-#+RESULTS:
-#+begin_example
-  freq           unit na_item geo     2011     2012     2013     2014  \
-0    A  CLV10_EUR_HAB    B1GQ  AL   3180.0   3230.0   3260.0   3330.0   
-1    A  CLV10_EUR_HAB    B1GQ  AT  36300.0  36390.0  36180.0  36130.0   
-2    A  CLV10_EUR_HAB    B1GQ  BE  33460.0  33490.0  33490.0  33870.0   
-3    A  CLV10_EUR_HAB    B1GQ  BG   5320.0   5390.0   5390.0   5470.0   
-4    A  CLV10_EUR_HAB    B1GQ  CH  58220.0  58290.0  58650.0  59300.0   
-
-      2015     2016     2017     2018     2019     2020     2021     2022  \
-0   3410.0   3530.0   3670.0   3830.0   3920.0   3810.0      NaN      NaN   
-1  36140.0  36390.0  36980.0  37690.0  38070.0  35390.0  36740.0  38080.0   
-2  34360.0  34620.0  35050.0  35510.0  36110.0  34060.0  36250.0  37040.0   
-3   5700.0   5910.0   6120.0   6330.0   6630.0   6400.0   6950.0   7680.0   
-4  59600.0  60170.0  60420.0  61690.0  61950.0  60190.0  62950.0  64030.0   
-
-   2023      country  
-0   NaN      Albania  
-1   NaN      Austria  
-2   NaN      Belgium  
-3   NaN     Bulgaria  
-4   NaN  Switzerland  
-#+end_example
-
-
-*** Question: make the following selections:
-- from the column =country= select EU countries
-- from =na_item= select 'B1GQ'
-- from =unit= select 'CP_EUR_HAB'
-- then drop the columns =unit, na_item, geo=
-
-*** answer                                                     
-
-
-#+begin_src jupyter-python :display plain
-df_n = df_n[df_n.country.isin(EU_countries) & (df_n.na_item == 'B1GQ')\
-            & (df_n.unit == "CP_EUR_HAB")]
-df_n.drop(["unit","na_item","geo"],axis=1,inplace=True)
-df_n.head()
-#+end_src
-
-#+RESULTS:
-#+begin_example
-     freq     2011     2012     2013     2014     2015     2016     2017  \
-1521    A  36970.0  37820.0  38210.0  38990.0  39890.0  40920.0  42000.0   
-1522    A  34060.0  34770.0  35210.0  35950.0  36960.0  37960.0  39130.0   
-1523    A   5640.0   5780.0   5790.0   5960.0   6380.0   6840.0   7420.0   
-1524    A  65190.0  66780.0  65730.0  66920.0  75530.0  74260.0  72860.0   
-1525    A  23340.0  22570.0  20930.0  20510.0  21170.0  22330.0  23630.0   
-
-         2018     2019     2020     2021     2022  2023      country  
-1521  43590.0  44740.0  42720.0  45270.0  49400.0   NaN      Austria  
-1522  40260.0  41660.0  39930.0  43840.0  47440.0   NaN      Belgium  
-1523   8000.0   8820.0   8880.0  10330.0  13270.0   NaN     Bulgaria  
-1524  72150.0  75150.0  75330.0  78990.0  88620.0   NaN  Switzerland  
-1525  24910.0  26280.0  24760.0  27690.0  30430.0   NaN       Cyprus  
-#+end_example
-
-
-*** Question: move the years into rows
-
-*** Answer
-
-The melt statement is easier now. Together with =year=, a column is uniquely identified by =country= only. Since we only have one variable here (GDP), we do not need to =unstack=.
-
-#+begin_src jupyter-python :display plain
-df_n = pd.melt(df_n,id_vars=['country'],
-                        value_vars=["{}".format(year) for\
-                                    year in np.arange(2011,2021)],
-                        var_name='year',\
-                        value_name='GDP per capita')
-df_n.head()
-#+end_src
-
-#+RESULTS:
-:        country  year  GDP per capita
-: 0      Austria  2011         36970.0
-: 1      Belgium  2011         34060.0
-: 2     Bulgaria  2011          5640.0
-: 3  Switzerland  2011         65190.0
-: 4       Cyprus  2011         23340.0
-
-
-*** merge into dataframe
-
-The final step is to [[https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.merge.html][merge]] the GDP data with the dataframe =df= on mortality.
-
-#+begin_src jupyter-python :display plain
-df=df.merge(df_n,how='left',left_on=['country','year'],\
-            right_on=['country','year'])
-df.head()
-#+end_src
-
-#+RESULTS:
-#+begin_example
-   country  year sex  Preventable mortality  Treatable mortality  \
-0  Austria  2011   F                  95.29                67.41   
-1  Austria  2011   M                 248.50                96.86   
-2  Austria  2012   F                  96.16                69.72   
-3  Austria  2012   M                 252.28                91.45   
-4  Austria  2013   F                  93.22                66.84   
-
-   GDP per capita  
-0         36970.0  
-1         36970.0  
-2         37820.0  
-3         37820.0  
-4         38210.0  
-#+end_example
-
-
-
-
-** Body mass index
-
-*** Question
-
-- go to: https://ec.europa.eu/eurostat/databrowser/view/hlth_ehis_bm1i/default/table?lang=en
-- create a dataframe =df_n= for this data
-- make the following selections on the data:
-  - ages 15-64
-  - percentage of people who are obese
-  - =quant_inc=: 'TOTAL'
-  - both sexes
-  - year 2014
-- merge this data with the dataframe =df=
-
-
-*** Answer
-
-
-#+begin_src jupyter-python :display plain
-df_n = eurostat.get_data_df('hlth_ehis_bm1i')
-df_n.rename({'geo\\TIME_PERIOD':'geo'},inplace=True,axis=1)
-df_n = df_n[(df_n.bmi=='BMI_GE30')&(df_n['quant_inc']=='TOTAL')\
-            &(df_n.sex.isin(['F','M']))&(df_n.age=='Y15-64')]
-df_n.drop(["quant_inc","age","unit","bmi","2019"],axis=1,inplace=True)
-
-df_n = pd.melt(df_n,id_vars=['geo','sex'],
-     value_vars=["2014"],
-     var_name='year',value_name='high bmi')
-
-df_n['country'] = df_n['geo'].replace(eurostat_dictionary)
-df_n.drop(['geo','year'],inplace=True,axis=1)
-df_n = df_n[df_n.country.isin(EU_countries)]
-df_n['high bmi'] = df_n['high bmi'].astype(float)/100.0
-
-df_n.head()
-#+end_src
-
-#+RESULTS:
-:   sex  high bmi   country
-: 0   F     0.113   Austria
-: 1   F     0.129   Belgium
-: 2   F     0.116  Bulgaria
-: 3   F     0.097    Cyprus
-: 4   F     0.160   Czechia
-
-
-#+begin_src jupyter-python :display plain
-df=df.merge(df_n,how='left',left_on=['country','sex'],\
-            right_on=['country','sex'])
-df.head()
-#+end_src
-
-#+RESULTS:
-#+begin_example
-   country  year sex  Preventable mortality  Treatable mortality  \
-0  Austria  2011   F                  95.29                67.41   
-1  Austria  2011   M                 248.50                96.86   
-2  Austria  2012   F                  96.16                69.72   
-3  Austria  2012   M                 252.28                91.45   
-4  Austria  2013   F                  93.22                66.84   
-
-   GDP per capita  high bmi  
-0         36970.0     0.113  
-1         36970.0     0.146  
-2         37820.0     0.113  
-3         37820.0     0.146  
-4         38210.0     0.113  
-#+end_example
-
-** Altair
-
-Because python is a programming language, we can also present the data in an interactive graph.
-
-#+begin_src jupyter-python :display plain
-df = pd.read_csv('./data/health_data.csv')
-df.describe()
-#+end_src
-
-#+RESULTS:
-#+begin_example
-       Unnamed: 0       year_x  Preventable mortality  Treatable mortality  \
-count  448.000000   448.000000             446.000000           446.000000   
-mean   223.500000  2014.000000             191.783520           110.963924   
-std    129.470717     2.002236             132.025295            61.740504   
-min      0.000000  2011.000000              45.910000            40.780000   
-25%    111.750000  2012.000000              95.860000            70.230000   
-50%    223.500000  2014.000000             164.055000            85.905000   
-75%    335.250000  2016.000000             227.407500           126.267500   
-max    447.000000  2017.000000             660.160000           333.310000   
-
-       GDP per capita  year_y         y_QU1         y_QU2         y_QU3  \
-count      444.000000   378.0    378.000000    378.000000    378.000000   
-mean     32714.054054  2015.0   9830.103704  16740.196296  23225.081481   
-std      26022.327013     0.0   6158.301385  10423.913545  13547.040290   
-min       5620.000000  2015.0   1491.500000   2997.500000   4072.100000   
-25%      14710.000000  2015.0   4233.300000   7538.900000  10857.300000   
-50%      24975.000000  2015.0   8959.400000  15529.200000  22675.800000   
-75%      39890.000000  2015.0  15468.800000  24832.300000  33983.400000   
-max     150490.000000  2015.0  25849.300000  47051.500000  58070.200000   
-
-              y_QU4          y_QU5    high bmi     smoking  binge drinking  
-count    378.000000     378.000000  420.000000  420.000000      392.000000  
-mean   31198.437037   51021.855556    0.150500    0.074433        0.184446  
-std    17724.428246   28761.101095    0.035153    0.058118        0.110150  
-min     5854.400000    9909.200000    0.077000    0.000000        0.017000  
-25%    14587.300000   26053.400000    0.129000    0.031750        0.105750  
-50%    31432.100000   51597.000000    0.146500    0.056500        0.169000  
-75%    45565.700000   72190.400000    0.175000    0.107750        0.256500  
-max    76374.000000  131011.200000    0.267000    0.250000        0.573000  
-#+end_example
-
-
-
-You can open the file =gdp_mortality.html= in a web browser. You can add it to a website etc. You can use the slider to select a year, zoom in and out of the graph, hover over a point to see the country.
-
-#+begin_src jupyter-python
-df.rename({'year_x':'year'},inplace=True,axis=1)
-
-select_year = alt.selection_single(
-    name='Select', fields=['year'], init={'year': 2011},
-    bind=alt.binding_range(min=2011, max=2017, step=1)
-)
-
-df['log gdp'] = np.log(df['GDP per capita'])
-df['log mortality'] = np.log(df['Treatable mortality'])
-df['Gender'] = df['sex'].replace({'F':'Female','M':'Male'})
-
-figure = alt.Chart(df).mark_point(filled=True,size=50).encode(
-    alt.X('log gdp',title='GDP per captita (in logs)',\
-          scale=alt.Scale(domain=[9,12])),
-    alt.Y('log mortality',title='Treatable mortality (in logs)',\
-          scale=alt.Scale(domain=[4,6])),
-    color='country',
-    column='Gender',
-    tooltip=['country']
-).configure_axis(
-    grid=False
-).configure_view(
-    strokeWidth=0
-).add_selection(select_year).transform_filter(select_year).interactive()
-
-
-
-figure.save('./figures/gdp_mortality.html')
-
-#+end_src
-
-
-* Bayesian statistics
-
-Before we start to analyze this data, we do a brief recap of Bayesian statistics.
-
-- you have a coin and you want to determine the probability $p$ that it turns up head
-- experiment: you throw it once ($n=1$), twice ($n=2$), three times etc. all the way up to twenty times ($n=20$)
-- count the number of heads ($y$)
-- 6 of these experiments ($n=1,2,3,4,5,20$) and outcomes($y = 1,1,2,2,3,14$)
-- after each experiment you calculate the posterior distribution for $p$
-
-#+begin_src jupyter-python
-y_values = [1,1,2,2,3,14]
-n_values = [1,2,3,4,5,20]
-posterior_list = []
-for i in range(len(n_values)):
-    with pm.Model() as binomial:
-      p = pm.Uniform('p',0,1)
-      y = pm.Binomial('y', p = p, observed = y_values[i], n = n_values[i])
-      trace = pm.sample(tune=2000)
-    print(i)
-    posterior_list.append(trace.posterior.p.values.flatten())
-#+end_src
-
-
-#+begin_src jupyter-python
-posterior_list.append(np.arange(0,1.0001,0.0001))
-#+end_src
-
-#+RESULTS:
-
-
-We plot the posterior distributions:
-
-#+begin_src jupyter-python :file ./figures/posterior_coins.png
-fig, axs = plt.subplots(2,3,figsize=(12,6))
-
-for i in range(2):
-    for j in range(3):
-        sn.kdeplot(posterior_list[3*i+j],ax = axs[i,j])
-        sn.kdeplot(posterior_list[3*i+j-1],ax = axs[i,j],\
-                   linestyle='--')
-        plt.gcf().get_axes()[3*i+j].set_xlim(0,1)
-        axs[i,j].set_title('n = {}, y = {}'.format(n_values[3*i+j],\
-                                                   y_values[3*i+j]))
-fig.tight_layout();
-#+end_src
-
-#+RESULTS:
-[[file:./figures/posterior_coins.png]]
-
-
-The advantage of a posterior distribution is that it tells you what you expect it to tell you. To illustrate this, consider the posterior at $n=20$ which we plot now as cdf (cumulative distribution function):
-
-#+begin_src jupyter-python :file ./figures/posterior95interval.png
-sn.kdeplot(posterior_list[-2],cumulative=True)
-plt.ylabel('probability')
-plt.xlabel('$p$');
-#+end_src
-
-#+RESULTS:
-[[file:./figures/posterior95interval.png]]
-
-This curve shows that with 40% probability it is the case that $p \leq 0.65$ (approximately).
-
-** Question: calculate the probability that $p>0.8$ after throwing the coin 20 times (with $y=14$).
-[hint: use the variable =posterior_list=.]
-** answer                                                    
-
-#+begin_src jupyter-python
-np.sum(posterior_list[-2]>0.8)/len(posterior_list[-2])
-#+end_src
-
-#+RESULTS:
-: 0.1085
-
-
-Let's consider last week's example of throwing a coin 20 times and seeing 14 times head. We want to know the posterior distribution of $p$, the probability of head, after seeing the data, where =data= equals $n=20, y =14$. As before our prior is uniform: $f(p)=1$ for $p \in [0,1]$.
-
-\begin{equation}
-\label{eq:4}
-Prob(p|data) = \frac{P(p and data)}{P(data)} = \frac{Binom(y=14,n=20,p=p)f(p)}{\int_{0}^1 Binom(y=14,n=20,p=\pi)f(\pi)d\pi}
-\end{equation}
-
-We can program this as follows:
-
-#+begin_src jupyter-python :file ./figures/coin_pisterior.png
-range_p = np.linspace(0,1,50)
-prior = np.ones_like(range_p)
-likelihood = sc.stats.binom.pmf(14,20,range_p)
-posterior = likelihood*prior/np.sum(likelihood*prior)
-plt.plot(range_p,posterior);
-#+end_src
-
-#+RESULTS:
-[[file:./figures/coin_pisterior.png]]
-
-- Using a grid to calculate the posterior distribution becomes extremely slow in higher dimensions; i.e. when there are 4 parameters or more;
-- Markov Chain Monte Carlo (MCMC) algorithms are far more efficient: https://chi-feng.github.io/mcmc-demo/
-- we know that "eventually" they converge to the true posterior distribution
-
-** Simulated data
-
-To get an idea how Bayesian analysis works, we use our "old trick": generate data and then estimate a model on the generated data to see whether we can recover the true underlying parameters.
-
-#+begin_src jupyter-python :display plain
-def generating_data(a1 = 1, a2 = -1,b = 3, n=100):
-    x1 =    np.random.normal(0,1,size=n)
-    x2 =    np.random.normal(0,1,size=n)
-    noise = np.random.normal(0,1,size=n)
-    y = b + a1 * x1 + a2 * x2 + noise
-    df = pd.DataFrame({'y':y, 'x1':x1, 'x2':x2})
-    return df
-
-df = generating_data()
-
-#+end_src
-
-#+RESULTS:
-
-*** Specifying a model
-
-The parameters of the model (=slope1,slope2,constant,sigma=) are themselves stochastic variables and we need to specify their prior distributions.
-
-
-#+begin_src jupyter-python :display plain
-with pm.Model() as model_simulated_data:
-    constant = pm.Normal('constant', 0, 3)
-    slope1 = pm.Normal('slope1', 0, 2)
-    slope2 = pm.Normal('slope2', 0, 2)
-    sigma = pm.HalfNormal('sigma', 1)
-    obs = pm.Normal('obs', mu = slope1*df.x1 + slope2*df.x2 + constant,\
-                    sigma = sigma, observed = df.y)
-
-    trace = pm.sample()
-
-
-with model_simulated_data:
-    ppc_simulated_data = pm.sample_posterior_predictive(trace,\
-                                                var_names=['obs'])
-
-#+end_src
-
-#+RESULTS:
-: Auto-assigning NUTS sampler...
-: Initializing NUTS using jitter+adapt_diag...
-: Multiprocess sampling (4 chains in 4 jobs)
-: NUTS: [sigma, slope2, slope1, constant]
-: Sampling 4 chains, 0 divergences: 100%|██████████| 4000/4000 [00:00<00:00, 4934.06draws/s]
-: 100%|██████████| 2000/2000 [00:02<00:00, 772.71it/s] 
-
-
-We can visualize the model with its priors. This shows that =obs= has 100 observations and is normally distributed. In the model, =obs= is determined by the parameters =slope1, slope2, constant, sigma= and their prior distributions are provided as well.
-
-#+begin_src jupyter-python :file ./figures/simulated_model_graph.png
-# pm.model_to_graphviz(model_simulated_data)
-#+end_src
-
-
-
-
-*** Trace plot and posterior distribution
-
-We plot the trace using =pm.plot_trace()= and discuss what we learn from it.
-
-First, look at the distributions on the left. Each posterior distribution is --more or less-- centered around the values we chose when generating the data.
-
-#+begin_src jupyter-python :file ./figures/trace_simulated_data.png
-pm.plot_trace(trace)
-#+end_src
-
-#+RESULTS:
-[[file:./figures/trace_simulated_data.png]]
-
-The trace plots on the right side are harder to interpret, but important in understanding whether the sampling process actually worked:
-- the plot should be stationary; for example, not trending upwards or downwards
-- there should be good mixing which translates into the condensed zig-zagging of the trace;
-- the different chains cover the same regions
-
-If you want to better understand how this algorithm works, you can watch [[https://www.youtube.com/watch?v=v-j0UmWf3Us][Richard McElreath's lecture on MCMC]].
-
-To get some feel for how this works, I recommend that you play around with different parameter values to see how this is then picked up in the posterior distribution. Further, also change the number of observations ($n$) in the data to see the effect on the posterior.
-
-*** Summarizing the posterior distribution
-
-We can also summarize the posterior in a table.
-
-#+begin_src jupyter-python :display plain
-pm.summary(trace)
-#+end_src
-
-#+RESULTS:
-#+begin_example
-           mean     sd  hdi_3%  hdi_97%  mcse_mean  mcse_sd  ess_mean  ess_sd  \
-constant  2.991  0.108   2.791    3.187      0.002    0.001    2875.0  2871.0   
-slope1    0.832  0.102   0.643    1.014      0.002    0.001    3168.0  3135.0   
-slope2   -1.005  0.103  -1.221   -0.831      0.002    0.002    2327.0  2300.0   
-sigma     1.038  0.076   0.892    1.176      0.002    0.001    1989.0  1952.0   
-
-          ess_bulk  ess_tail  r_hat  
-constant    2875.0    1676.0    1.0  
-slope1      3119.0    1678.0    1.0  
-slope2      2329.0    1484.0    1.0  
-sigma       2051.0    1517.0    1.0  
-#+end_example
-
-The important thing to observe here is that =r_hat= should be close to 1.0.
-
-*** Model fit
-
-To get an idea of the model fit, we use the posterior predictive distribution. This is the distribution of $y$ for each observation in our data.
-
-We use the =numpy= function =percentile= to get the percentiles at 2.5% and 97.5%. In between these we have 95% probability mass.
-
-The vertical lines are drawn by =matplotlib='s function =vlines=.
-
-#+begin_src jupyter-python :file ./figures/fit_simulated_model.png
-percentiles = np.percentile(ppc_simulated_data.posterior_predictive['obs'],[2.5,97.5],axis=[0,1]).T
-fig, (ax1,ax2) = plt.subplots(1,2, figsize=(10, 5))
-ax1.vlines(df.x1,percentiles[:,0],percentiles[:,1],alpha=0.2)
-ax1.scatter(df.x1,df.y, color='r')
-ax1.set(xlabel='$x_1$', ylabel='$y$');
-ax2.vlines(df.x2,percentiles[:,0],percentiles[:,1],alpha=0.2)
-ax2.scatter(df.x2,df.y, color='r')
-ax2.set(xlabel='$x_2$', ylabel='$y$');
-#+end_src
-
-#+RESULTS:
-[[file:./figures/fit_simulated_model.png]]
-
-The figure shows that for most observations, the observed values lie in the 95% prediction interval of the model predictions.
-
-Now we will apply this Bayesian technique to real data. This gives us an opportunity to be more precise about how to choose priors for the parameters that we estimate.
-
-
-* Bayesian analysis with real data
-
-
-#+begin_src jupyter-python :display plain
-df = pd.read_csv('./data/health_data.csv')
-df.describe()
-#+end_src
-
-#+RESULTS:
-#+begin_example
-       Unnamed: 0       year_x  Preventable mortality  Treatable mortality  \
-count  448.000000   448.000000             446.000000           446.000000   
-mean   223.500000  2014.000000             191.783520           110.963924   
-std    129.470717     2.002236             132.025295            61.740504   
-min      0.000000  2011.000000              45.910000            40.780000   
-25%    111.750000  2012.000000              95.860000            70.230000   
-50%    223.500000  2014.000000             164.055000            85.905000   
-75%    335.250000  2016.000000             227.407500           126.267500   
-max    447.000000  2017.000000             660.160000           333.310000   
-
-       GDP per capita  year_y         y_QU1         y_QU2         y_QU3  \
-count      444.000000   378.0    378.000000    378.000000    378.000000   
-mean     32714.054054  2015.0   9830.103704  16740.196296  23225.081481   
-std      26022.327013     0.0   6158.301385  10423.913545  13547.040290   
-min       5620.000000  2015.0   1491.500000   2997.500000   4072.100000   
-25%      14710.000000  2015.0   4233.300000   7538.900000  10857.300000   
-50%      24975.000000  2015.0   8959.400000  15529.200000  22675.800000   
-75%      39890.000000  2015.0  15468.800000  24832.300000  33983.400000   
-max     150490.000000  2015.0  25849.300000  47051.500000  58070.200000   
-
-              y_QU4          y_QU5    high bmi     smoking  binge drinking  
-count    378.000000     378.000000  420.000000  420.000000      392.000000  
-mean   31198.437037   51021.855556    0.150500    0.074433        0.184446  
-std    17724.428246   28761.101095    0.035153    0.058118        0.110150  
-min     5854.400000    9909.200000    0.077000    0.000000        0.017000  
-25%    14587.300000   26053.400000    0.129000    0.031750        0.105750  
-50%    31432.100000   51597.000000    0.146500    0.056500        0.169000  
-75%    45565.700000   72190.400000    0.175000    0.107750        0.256500  
-max    76374.000000  131011.200000    0.267000    0.250000        0.573000  
-#+end_example
-
-As you can see, the counts for the different values differ. This implies that we have missing values for variables.
-
-To get an idea of our data, let's plot mortality against GDP per capita.
-
-
-#+begin_src jupyter-python :file ./figures/gdp_mortality_log_log_scale_by_sex.png
-import matplotlib.colors as colors
-import matplotlib as mpl
-import matplotlib.cm as mplcm
-import numpy as np
-import statsmodels.api as sm
-
-plt.style.use('seaborn-dark-palette')
-NUM_COLORS = 24
-
-cm = plt.get_cmap('tab20b')
-cNorm  = colors.Normalize(vmin=0, vmax=NUM_COLORS-1)
-scalarMap = mplcm.ScalarMappable(norm=cNorm, cmap=cm)
-
-mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=([scalarMap.to_rgba(i) for\
-                                                     i in range(NUM_COLORS)]))
-
-fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True, sharex=True,figsize=(13,5))
-
-
-for country in df.country.unique():
-    mask = (df.country == country)
-    ax1.scatter(df[mask&(df.sex=='F')]['GDP per capita'],\
-                df[mask&(df.sex=='F')]['Treatable mortality'], label = country)
-    ax2.scatter(df[mask&(df.sex=='M')]['GDP per capita'],\
-                df[mask&(df.sex=='M')]['Treatable mortality'], label = country)
-
-ax1.set_yscale('log')
-ax1.set_xscale('log')
-ax1.set_xlabel('GDP per capita')
-ax2.set_xlabel('GDP per capita')
-ax1.set_ylabel('Treatable mortality')
-ax1.set_title('Female')
-ax2.set_title('Male')
-plt.tight_layout()
-plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.);
-#+end_src
-
-#+RESULTS:
-[[file:./figures/gdp_mortality_log_log_scale_by_sex.png]]
-
-This figure suggests a linear relation between log GDP per capita and log treatable mortality as a reasonable approximation.
-
-We measure income inequality in our data set as:
-\begin{equation}
-\label{eq:19}
-\text{inequality} = \ln\left(\sum_{i=1}^5 \phi_i Y_i \right) - \sum_{i=1}^5 \phi_i \ln(Y_i)
-\end{equation}
-where the fraction of people in income category $i$ denoted $\phi_i = 0.2$ as we have data on income quintiles. The higher this expression, the more unequal the income distribution in a country is.
-
-*** Question: add the variable =inequality= to the dataframe using the definition above.
-[hint: use the quintiles =y_QU1,...,y_QU5= in the data with $\phi_i = 0.2$ for $i=1,...,5$.]
-
-*** Answer inequality                                           
-
-#+begin_src jupyter-python :display plain
-
-income_quantiles = ['y_QU1','y_QU2','y_QU3','y_QU4','y_QU5']
-Inequality = np.log(df[income_quantiles].mean(axis=1))-\
-    (np.log(df[income_quantiles])).mean(axis=1)
-df['inequality'] = Inequality
-df.drop(income_quantiles,axis=1,inplace=True)
-df.head()
-#+end_src
-
-#+RESULTS:
-#+begin_example
-   Unnamed: 0  country  year_x sex  Preventable mortality  \
-0           0  Austria    2011   F                  95.29   
-1           1  Austria    2011   M                 248.50   
-2           2  Austria    2012   F                  96.16   
-3           3  Austria    2012   M                 252.28   
-4           4  Austria    2013   F                  93.22   
-
-   Treatable mortality  GDP per capita  year_y  high bmi  smoking  \
-0                67.41         36970.0  2015.0     0.113    0.083   
-1                96.86         36970.0  2015.0     0.146    0.141   
-2                69.72         37820.0  2015.0     0.113    0.083   
-3                91.45         37820.0  2015.0     0.146    0.141   
-4                66.84         38210.0  2015.0     0.113    0.083   
-
-   binge drinking  inequality  
-0           0.129    0.123411  
-1           0.249    0.123411  
-2           0.129    0.123411  
-3           0.249    0.123411  
-4           0.129    0.123411  
-#+end_example
-
-
-
-** Missing values (the wrong way)
-
-We have missing values in the data. First, we will deal with these in a simple (but incorrect) way: simply delete rows from the dataframe that contain a missing value.
-
-We use =dropna()= to drop all rows that have missing values. The describe statement shows that all variables have the same number of observations now.
-
-#+begin_src jupyter-python :display plain
-df_small = df.dropna()
-#+end_src
-
-#+RESULTS:
-
-
-
-*** Standardizing variables
-
-Just as with neural networks, we can help the algorithm by standardizing our variables:
-
-#+begin_src jupyter-python
-def standardize(x):
-    return (x-x.mean())/x.std()
-log_mortality = standardize(np.log(df_small['Treatable mortality']))
-gdp = standardize(np.log(df_small['GDP per capita']))
-inequality = standardize(df_small['inequality'])
-high_bmi = standardize(df_small['high bmi'])
-smoking = standardize(df_small['smoking'])
-binge_drinking = standardize(df_small['binge drinking'])
-gender = df_small['sex']=='F'
-#+end_src
-
-#+RESULTS:
-
-
-Just to be sure: note the order in which we do this: for GDP and mortality, we first take the log and then we standardize. If you do not understand why we do it this way, try for yourself: first standardize and then take the log.
-
-
-*** Question: Complete the specification of the model
-
-We model =log_mortality= as being normally distributed with expectation $\mu$ as specified below and standard deviation $\sigma$. 
-
-Since log mortality is standardized, we model the prior for the =constant= as being normally distributed with 0 mean and standard deviation equal to 1. We specify one $\sigma_{prior}$ for all =b_= coefficients. The priors for these coefficients are normally distributed with mean zero and standard deviation equal to $\sigma_{prior}$.
-
-To avoid over-fitting, we specify a small value for $\sigma_{prior}$. This is sometimes called a "seat-belt prior". Low values for this standard deviation make sure that the model does not get "too excited" about the data. It is comparable to a (high) penalty term in a lasso or ridge regression. But here this is specified as a (conservative) prior. The more observations we have, the smaller the weight of this prior in the posterior. Hence, the model gets "more easily excited" if there are more data points, which is intuitive
-
-#+begin_src jupyter-python
-
-  with pm.Model() as normal:
-
-      ## priors on coefficients
-      constant = pm.Normal('constant', mu = 0.0, sigma = 1.0)
-      σ_prior = 0.1
-
-      ### complete the priors
-
-      ## model
-      μ = constant + b_female * gender + b_gdp*gdp +\
-          b_inequality * inequality +  b_smoking * smoking +\
-          b_high_bmi * high_bmi + b_binge_drinking * binge_drinking +\
-          b_female_gdp * gdp * gender
-      σ = pm.HalfNormal('σ', 1)
-
-      mortality = pm.Normal('mortality', μ, σ, observed=log_mortality)
-      trace_normal = pm.sample(2000, tune=1000)
-          
-#+end_src
-
-*** Question: generate the posterior predictive distribution for the variable =mortality=. 
-*** answer                                                    
-
-
-#+begin_src jupyter-python
-  with pm.Model() as normal:
-
-      ## priors on coefficients
-      constant = pm.Normal('constant', mu = 0.0, sigma = 1.0)
-      σ_prior = 0.1
-
-      b_gdp = pm.Normal('b_gdp', mu = 0, sigma = σ_prior)
-      b_inequality = pm.Normal('b_inequality',mu=0,sigma=σ_prior)
-      b_smoking= pm.Normal('b_smoking',mu = 0, sigma = σ_prior)
-      b_high_bmi = pm.Normal('b_high_bmi',mu = 0, sigma = σ_prior)
-      b_binge_drinking = pm.Normal('b_binge_drinking',mu = 0, sigma = σ_prior)
-      b_female = pm.Normal('b_female',mu = 0, sigma = σ_prior)
-      b_female_gdp = pm.Normal('b_female_gdp',mu = 0, sigma = σ_prior)
-
-
-      ## model
-      μ = constant + b_female * gender + b_gdp*gdp + b_inequality * inequality +\
-          b_smoking * smoking + b_high_bmi * high_bmi +\
-          b_binge_drinking * binge_drinking + b_female_gdp * gdp * gender
-      σ = pm.HalfNormal('σ', 1)
-
-      mortality = pm.Normal('mortality', μ, σ, observed=log_mortality)
-      trace_normal = pm.sample(2000, tune=1000)
-          
-  with normal:
-      ppc_normal = pm.sample_posterior_predictive(trace_normal,\
-                                                  var_names=["mortality"])
-#+end_src
-
-#+RESULTS:
-: Auto-assigning NUTS sampler...
-: Initializing NUTS using jitter+adapt_diag...
-: Multiprocess sampling (4 chains in 4 jobs)
-: NUTS: [σ, b_female_gdp, b_female, b_binge_drinking, b_high_bmi, b_smoking, b_inequality, b_gdp, constant]
-: Sampling 4 chains, 0 divergences: 100%|██████████| 12000/12000 [00:04<00:00, 2473.50draws/s]
-: 100%|██████████| 8000/8000 [00:07<00:00, 1032.59it/s]
-
-We can visualize the model.
-
-#+begin_src jupyter-python :file ./figures/health_model_graph.png
-# pm.model_to_graphviz(normal)
-#+end_src
-
-
-*** Question: summarize the posterior distribution in a table; check the values for =r_hat=.
-
-
-*** answer                                  
-
-#+begin_src jupyter-python :display plain
-variables_health = ['b_female','b_gdp', 'b_female_gdp', 'b_inequality',\
-                    'b_smoking', 'b_high_bmi', 'b_binge_drinking']
-pm.summary(trace_normal.posterior,variables_health)
-#+end_src
-
-
-*** Check fit of the model
-
-If you followed our naming suggestions above, you should be able to run the code below without errors to see the fit of the model. For most country/year/gender combinations the observation (dot) falls within the 95% prediction interval (vertical lines).
-
-#+begin_src jupyter-python :file ./figures/check_fit_health_data.png
-mask_female = (df_small.sex=='F')
-mask_male = (df_small.sex=='M')
-percentiles = np.percentile(ppc_normal.posterior_predictive.mortality,\
-                            [2.5,97.5],axis=[0,1])
-
-plt.style.use('seaborn-dark-palette')
-NUM_COLORS = 24
-
-cm = plt.get_cmap('tab20b') 
-cNorm  = colors.Normalize(vmin=0, vmax=NUM_COLORS-1)
-scalarMap = mplcm.ScalarMappable(norm=cNorm, cmap=cm)
-mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=([scalarMap.to_rgba(i)\
-                                                     for i in range(NUM_COLORS)]))
-fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True, sharex=True,figsize=(13,5))
-
-for country in df_small.country.unique():
-    mask = (df_small.country == country)
-    ax1.vlines(gdp[mask_female&mask],percentiles[0,:][mask_female&mask],\
-               percentiles[1,:][mask_female&mask],\
-               color = next(ax1._get_lines.prop_cycler)['color'],alpha=0.3)
-    ax1.scatter(gdp[mask&(df_small.sex=='F')],\
-                log_mortality[mask&(df_small.sex=='F')], label = country)
-    ax2.vlines(gdp[mask_male&mask],percentiles[0,:][mask_male&mask],\
-               percentiles[1,:][mask_male&mask],\
-               color = next(ax2._get_lines.prop_cycler)['color'],alpha=0.3)
-    ax2.scatter(gdp[mask&(df_small.sex=='M')],\
-                log_mortality[mask&(df_small.sex=='M')], label = country)
-    
-ax1.set_xlabel('Log GDP per capita (standardized)')
-ax2.set_xlabel('Log GDP per capita (standardized)')
-ax1.set_ylabel('Log treatable mortality (standardized)')
-ax1.set_title('Female')
-ax2.set_title('Male')
-plt.tight_layout()
-plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.);
-
-#+end_src
-
-#+RESULTS:
-[[file:./figures/check_fit_health_data.png]]
-
-
-** Missing data (the right way)
-
-Above we deleted all rows that feature a missing value. This is one extreme and it is not optimal.
-
-The other extreme is another common practice that is also not correct: interpolating the missing values.
-
-The Bayesian way to deal with missing values is to model that they are drawn from a distribution. Since we work with standardized variables, we model that a missing value is drawn from a normal distribution with mean 0 and standard deviation equal to 1.
-
-In order to use missing values in =pymc3=, we use so called masked =numpy= arrays (see https://numpy.org/doc/stable/reference/maskedarray.html).
-
-Consider the following example.
-
-#+begin_src jupyter-python
-x = np.ma.array([1, 2, np.nan], mask=[0, 0, 1])
-print("x in compressed/readable format: {}".format(x.compressed()))
-print("x in raw format: ")
-x
-#+end_src
-
-#+RESULTS:
-:RESULTS:
-: x in compressed/readable format: [1. 2.]
-: x in raw format: 
-: masked_array(data=[1.0, 2.0, --],
-:              mask=[False, False,  True],
-:        fill_value=1e+20)
-:END:
-
-The =mask= (=[False, False,  True]=) in the example above, indicates which values are missing (=True=) and which values are there (=False=). This additional information allows =pymc3= to figure out that there are missing values in the data which need to be treated differently.
-
-Let's load the data.
-
-#+begin_src jupyter-python :display plain
-df = pd.read_csv('./data/health_data.csv')
-df.dropna(subset=['Treatable mortality'],inplace=True)
-income_quantiles = ['y_QU1','y_QU2','y_QU3','y_QU4','y_QU5']
-df['inequality']= np.log(df[income_quantiles].mean(axis=1))-\
-    (np.log(df[income_quantiles])).mean(axis=1)
-df.drop(income_quantiles,axis=1,inplace=True)
-
-def standardize(x):
-    return (x-x.mean())/x.std()
-
-log_mortality = standardize(np.log(df['Treatable mortality']))
-gender = df['sex']=='F'
-#+end_src
-
-#+RESULTS:
-
-
-We define a new function to standardize our variables which can handle missing values. This function can work with masked arrays (=ma=).
-
-#+begin_src jupyter-python
-def standardize_ma(x):
-    x_ma = np.ma.masked_invalid(x)
-    return (x_ma-x_ma.mean())/x_ma.std()
-
-gdp = standardize_ma(np.log(df['GDP per capita']))
-inequality = standardize_ma(df['inequality'])
-high_bmi = standardize_ma(df['high bmi'])
-smoking = standardize_ma(df['smoking'])
-binge_drinking = standardize_ma(df['binge drinking'])
-#+end_src
-
-#+RESULTS:
-
-The code for our model is as follows. Note that we use the =observed= keyword also for the explanatory variables with missing values.
-
-
-#+begin_src jupyter-python
-  with pm.Model() as normal_missing:
-
-      ## priors on coefficients
-      constant = pm.Normal('constant', mu = 0.0, sigma = 1.0)
-      σ_prior = 0.1
-
-      b_gdp = pm.Normal('b_gdp', mu = 0, sigma = σ_prior)
-      b_inequality = pm.Normal('b_inequality',mu=0,sigma=σ_prior)
-      b_smoking= pm.Normal('b_smoking',mu = 0, sigma = σ_prior)
-      b_high_bmi = pm.Normal('b_high_bmi',mu = 0, sigma = σ_prior)
-      b_binge_drinking = pm.Normal('b_binge_drinking',mu = 0, sigma = σ_prior)
-      b_female = pm.Normal('b_female',mu = 0, sigma = σ_prior)
-      b_female_gdp = pm.Normal('b_female_gdp',mu = 0, sigma = σ_prior)
-
-
-      ## missing variables
-      Gdp = pm.Normal('Gdp', mu = 0, sigma = 1.0, observed = gdp)
-      Smoking = pm.Normal('Smoking', mu = 0, sigma = 1.0, observed = smoking)
-      Binge_drinking = pm.Normal('Binge_drinking', mu = 0, sigma = 1.0,\
-                                 observed = binge_drinking)
-      High_bmi = pm.Normal('High_bmi', mu = 0, sigma = 1.0, observed = high_bmi)
-      Inequality = pm.Normal('Inequality', mu = 0, sigma = 1.0,\
-                             observed = inequality)
-
-
-      ## model
-      μ = constant + b_inequality * Inequality  +  b_smoking * Smoking +\
-          b_high_bmi * High_bmi + b_binge_drinking * Binge_drinking +\
-          b_gdp * Gdp + b_female_gdp * Gdp * gender+ b_female * gender
-      σ = pm.HalfNormal('σ', 1)
-
-      mortality = pm.Normal('mortality', μ, σ, observed=log_mortality)
-      trace_normal_missing = pm.sample()
-
-#+end_src
-
-#+RESULTS:
-: Auto-assigning NUTS sampler...
-: Initializing NUTS using jitter+adapt_diag...
-: Multiprocess sampling (4 chains in 4 jobs)
-: NUTS: [σ, Inequality_missing, High_bmi_missing, Binge_drinking_missing, Smoking_missing, Gdp_missing, b_female_gdp, b_female, b_binge_drinking, b_high_bmi, b_smoking, b_inequality, b_gdp, constant]
-: Sampling 4 chains, 0 divergences: 100%|██████████| 4000/4000 [00:06<00:00, 594.68draws/s]
-: 100%|██████████| 2000/2000 [00:02<00:00, 686.56it/s]
-
-
-
-*** Question: summarize the posterior distribution with a table
-
-Complete the following code block. In the summary, we are interested in the coefficients =variables_health=.
-
-#+begin_src jupyter-python :display plain
-variables_health = ['b_female','b_gdp', 'b_female_gdp', 'b_inequality',\
-                    'b_smoking', 'b_high_bmi', 'b_binge_drinking']
-pm.summary(...,variables_health)
-#+end_src
-
-
-*** answer                                                     
-
-Check the values for =r_hat=.
-
-#+begin_src jupyter-python :display plain
-variables_health = ['b_female','b_gdp', 'b_female_gdp', 'b_inequality',\
-                    'b_smoking', 'b_high_bmi', 'b_binge_drinking']
-pm.summary(trace_normal_missing.posterior,variables_health)
-#+end_src
-
-
-*** Question: provide the trace plots for =variables_health=.
-
-Check that the trace plots satisfy the criteria discussed above.
-
-
-*** answer                                                     
-
-
-#+begin_src jupyter-python :file ./figures/trace_plot_health_missing.png
-pm.plot_trace(trace_normal_missing,var_names=variables_health);
-#+end_src
-
-
-** how do the missing values work in the posterior?
-
-#+begin_src jupyter-python :display plain
-print(gdp.shape)
-print(trace_normal_missing.posterior.Gdp.shape)
-print(gdp[0])
-print(trace_normal_missing.posterior.Gdp[0,:10,0].values)
-#+end_src
-
-#+RESULTS:
-: (448,)
-: (4, 1000, 448)
-: 0.5323352480715294
-: [0.53233525 0.53233525 0.53233525 0.53233525 0.53233525 0.53233525
-:  0.53233525 0.53233525 0.53233525 0.53233525]
-
-
-#+begin_src jupyter-python
-np.where(gdp.isna())
-#+end_src
-
-#+RESULTS:
-| array | ((238 239 240 241)) |
-
-
-#+begin_src jupyter-python :display plain
-print(gdp[238])
-print(trace_normal_missing.posterior.Gdp[0,:10,238].values)
-#+end_src
-
-
-** Altair
-
-
-#+begin_src jupyter-python :display plain
-df = pd.read_csv('./data/health_data.csv')
-df.describe()
-#+end_src
-
-
-
-You can open the file =gdp_mortality.html= in a web browser. You can add it to a website etc. You can use the slider to select a year, zoom in and out of the graph, hover over a point to see the country.
-
-#+begin_src jupyter-python
-df.rename({'year_x':'year'},inplace=True,axis=1)
-
-select_year = alt.selection_single(
-    name='Select', fields=['year'], init={'year': 2011},
-    bind=alt.binding_range(min=2011, max=2017, step=1)
-)
-
-df['log gdp'] = np.log(df['GDP per capita'])
-df['log mortality'] = np.log(df['Treatable mortality'])
-df['Gender'] = df['sex'].replace({'F':'Female','M':'Male'})
-
-figure = alt.Chart(df).mark_point(filled=True,size=50).encode(
-    alt.X('log gdp',title='GDP per capita (in logs)',scale=alt.Scale(domain=[9,12])),
-    alt.Y('log mortality',title='Treatable mortality (in logs)',scale=alt.Scale(domain=[4,6])),
-    color='country',
-    column='Gender',
-    tooltip=['country']
-).configure_axis(
-    grid=False
-).configure_view(
-    strokeWidth=0
-).add_selection(select_year).transform_filter(select_year).interactive()
-
-
-
-figure.save('./figures/gdp_mortality.html')
-
-#+end_src
-
-
-** Gaussian Process
-
-
-The idea of a Gaussian Process (GP) is that we draw from a multivariate normal distribution; that is, we do not draw one value but we draw a string of values (a vector) from the distribution. Hence, we need to specify the correlation between these different values; e.g. what is the correlation between the 1st and 5th value. This correlation is determined by the co-variance matrix of the multivariate distribution. The GP's kernel determines this co-variance matrix.
-
-To illustrate the GP, let's create our own data.
-
-#+begin_src jupyter-python :file scatter_GP_data.png
-n = 100
-x = np.linspace(0, 6*np.pi, n)
-def time_series(x):
-   return 0.4 * x + np.sin(x)
-y = time_series(x) + np.random.normal(0, 0.5, n)
-plt.scatter(x, y);
-#+end_src
-
-
-
-*** GP with exponentiated quadratic kernel
-
-A kernel specifies the correlation between two elements in the series that we have. In a time series this boils down to the correlation between the observation at time $t$ and time $t'$.
-
-The exact expression for the correlation between observations at $t$ and $t'$ is given by:
-\begin{equation}
-\label{eq:5b}
-k(t,t') = e^{-\frac{(t-t')^{2}}{2\ell^{2}}}
-\end{equation}
-In the code block we specify our prior for $\ell$ (=ls=) as $h$. The kernel is written as =pm.gp.cov.ExpQuad()= where we specify that our input variable (time) =X= is one dimensional (as a tensor).
-
-The $x$ variable needs to be turned into a column vector $X$.
-
-Finally, the last statement in this code block looks different from what we saw above with =obs = pm.Normal('obs', mu, sigma, observed = y)=. This is due to the way GP's are implemented in =pymc3=.
-
-#+begin_src jupyter-python
-X = x.reshape(n,1)
-
-with pm.Model() as timeseries_kernel:
-    h = pm.Gamma('h', 3, 1.0)
-    c = pm.gp.cov.ExpQuad(1, ls=h)
-    gp = pm.gp.Marginal(cov_func=c)
-    sigma = pm.HalfCauchy('sigma', 1.0)
-    y_est = gp.marginal_likelihood('y_est', X=X, y=y, noise=sigma)
-#+end_src
-
-#+RESULTS:
-
-Sampling from GP's with MCMC --as we did above-- is sometimes slow. Here we sample with ADVI. The [[https://arxiv.org/abs/1603.00788][idea of ADVI]] is to approximate the posterior distribution with a combination of well known distributions.
-
-We check whether the fitting went well by plotting the so called "ELBO" (evidence lower bound) plot.
-
-#+begin_src jupyter-python :file ./figures/elbo_timeseries_kernel.png
-with timeseries_kernel:
-    inference = pm.ADVI()
-    approx = pm.fit(20000)
-
-plt.plot(approx.hist);
-
-#+end_src
-
-#+RESULTS:
-:RESULTS:
-: Average Loss = 135.43: 100%|██████████| 20000/20000 [01:13<00:00, 270.59it/s]
-: Finished [100%]: Average Loss = 135.43
-[[file:./figures/elbo_timeseries_kernel.png]]
-:END:
-
-Now we can generate samples from =approx= which we defined above as =approx = pm.fit()=.
-
-We specify the range over which we want to predict =xp= and the number of samples that we want for the prediction, =n_samples=.
-
-#+begin_src jupyter-python
-trace = approx.sample(draws=5000)
-#+end_src
-
-#+RESULTS:
-
-Note that [[https://numpy.org/doc/stable/reference/generated/numpy.c_.html][np_c]] is a quick way to add a dimension to an array.
-
-#+begin_src jupyter-python
-n_samples = 100
-xp = np.c_[np.linspace(0, 6*np.pi, n_samples)]
-print(np.linspace(0, 6*np.pi, n_samples).shape)
-print(np.linspace(0, 6*np.pi, n_samples)[:,None].shape)
-
-print(xp.shape)
-#+end_src
-
-#+RESULTS:
-: (100,)
-: (100, 1)
-: (100, 1)
-
-
-*Note* The code for jupyterlab.uvt.nl is different from the one below:
-- =ppc = pm.sample_posterior_predictive(trace, var_names  = ['gpc'], samples  = n_samples)=
-- =ppc_test = pm.sample_posterior_predictive(trace, var_names = ['gpc_test'], samples = n_samples)=
-
-
-
-#+begin_src jupyter-python
-
-with timeseries_kernel:
-    gpc = gp.conditional('gpc', xp)
-    ppc = pm.sample_posterior_predictive(trace,\
-                         vars=[gpc], samples=n_samples)
-#+end_src
-
-#+RESULTS:
-: 100%|██████████| 100/100 [00:06<00:00, 16.06it/s]
-
-We can plot this in-sample prediction (in grey) together with our observations (red dots).
-
-#+begin_src jupyter-python :file ./figures/in_sample_prediction_timeseries_kernel.png
-plt.plot(xp, ppc['gpc'].T, c='grey', alpha=0.2)
-plt.scatter(x, y, c='red');
-#+end_src
-
-#+RESULTS:
-[[file:./figures/in_sample_prediction_timeseries_kernel.png]]
-
-Finally, we can plot out-of-sample predictions. The interval =x_test= starts where the observations ended and plots a number of periods ahead.
-
-#+begin_src jupyter-python :file ./figures/out_of_sample_prediction_time_series_kernel.png
-
-n_samples = 100
-x_test = np.c_[np.linspace(6*np.pi, 6.5*np.pi, n_samples)]
-
-with timeseries_kernel:
-    gpc_test = gp.conditional('gpc_test', x_test)
-    ppc_test = pm.sample_posterior_predictive(trace,\
-                          vars=[gpc_test], samples=n_samples)
-
-
-plt.plot(xp, ppc['gpc'].T, c='grey', alpha=0.1)
-plt.plot(x_test, ppc_test['gpc_test'].T, c='green', alpha=0.1)
-plt.scatter(x, y, c='red');
-#+end_src
-
-#+RESULTS:
-:RESULTS:
-: 100%|██████████| 100/100 [00:03<00:00, 28.54it/s]
-[[file:./figures/out_of_sample_prediction_time_series_kernel.png]]
-:END:
-
-
-* Other Bayesian topics
-
-
-** time series
-
-
-#+begin_src jupyter-python :file scatter_GP_data.png
-n = 100
-x = np.linspace(0, 6*np.pi, n)
-def time_series(x):
-   return 0.4 * x + np.sin(x)
-y = time_series(x) + np.random.normal(0, 0.5, n)
-plt.scatter(x, y);
-#+end_src
-
-
-*** GP with periodic kernel
-
-With a periodic kernel, the expression for this correlation uses something like $\sin(t-t')$. Hence, this correlation is high when $\sin$ equals 1. This gives the repetitive or cyclical part in the observations.
-
-The exact expression for the correlation between observations at $t$ and $t'$ is given by:
-\begin{equation}
-\label{eq:5}
-k(t,t') = e^{-\frac{ \sin^2(\pi |t-t' |\frac{1}{T})}{2\ell^{2}}}
-\end{equation}
-
-Then we add a cyclical and linear component to get =gp=.
-
-#+begin_src jupyter-python
-X = x.reshape(n,1)
-
-with pm.Model() as timeseries_periodic:
-    # Cyclical component
-    ls = pm.Gamma('ls', 1.0, 0.5)
-    period = pm.Gamma('period',7,1)
-    cov = pm.gp.cov.Periodic(input_dim=1, period = period,\
-                             ls=ls)
-    gp1 = pm.gp.Marginal(cov_func=cov)
-    # Linear trend.
-    c = pm.Normal(name='c', mu=0, sigma=1)
-    gp2 = pm.gp.Marginal(cov_func=pm.gp.cov.Linear(input_dim=1,\
-                                                   c=c))
-    # adding the two components
-    gp = gp1 + gp2
-    sigma = pm.HalfCauchy('sigma', 0.5)
-    y_est = gp.marginal_likelihood('y_est', X=X, y=y,\
-                                   noise=sigma)
-#+end_src
-
-#+RESULTS:
-
-
-
-
-** neural network
-
-- Bayesian neural networks are do-able now
-- but require a bit of programming
-- this will become easier in a year or two
-- conceptually it is important to understand what information a neural network provides about uncertainty
-- this is part of the "black box" feature of a neural network
-- suppose we want to classify pictures with cats and dogs:
-  - compare two pictures where one is classified as dog with 0.51 prob.; the other with 0.99 probability
-  - when you run the neural network 1000 times, the latter features probabilities 0.01 and 0.99 each 500 times...
-
-
-
-** confidence interval
-
-To make clear what a confidence interval is in "standard" (frequentist) econometrics, we will simulate this interval for an example: we draw a sample $x_1,...,x_n$ from a normal distribution with (unknown) mean $\mu$ and (known) standard deviation $\sigma=1$. We calculate the sample mean $m = \sum x_i/n$ and the 95% confidence interval $[m - 2 \sigma_m, m + 2 \sigma_m]$ where $\sigma_m = \sigma/\sqrt(n)$ denotes the standard deviation of the sample mean $m$.
-
-#+begin_src jupyter-python
-def interval_95(X,σ):
-    """X should be of the form: number of repetitions (in rows) times sample (in columns)"""
-    mean = X.mean(axis=1) # for each row (repetition) take the mean across the sample
-    σ_m = σ/np.sqrt(X.shape[1])
-    return np.array([mean - 2 * σ_m, mean + 2 * σ_m])
-
-μ = 100
-σ = 10
-repetions = 100_000
-n_sample = 9
-X = np.random.normal(μ,σ,size = (repetions,n_sample))
-
-#+end_src
-
-#+RESULTS:
-
-
-
-*** Question: calculate in which percentage of cases $\mu$ lies in this 95% interval
-
-Note that $\mu$ does not vary when we are doing these simulations; it stays fixed at $\mu=100$.
-
-
-*** Answer: confidence interval                                  
-
-
-#+begin_src jupyter-python
-intervals = interval_95(X,σ)
-test = (intervals[0] < μ) &(μ < intervals[1])
-print(np.sum(test)/len(test))
-#+end_src
-
-#+RESULTS:
-: 0.95449
-
-There is no randomness with respect to $\mu$. But we do draw different samples and hence find different sample means. The different sample means generate different confidence intervals. We are calculating how often these (stochastic) confidence intervals actually contain $\mu$.
-
 
 
 * Course takeaway: simulation as a bridge to machine learning
