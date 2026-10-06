@@ -1986,303 +1986,595 @@ print(np.allclose(beta_hat, beta_loop))   # should print True
 
 -----
 
-* Lexture 4: Overfitting and underfitting
+* Lecture 4: Overfitting and underfitting
 :PROPERTIES:
-:CUSTOM_ID: lecture-overfitting-and-underfitting
+:HTML_CONTAINER_CLASS: section
+:CUSTOM_ID: lecture-overfitting
 :END:
-Adding more explanatory variables to a regression cannot make the fit
-worse. This is easy to see: if it would become worse, you would set the
-coefficient on the added variables to 0. That would give the same fit as
-before.
 
-A bit more formally, OLS solves the following minimization problem: \[
-\min_{\beta} \sum_{i=1}^N (y_i - \hat y_i(\beta))^2
-\] where the prediction \(\hat y_i\) is a function of the parameter
-values \(\beta\) that we choose. Having a larger vector \(\beta\) (more
-explanatory variables) cannot increase this objective function
+*Skills you learn in this lecture:* splitting data into train and test sets, diagnosing over-fitting and under-fitting by comparing train and test errors, regularizing with ridge and lasso regression, and tuning the regularization strength with cross-validation.
 
-There are two problems when one does machine learning (or any other form
-of statistical analysis): * underfitting and * overfitting.
+** Learning Objectives
 
-Underfitting is the situation where a variable is important to explain
-\(y\) but you do not include it in the regression. As most people have a
-tendency to include as many variables as possible, this is usually not a
-problem. Unless, of course, you do not have data on an important
-variable, but then you cannot really solve this problem.
+After completing this lecture you should be able to:
+- explain why adding more parameters always improves the training fit but may worsen out-of-sample predictions
+- create a polynomial design matrix with =np.vander= and fit it by OLS with =np.linalg.solve=
+- implement a train/test split with =numpy= slicing and compute the mean squared error on each set
+- implement ridge regression using the closed-form solution $\hat\beta_{\text{ridge}} = (X^\top X/n + \lambda \Lambda)^{-1} X^\top y/n$
+- implement lasso regression and explain why it produces exact zeros for coefficients
+- tune the hyper-parameter $\lambda$ with $k$ fold cross-validation
 
-Overfitting is the situation where you include variables in your
-regression that are actually not relevant. The reason why this happens
-is that including these variables improves the fit of the model (see
-above and an example below). But the problem is that you are picking up
-correlations that are particular to the sample; not a (general) feature
-of the data generating process.
+** Introduction
 
-There are a number of ways to deal with this. One is the lasso and ridge
-regressions we discussed above. Another is the use of an information
-criterion like
-[[https://en.wikipedia.org/wiki/Akaike_information_criterion][AIC]] and
-its generalizations. The idea of AIC is to include a penalty in the
-expression for the fit for the number of parameters.
+In machine learning and econometrics we face a fundamental tension: a more complex model (more parameters) always fits the training data better, but a model that is /too/ complex will fit the noise in the training sample rather than the underlying signal. That is, the model picks up structure that is specific for the sample and does not generalize to the population.
 
-But if you have lots of data (which is the case if you work with “big
-data”), there is a simple way to deal with this: split your data into a
-train and test set. You estimate the model with the train set (you
-“train the model”). And then check the fit with the test set. If you
-pick up particular correlations in the train set, your predictions in
-the test set become worse.
+Adding more explanatory variables to a regression cannot make the training fit worse. The OLS minimization problem,
 
-Let's first look at an example. We generate data with a quadratic
-relation between \(x\) and \(y\). Then we generate more variables:
-\(x^3, x^4, ..., x^9\).
+\[
+\min_{\beta} \frac{1}{n}\sum_{i=1}^{n}\left(y_i - \hat{y}_i(\beta)\right)^2
+\]
 
-Including all these extra variables in training the model, improves the
-fit. The sum of squared residuals decreases with the number of
-explanatory variables in the train set. However, this is not true in the
-test set.
+can only improve (or stay the same) when $\beta$ is extended. If adding the new variable hurt, we would simply set its coefficient to zero and recover the previous fit.
 
-First, we generate the data:
+The problem is that a model optimized on the training sample can pick up idiosyncratic patterns --- noise --- that do not repeat in new data. We say the model does not generalize. Two failure modes matter:
+
+- /Under-fitting/: the model is too simple to capture the true relationship. Both training and test errors are high.
+- /Over-fitting/: the model is too complex and fits the training noise. Training error is low but test error is high.
+
+The standard diagnostic is a /train/test split/: hold out a random subset of the data, train the model on the remainder, and evaluate predictions on the held-out test set. The test error is an unbiased estimate of generalization performance. Crucially, the test set should be used /once/, after we have settled on a final model. Repeatedly comparing models on the test set risks over-fitting to it.
+
+A practical remedy for over-fitting is /regularization/: add a penalty for large coefficients to the objective function. Two popular penalties are the /ridge/ ($L_2$) penalty $\lambda \sum_j \beta_j^2$ and the /lasso/ ($L_1$) penalty $\lambda \sum_j |\beta_j|$. As $\lambda$ increases, coefficients shrink toward zero; with a very large $\lambda$ even complex models under-fit. The penalty strength $\lambda$ is a /hyper-parameter/ chosen by cross-validation, not by fitting/estimating on the training set.
+
+** Apps
+
+This lecture has two interactive apps. The first shows how train and test errors diverge as polynomial degree increases. The second applies ridge and lasso regularization to an over-parameterized polynomial and illustrates how the optimal penalty balances the bias--variance trade-off.
+
+Two remarks; first, we are not particularly interested in polynomial regression. But it is an intuitive way in which to make the model more complex and the over-fitting pattern is obvious in a simple figure. Second, in the app the train/test split of the data is done on sorted data which is not advisable in practice but helps to illustrate the effect in the figures.
+
+*** Polynomial regression: over-fitting and under-fitting
+:PROPERTIES:
+:HTML_CONTAINER_CLASS: section
+:END:
+
+Data come from the true model $y = 1 + 2x^2 + \varepsilon$. We split 30 observations into 20 training and 10 test points and fit a polynomial of degree $d$ only to the training data.
+
+Use the slider to vary $d$ from 1 to 9. The top figure shows all data together with the fitted curve; the two panels below compare the fit on the training set (left) and on the test set (right). The train MSE falls monotonically with $d$; the test MSE is minimized near the true degree 2 and grows thereafter.
+
+#+BEGIN_EXPORT latex
+\url{https://janboone.github.io/datascience-marimo/lecture4\_overfitting.html}
+#+END_EXPORT
+
+#+BEGIN_EXPORT html
+<div style="text-align:center;margin:20px 0;">
+  <a href="https://janboone.github.io/datascience-marimo/lecture4_overfitting.html"
+     target="_blank"
+     style="background:#1f3c88;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:1em;">
+    &#9658; Open app: Polynomial Regression &#8212; Overfitting and Underfitting
+  </a>
+</div>
+#+END_EXPORT
+
+*** Ridge and lasso regularisation
+:PROPERTIES:
+:HTML_CONTAINER_CLASS: section
+:END:
+
+We fix a degree-9 polynomial (10 coefficients, only 20 training observations) and add ridge and lasso regularization. Use the slider to vary $\lambda$.
+
+- Train MSE rises as $\lambda$ increases (more shrinkage = more bias).
+- Test MSE first falls (over-fitting reduced) and then rises (under-fitting).
+- Lasso sets some coefficients exactly to zero; ridge keeps all non-zero but small.
+
+#+BEGIN_EXPORT latex
+\url{https://janboone.github.io/datascience-marimo/lecture4\_regularization.html}
+#+END_EXPORT
+
+#+BEGIN_EXPORT html
+<div style="text-align:center;margin:20px 0;">
+  <a href="https://janboone.github.io/datascience-marimo/lecture4_regularization.html"
+     target="_blank"
+     style="background:#1f3c88;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:1em;">
+    &#9658; Open app: Ridge and Lasso Regularisation
+  </a>
+</div>
+#+END_EXPORT
+
+** Python Code Explanation
+
+Open a =marimo= notebook alongside this document and type the code yourself. We build up from polynomial features and the train/test split to regularized regression and cross-validation.
+
+*** Polynomial features and train/test split
+
+We generate data from the true quadratic model and split into train and test sets using =numpy= slicing. We split the data on sorted data for "dramatic effect" in our figures.
 
 #+begin_src python
-N_observations = 30
-train_size = 15
-x = tf.random.normal([N_observations],seed=26)
-y = x+2*x**2+2*tf.random.normal([N_observations],seed=50)
-df = pd.DataFrame({'y':y,'x':x})
-df['constant'] = 1
-df['x2'] = df.x**2
-df['x3'] = df.x**3
-df['x4'] = df.x**4
-df['x5'] = df.x**5
-df['x6'] = df.x**6
-df['x7'] = df.x**7
-df['x8'] = df.x**8
-df['x9'] = df.x**9
-df_train = df[:train_size]
-df_test = df[train_size:]
+import numpy as np
+import matplotlib.pyplot as plt
+
+rng = np.random.default_rng(42)
+N, n_train = 30, 20
+x = np.sort(rng.uniform(-2.0, 2.0, N))
+y = 1.0 + 2.0 * x ** 2 + rng.normal(0, 1.5, N)
+
+x_train, x_test = x[:n_train], x[n_train:]
+y_train, y_test = y[:n_train], y[n_train:]
 #+end_src
 
-We split the dataset (dataframe) into a train and test set (using
-slicing).
 
-Then we estimate a series of regressions, starting with \(y\) explained
-by a constant and variable \(x\) and adding a term \(x^n\) for
-\(n=2,...,9\). Hence, we estimate 9 regressions.
+A /polynomial design matrix/ of degree $d$ has columns $[1,\, x,\, x^2,\, \ldots,\, x^d]$. =np.vander= builds this efficiently with the =increasing=True= argument.
 
 #+begin_src python
-regression = 'y ~ x'
-vector_results = [smf.ols(regression, data=df_train).fit()]
-for column in df.columns[3:]:
-    regression = regression+' + '+column
-    print(regression)
-    vector_results.append(smf.ols(regression, data=df_train).fit())
+def poly_features(xv, degree):
+    return np.vander(xv, N=degree + 1, increasing=True)
+
+d = 4
+Xtr = poly_features(x_train, d)   # shape (20, 5)
+Xte = poly_features(x_test,  d)   # shape (10, 5)
+Xtr.shape                         # (20, 5)
 #+end_src
 
-When we plot mean squared error, =mse= (we will calculate this ourselves
-below), we see --as claimed above-- that the fit improves with each
-variable \(x^n\) that we add to the regression. Hence, this gives the
-impression that adding all 9 terms is a good idea.
+#+RESULTS:
+| 20 | 5 |
 
-However, we generated the data ourselves and we know that there are no
-terms \(x^9\) in the data generating process.
+We fit OLS on the training data and compute the mean squared error (MSE) on both sets.
 
-#+begin_src python
-plt.plot([tf.keras.losses.mse(df_train['y'],model.predict(df_train)).numpy() for model in vector_results])
+#+begin_src python :results output
+def ols(X, y):
+    return np.linalg.solve(X.T @ X, X.T @ y)
+
+beta = ols(Xtr, y_train)
+mse_train = np.mean((y_train - Xtr @ beta) ** 2)
+mse_test  = np.mean((y_test  - Xte @ beta) ** 2)
+print(f"Train MSE: {mse_train:.2f},  Test MSE: {mse_test:.2f}")
 #+end_src
 
-Next we use the 9 models that we estimated above to predict the outcomes
-in the test set. For each model we plot the mean sqaured error in the
-test set (dots).
+#+RESULTS:
+: Train MSE: 1.08,  Test MSE: 3.17
 
-In the first graph we also plot the means squared error of the train set
-(blue line) with the code:
-=np.sum((df_train['y']-model.predict(df_train))**2)/len(df_train['y'])=
+To see how MSE changes with polynomial degree we loop over degrees 1 to 9.
 
-#+begin_src python
-    
-plt.plot([np.sum((df_train['y']-model.predict(df_train))**2)/len(df_train['y']) for model in vector_results])
-plt.scatter(range(9),[tf.keras.losses.mse(df_test['y'],model.predict(df_test)).numpy() for model in vector_results])
+#+begin_src python :results graphics file output :file ./figures/OLS_under_over_fitting.png
+degrees = range(1, 10)
+train_errors, test_errors = [], []
+for d in degrees:
+    Xtr_d = poly_features(x_train, d)
+    Xte_d = poly_features(x_test,  d)
+    b = ols(Xtr_d, y_train)
+    train_errors.append(np.mean((y_train - Xtr_d @ b) ** 2))
+    test_errors.append( np.mean((y_test  - Xte_d @ b) ** 2))
+
+plt.plot(degrees, train_errors, label="Train MSE")
+plt.plot(degrees, test_errors,  label="Test MSE")
+plt.axvline(2, color="gray", linestyle="--", label="True degree (d=2)")
+plt.xlabel("Polynomial degree"); plt.ylabel("MSE")
+plt.yscale("log"); plt.legend()
 #+end_src
 
-The fit of the final model is so bad, that we cannot see the pattern in
-the 8 other models. Hence, for the next plot we delete the 9th model.
+#+RESULTS:
+[[file:./figures/OLS_under_over_fitting.png]]
 
-#+begin_src python
-plt.scatter(range(8),[tf.keras.losses.mse(df_test['y'],model.predict(df_test)).numpy() for model in vector_results[:8]])
+The train MSE curve is monotonically decreasing; the test MSE curve has a U-shape with its minimum near the true degree 2.
+
+*** Ridge regression: shrinking coefficients
+
+Ridge regression adds a squared-coefficient penalty to the OLS objective:
+
+\[
+\hat\beta_{\text{ridge}} = \arg\min_\beta \frac{1}{n}\|y - X\beta\|^2 + \lambda \sum_{j=1}^{p} \beta_j^2
+\]
+
+The first-order condition gives the closed-form solution
+
+\[
+\hat\beta_{\text{ridge}} = \left(\frac{X^\top X}{n} + \lambda \Lambda\right)^{-1} \frac{X^\top y}{n}
+\]
+
+where $\Lambda = \operatorname{diag}(0, 1, 1, \ldots, 1)$ so the intercept is not penalized. With $\lambda = 0$ this coincides with the OLS estimate.
+
+Before fitting, we standardize the polynomial features (not the intercept column) so that $\lambda$ treats all predictors equally regardless of their natural scale.
+
+#+begin_src python :results output
+# Standardise columns 1..d using training mean/std
+def standardize(Xraw, mean=None, std=None):
+    if mean is None:
+        mean = Xraw[:, 1:].mean(axis=0)
+        std  = Xraw[:, 1:].std(axis=0) + 1e-8
+    Xs = Xraw.copy()
+    Xs[:, 1:] = (Xs[:, 1:] - mean) / std
+    return Xs, mean, std
+
+d = 9   
+Xtr_raw = poly_features(x_train, d)
+Xte_raw = poly_features(x_test,  d)
+
+Xtr, fmean, fstd = standardize(Xtr_raw)
+Xte, _,    _     = standardize(Xte_raw, fmean, fstd)
+
+def ridge(X, y, lam):
+    n, p = X.shape
+    Lambda = np.diag([0.0] + [1.0] * (p - 1))
+    A = X.T @ X / n + lam * Lambda
+    return np.linalg.solve(A, X.T @ y / n)
+
+for lam in [0.0, 0.5, 1.0, 2.0]:
+    b = ridge(Xtr, y_train, lam)
+    mse_tr = np.mean((y_train - Xtr @ b) ** 2)
+    mse_te = np.mean((y_test  - Xte @ b) ** 2)
+    print(f"lambda={lam:.1f}  train MSE={mse_tr:.2f}  test MSE={mse_te:.2f}")
 #+end_src
 
-As you can see, the fit does not monotonically improve with the size of
-the model. This due to the model picking up patterns that are present in
-the train sample but which do not generalize to the test sample.
+#+RESULTS:
+: lambda=0.0  train MSE=0.35  test MSE=555215.25
+: lambda=0.5  train MSE=1.36  test MSE=6.73
+: lambda=1.0  train MSE=1.51  test MSE=9.81
+: lambda=2.0  train MSE=1.72  test MSE=11.86
 
-To understand why this happens, let's plot the train and test data
-points together with the prediction of the final model.
+Ridge shrinks all coefficients continuously but never sets any exactly to zero.
 
-#+begin_src python
-range_x = np.arange(min(x),max(x),0.1)
-df_plot = pd.DataFrame({'x':range_x})
-df_plot['constant'] = 1
-df_plot['x2'] = df_plot.x**2
-df_plot['x3'] = df_plot.x**3
-df_plot['x4'] = df_plot.x**4
-df_plot['x5'] = df_plot.x**5
-df_plot['x6'] = df_plot.x**6
-df_plot['x7'] = df_plot.x**7
-df_plot['x8'] = df_plot.x**8
-df_plot['x9'] = df_plot.x**9
-plt.scatter(df_train['x'],df_train['y'],label='train data')
-plt.plot(range_x,vector_results[-1].predict(df_plot),label='prediction')
-plt.scatter(df_test['x'],df_test['y'],label='test data')
+*** Lasso regression: coordinate descent and sparsity
+
+The lasso uses an $L_1$ penalty:
+
+\[
+\hat\beta_{\text{lasso}} = \arg\min_\beta \frac{1}{2n}\|y - X\beta\|^2 + \lambda \sum_{j=1}^{p} |\beta_j|
+\]
+
+There is no closed-form solution. The single-coordinate minimizer involves the /soft-thresholding/ operator
+
+\[
+S(z, \lambda) = \operatorname{sign}(z) \cdot \max(|z| - \lambda,\, 0)
+\]
+
+which sets the coefficient to zero whenever $|z| < \lambda$.
+
+Starting from the coordinate-wise objective:
+
+$$\min_{\beta_j} \frac{1}{2n}\|r_j - X_j \beta_j\|^2 + \lambda|\beta_j|$$
+
+with $r_j = y - \sum_{k \neq j} X_k \beta_k$
+
+Expanding the quadratic term:
+
+$$\frac{1}{2n}\left(r_j^T r_j - 2\beta_j X_j^T r_j + \beta_j^2 X_j^T X_j\right) + \lambda|\beta_j|$$
+
+Taking the derivative of the smooth part:
+
+$$\frac{\partial}{\partial \beta_j} = \frac{1}{n}\left(-X_j^T r_j + \beta_j X_j^T X_j\right)$$
+
+The first order condition for the full objective is:
+
+$$\frac{1}{n}\left(-X_j^T r_j + \beta_j X_j^T X_j\right) + \lambda \partial|\beta_j| = 0$$
+
+where the notation $\partial|\beta_j|$ is short-hand for the following "derivative":
+
+$$\partial|\beta_j| = \begin{cases} \{1\} & \beta_j > 0 \\ \{-1\} & \beta_j < 0 \\ [-1, 1] & \beta_j = 0 \end{cases}$$
+
+Letting $z_j = X_j^T r_j / n$ and $c_j = X_j^T X_j / n$, the three cases resolve to:
+
+$$\hat{\beta}_j = \begin{cases} \frac{z_j - \lambda}{c_j} & z_j > \lambda \\ \frac{z_j + \lambda}{c_j} & z_j < -\lambda \\ 0 & |z_j| \leq \lambda \end{cases}$$
+
+Which is exactly the soft-threshold formula:
+
+$$\hat{\beta}_j = \frac{S(z_j, \lambda)}{c_j}$$
+
+
+
+#+begin_src python :results output
+def soft_threshold(z, threshold):
+    return np.sign(z) * np.maximum(np.abs(z) - threshold, 0.0)
+
+def lasso_cd(X, y, lam, max_iter=3000, tol=1e-8):
+    n, p = X.shape
+    beta = np.zeros(p)
+    col_norms = np.sum(X ** 2, axis=0) / n   # yields the c_j
+    for _ in range(max_iter):
+        beta_old = beta.copy()
+        for j in range(p):
+            # Partial residual holding all other coefficients fixed
+            r_j = y - X @ beta + X[:, j] * beta[j]
+            z_j = X[:, j] @ r_j / n
+            if j == 0:                        # intercept: no penalty
+                beta[j] = z_j / col_norms[j]
+            else:
+                beta[j] = soft_threshold(z_j, lam) / col_norms[j]
+        if np.max(np.abs(beta - beta_old)) < tol:
+            break
+    return beta
+
+for lam in [0.0, 0.5, 1.0, 2.0]:
+    b = lasso_cd(Xtr, y_train, lam)
+    n_zeros = np.sum(np.abs(b[1:]) < 1e-6)
+    mse_te = np.mean((y_test - Xte @ b) ** 2)
+    print(f"lambda={lam:.1f}  zeros={n_zeros}/9  test MSE={mse_te:.2f}")
+#+end_src
+
+#+RESULTS:
+: lambda=0.0  zeros=0/9  test MSE=367.49
+: lambda=0.5  zeros=7/9  test MSE=5.01
+: lambda=1.0  zeros=7/9  test MSE=3.73
+: lambda=2.0  zeros=8/9  test MSE=7.67
+
+Lasso sets coefficients exactly to zero (sparse solution) because the $L_1$ penalty has a kink at zero: any coefficient smaller than $\lambda$ in magnitude is thresholded all the way to zero. This makes lasso a natural tool for variable selection. Ridge, which uses a smooth $L_2$ penalty, shrinks coefficients (in absolute value) but does not set them equal to zero.
+
+*** Tuning $\lambda$ with cross-validation
+
+The hyper-parameter $\lambda$ controls the bias-variance trade-off. We choose it by $k$ fold cross-validation: split the training data into $k$ equal folds; in each iteration use $k-1$ folds to fit the model and the remaining fold to evaluate the loss. The average validation loss across folds estimates out-of-sample performance without ever touching the test set.
+
+When you will use $k$ fold cross validation in your own analyses, you will probably use [[https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.KFold.html][scikit-learn KFold]]. Here we program the $k$ folds ourselves with =numpy=. Read the code for the function =kfold_cv= and try to understand how this works (you can ask an LLM for help, if necessary).
+
+#+begin_src python :results graphics file output :file ./figures/cross_validation_lasso_ridge.png
+def kfold_cv(X, y, lam_values, k=5, method="ridge"):
+    n = len(y)
+    fold_size = n // k # integer division
+    val_mse = np.zeros(len(lam_values))
+    for fold in range(k):
+        idx_val   = np.arange(fold * fold_size, (fold + 1) * fold_size)
+        idx_train = np.concatenate([np.arange(0, fold * fold_size),
+                                    np.arange((fold + 1) * fold_size, n)])
+        Xf_tr, yf_tr   = X[idx_train], y[idx_train]
+        Xf_val, yf_val = X[idx_val],   y[idx_val]
+        for i, lam in enumerate(lam_values):
+            if method == "ridge":
+                b = ridge(Xf_tr, yf_tr, lam)
+            else:
+                b = lasso_cd(Xf_tr, yf_tr, lam)
+            val_mse[i] += np.mean((yf_val - Xf_val @ b) ** 2)
+    return val_mse / k
+
+lam_values = np.linspace(0.05, 3.0, 61)
+cv_ridge = kfold_cv(Xtr, y_train, lam_values, k=5, method="ridge")
+cv_lasso = kfold_cv(Xtr, y_train, lam_values, k=5, method="lasso")
+
+opt_ridge = lam_values[np.argmin(cv_ridge)]
+opt_lasso = lam_values[np.argmin(cv_lasso)]
+
+plt.plot(lam_values, cv_ridge, label="Ridge CV MSE")
+plt.plot(lam_values, cv_lasso, label="Lasso CV MSE")
+plt.axvline(opt_ridge, linestyle="--", color="steelblue",  alpha=0.6, label="optimal $\\lambda$ ridge")
+plt.axvline(opt_lasso, linestyle="--", color="forestgreen", alpha=0.6, label="optimal $\\lambda$ lasso")
+plt.xlabel("lambda"); plt.ylabel("Validation MSE")
 plt.legend()
 #+end_src
 
-Since the prediction is “way off” for low values of \(x\), let's zoom in
-on the prediction (use a more narrow =range_x=).
+#+RESULTS:
+[[file:./figures/cross_validation_lasso_ridge.png]]
 
-Now it becomes clearer what the estimation in the train set is trying to
-achieve. But it is also clear that this does not generalize to the test
-data (orange points).
+Both curves have a U-shape: too small $\lambda$ leads to over-fitting; too large leads to under-fitting. The optimal $\lambda$ sits at the bottom of the U. Because we only have $k=5$ folds on 20 training points (4 per fold), the validation estimates are noisy; with more data the U becomes smoother and the optimum sharper.
 
-This is exactly what overfitting does.
+*** Bias--variance decomposition
 
-#+begin_src python
-range_x = np.arange(-1.25,1.7,0.1)
-df_plot = pd.DataFrame({'x':range_x})
-df_plot['constant'] = 1
-df_plot['x2'] = df_plot.x**2
-df_plot['x3'] = df_plot.x**3
-df_plot['x4'] = df_plot.x**4
-df_plot['x5'] = df_plot.x**5
-df_plot['x6'] = df_plot.x**6
-df_plot['x7'] = df_plot.x**7
-df_plot['x8'] = df_plot.x**8
-df_plot['x9'] = df_plot.x**9
-plt.scatter(df_train['x'],df_train['y'],label='train data')
-plt.plot(range_x,vector_results[-1].predict(df_plot),label='prediction')
-plt.scatter(df_test['x'],df_test['y'],label='test data')
+Assume the true relationship is $y = f(x) + \varepsilon$, where
+$\varepsilon \sim (0, \sigma^2)$ is independent noise. Let $\hat{y}$
+be our estimator. We want to compute the expected squared error at a
+fixed point $x$:
+
+\begin{align*}
+\mathbb{E}\!\left[(y - \hat{y})^2\right]
+&= \mathbb{E}\!\left[(f(x) + \varepsilon - \hat{y})^2\right] \\
+&= \mathbb{E}\!\left[((f(x) - \hat{y}) + \varepsilon)^2\right] \\
+&= \mathbb{E}\!\left[(f(x) - \hat{y})^2\right]
+ + 2\,\mathbb{E}\!\left[(f(x) - \hat{y})\,\varepsilon\right]
+ + \mathbb{E}\!\left[\varepsilon^2\right].
+\end{align*}
+
+Since $\varepsilon$ is independent of $\hat{y}$ and
+$\mathbb{E}[\varepsilon] = 0$, the cross term vanishes:
+\[
+\mathbb{E}\!\left[(f(x) - \hat{y})\,\varepsilon\right]
+= \mathbb{E}\!\left[f(x) - \hat{y}\right]\mathbb{E}[\varepsilon] = 0,
+\]
+and $\mathbb{E}[\varepsilon^2] = \sigma^2$. So:
+\[
+\mathbb{E}\!\left[(y - \hat{y})^2\right]
+= \mathbb{E}\!\left[(f(x) - \hat{y})^2\right] + \sigma^2.
+\]
+
+Now we decompose the first term. Let
+$\mu = \mathbb{E}[\hat{y}]$. Add and subtract $\mu$:
+
+\begin{align*}
+\mathbb{E}\!\left[(f(x) - \hat{y})^2\right]
+&= \mathbb{E}\!\left[(f(x) - \mu + \mu - \hat{y})^2\right] \\
+&= \mathbb{E}\!\left[(f(x) - \mu)^2
+  + 2(f(x)-\mu)(\mu - \hat{y})
+  + (\mu - \hat{y})^2\right] \\
+&= (f(x) - \mu)^2
+  + 2(f(x)-\mu)\,\mathbb{E}\!\left[\mu - \hat{y}\right]
+  + \mathbb{E}\!\left[(\hat{y} - \mu)^2\right].
+\end{align*}
+
+Since $\mathbb{E}[\mu - \hat{y}] = \mu - \mu = 0$, the cross term vanishes, leaving:
+
+$$\mathbb{E}\!\left[(f(x) - \hat{y})^2\right] = \underbrace{(f(x) - \mu)^2}_{\text{Bias}^2} + \underbrace{\mathbb{E}\!\left[(\hat{y}-\mu)^2\right]}_{\operatorname{Var}(\hat{y})}.$$
+
+Combining everything the expected test error decomposes into three terms:
+
+\[
+\mathbb{E}\!\left[(y - \hat{y})^2\right] = \underbrace{\left(\mathbb{E}[\hat{y}] - f(x)\right)^2}_{\text{Bias}^2} + \underbrace{\operatorname{Var}(\hat{y})}_{\text{Variance}} + \underbrace{\sigma^2}_{\text{Irreducible noise}}
+\]
+
+- /Bias/: how far the average prediction is from the truth. A too-simple model (underfitting) has high bias.
+- /Variance/: how much the prediction changes across different training samples. A too-complex model (overfitting) has high variance.
+- /Irreducible noise/: $\sigma^2$, the noise in $y$ itself. No model can remove it.
+
+Regularisation trades bias for variance: as $\lambda$ increases, bias rises (the model is forced toward zero) but variance falls (the model is less sensitive to the particular training sample). The optimal $\lambda$ balances the two.
+
+We can verify this decomposition empirically by repeating the experiment many times with different training samples and observing the average squared bias and variance of the predictions.
+
+#+begin_src python :results graphics file output :file ./figures/bias_variance_tradeoff.png
+fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+
+N_sim  = 500
+x_grid = np.linspace(-1.0, 1.0, 80)
+degrees = [1, 5, 9]
+
+for ax, d in zip(axes, degrees):
+    all_preds = np.zeros((N_sim, len(x_grid)))
+    for i in range(N_sim):
+        xi = np.sort(rng.uniform(-2.0, 2.0, n_train))
+        yi = 1.0 + 2.0 * xi ** 2 + rng.normal(0, 1.5, n_train)
+        coeffs_i = np.polyfit(xi, yi, d)
+        all_preds[i] = np.polyval(coeffs_i, x_grid)
+
+    f_true    = 1.0 + 2.0 * x_grid ** 2
+    mean_pred = all_preds.mean(axis=0)
+    bias_sq   = (mean_pred - f_true) ** 2
+    variance  = all_preds.var(axis=0)
+
+    ax.plot(x_grid, bias_sq,            label="Bias²")
+    ax.plot(x_grid, variance,           label="Variance")
+    ax.plot(x_grid, bias_sq + variance, label="Bias² + Variance", lw=2)
+    ax.set_xlabel("x")
+    ax.set_ylabel("MSE component")
+    ax.set_title(f"Degree-{d} polynomial")
+    ax.legend()
+
+fig.suptitle("Bias–Variance Decomposition", fontsize=14)
+plt.tight_layout()
+#+end_src
+
+#+RESULTS:
+[[file:./figures/bias_variance_tradeoff.png]]
+
+Compare the total $\text{Bias}^{2}$ + Variance across degrees 1, 5 and 9 to trace the full bias--variance trade-off curve. At degree 1 bias is large; at degree 9 variance dominates.
+
+*** Why lasso gives sparsity but ridge does not
+
+Both penalties shrink coefficients toward zero, but only lasso can set them /exactly/ to zero. The reason is geometric.
+
+Consider minimising the OLS loss subject to a budget constraint on the coefficients:
+
+- /Ridge/ constrains $\|\beta\|_2^2 = \beta_1^2 + \beta_2^2 \leq c$. The constraint region is a smooth circle (sphere in higher dimensions). The loss contours (ellipses) typically touch the constraint region on its curved surface, away from the axes, so both coefficients are non-zero.
+- /Lasso/ constrains $\|\beta\|_1 = |\beta_1| + |\beta_2| \leq c$. The constraint region is a diamond with corners on the axes. The loss contours are much more likely to first touch the diamond at a corner, where one coefficient is exactly zero.
+
+We can visualise this in 2D.
+
+#+begin_src python :results graphics file output :file ./figures/lasso_to_zero.png
+theta = np.linspace(0, 2 * np.pi, 300)
+fig, axes = plt.subplots(1, 2, figsize=(10, 4.5))
+
+# OLS contours (loss ellipses centred away from origin)
+beta_ols_2d = np.array([1.2, 0.8])    # hypothetical OLS solution
+A2 = np.array([[2.0, 0.5], [0.5, 1.0]])   # positive definite quadratic form
+
+b1, b2 = np.meshgrid(np.linspace(-1.5, 2.0, 200), np.linspace(-1.5, 1.5, 200))
+beta_grid = np.stack([b1, b2], axis=-1)
+diff = beta_grid - beta_ols_2d
+loss_2d = np.einsum("...i,ij,...j->...", diff, A2, diff)
+
+for ax, title, constraint in zip(axes, ["Ridge (L2)", "Lasso (L1)"], ["L2", "L1"]):
+    ax.contour(b1, b2, loss_2d, levels=10, cmap="Blues_r", alpha=0.7)
+    if constraint == "L2":
+        ax.fill(np.cos(theta), np.sin(theta), alpha=0.3, color="steelblue")
+        ax.plot(np.cos(theta), np.sin(theta), color="steelblue", lw=2)
+    else:
+        diamond = np.array([[1,0],[0,1],[-1,0],[0,-1],[1,0]])
+        ax.fill(diamond[:,0], diamond[:,1], alpha=0.3, color="forestgreen")
+        ax.plot(diamond[:,0], diamond[:,1], color="forestgreen", lw=2)
+    ax.axhline(0, color="gray", lw=0.8); ax.axvline(0, color="gray", lw=0.8)
+    ax.set_xlabel(r"$\beta_1$"); ax.set_ylabel(r"$\beta_2$")
+    ax.set_title(title); ax.set_xlim(-1.6, 2.1); ax.set_ylim(-1.6, 1.6)
+
+plt.tight_layout()
+#+end_src
+
+#+RESULTS:
+[[file:./figures/lasso_to_zero.png]]
+
+The corner of the lasso diamond lies on the $\beta_2 = 0$ axis: wherever the OLS solution points from that corner, the unconstrained minimizer must cross the horizontal axis, making it likely that the constrained solution lands exactly there with $\beta_2 = 0$.
+
+*** Regularisation path
+
+The /regularisation path/ shows how each coefficient changes as $\lambda$ varies from zero (OLS) to a large value (strong shrinkage). It helps identify which variables are most important: lasso paths hit zero at different $\lambda$ values, effectively ordering variables by their relevance.
+
+#+begin_src python :results graphics file output :file ./figures/regularisation_path.png
+lam_path   = np.logspace(-2, 1, 60)   # from 0.01 to 10 on a log scale
+ridge_coefs = np.array([ridge(Xtr, y_train, l)[1:] for l in lam_path])
+lasso_coefs = np.array([lasso_cd(Xtr, y_train, l)[1:] for l in lam_path])
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
+
+for j in range(ridge_coefs.shape[1]):
+    ax1.plot(lam_path, ridge_coefs[:, j])
+ax1.set_xscale("log"); ax1.axhline(0, color="k", lw=0.8, ls="--")
+ax1.set_xlabel("lambda (log scale)"); ax1.set_ylabel("Coefficient value")
+ax1.set_title("Ridge regularisation path (all coefficients shrink smoothly)")
+
+for j in range(lasso_coefs.shape[1]):
+    ax2.plot(lam_path, lasso_coefs[:, j])
+ax2.set_xscale("log"); ax2.axhline(0, color="k", lw=0.8, ls="--")
+ax2.set_xlabel("lambda (log scale)"); ax2.set_ylabel("Coefficient value")
+ax2.set_title("Lasso regularisation path (coefficients hit zero at different lambda)")
+
+plt.tight_layout()
+#+end_src
+
+#+RESULTS:
+[[file:./figures/regularisation_path.png]]
+
+In the ridge path all curves approach zero asymptotically but never reach it. In the lasso path curves bend sharply and hit zero at specific $\lambda$ values. The last variable to reach zero is the most important predictor according to lasso.
+
+*** Information criteria
+
+An alternative to cross-validation that you may find in the literature is an /information criterion/: penalize the log-likelihood (or equivalently the in-sample fit) for model complexity directly, without holding out data. Two common choices are:
+
+- /AIC/: $\text{AIC} = n \log(\text{RSS}/n) + 2k$
+- /BIC/: $\text{BIC} = n \log(\text{RSS}/n) + k \log n$
+
+where $k$ is the number of parameters and RSS is the residual sum of squares. BIC penalizes model size more heavily (by $\log n$ instead of 2) and tends to select simpler models.
+
+Information criteria are fast to compute (no refitting needed) but assume the model is correctly specified. Cross-validation makes fewer assumptions and is preferred when data are plentiful.
+
+#+begin_src python :results output
+def aic(y_train, y_pred_train, k):
+    n   = len(y_train)
+    rss = np.sum((y_train - y_pred_train) ** 2)
+    return n * np.log(rss / n) + 2 * k
+
+def bic(y_train, y_pred_train, k):
+    n   = len(y_train)
+    rss = np.sum((y_train - y_pred_train) ** 2)
+    return n * np.log(rss / n) + k * np.log(n)
+
+degrees = range(1, 10)
+aic_vals, bic_vals = [], []
+for d in degrees:
+    Xtr_d = poly_features(x_train, d)
+    b = ols(Xtr_d, y_train)
+    k = d + 1                          # number of free parameters
+    aic_vals.append(aic(y_train, Xtr_d @ b, k))
+    bic_vals.append(bic(y_train, Xtr_d @ b, k))
+
+opt_aic = list(degrees)[np.argmin(aic_vals)]
+opt_bic = list(degrees)[np.argmin(bic_vals)]
+print(f"AIC selects degree {opt_aic},  BIC selects degree {opt_bic}")
+#+end_src
+
+#+RESULTS:
+: AIC selects degree 8,  BIC selects degree 7
+
+#+begin_src python :results graphics file output :file ./figures/AIC_BIC.png
+plt.plot(degrees, aic_vals, "o-", label=f"AIC (min at d={opt_aic})")
+plt.plot(degrees, bic_vals, "s-", label=f"BIC (min at d={opt_bic})")
+plt.axvline(2, color="gray", ls="--", label="True degree")
+plt.xlabel("Polynomial degree"); plt.ylabel("Information criterion")
 plt.legend()
 #+end_src
 
-*Question* Make the plots of data and prediction for models 5, 6 and 7.
-Adjust =range_x= such that you can see “what is going on”.
-
-Using a train and test set helps to alleviate over- and underfitting
-problems. But the test set should only be used once. If you repeatedly
-use the train and test set to see which model is best, you make the same
-mistake as above but “on a higher level”: you may find patterns in the
-train set that generalize only to the test set but not to the data
-generating process.
-
-So how can you select your best model if you cannot use the test set for
-this? The answer is: we split the dataset in three parts: a train,
-validate and test set. That is, we use the train set to fit the model.
-Then we repeatedly use the validation set to see what the best model is.
-Then our final model, we test only once on the test set.
-
-This splitting of the data into three different (sub)sets is the royal
-road to testing the predictions of your model. Below --for ease of
-exposition-- we will not always to this. We tend to illustrate problems
-using a train and test set. We are not trying to optimize a given model
-by finetuning each parameter. For such finetuning, three subsets of data
-are recommended.
-
-Suppose you have a train and test set and your trained model does really
-well on the test set. How do you know that this is not by chance,
-e.g. due to the way you have split the data into the train and test set?
-One way to check is to do the analyses for a number of ways in which you
-can split the data into train and test sets and for each these cases
-consider the loss on the test set. If this is rather constant across the
-different ways in which you split the data, you do not need to worry. If
-this vary wildly between data partitions, something “odd” may be going
-on.
-
-One way of generating these different data partititions is k-fold
-cross-validation. See the
-[[https://en.wikipedia.org/wiki/Cross-validation_(statistics)][wikipedia page on cross-validation]]
-for details.
-
-
-- overfitting: you pick up structure that is particular to the sample but does not generalize to the population
-- underfitting: the sample contains relevant information about the population but your model is too simple to pick this up
-
-#+begin_src jupyter-python
-N_observations = 30
-train_size = 15
-x = np.random.normal(0,1,size=N_observations)
-y = x**2 + np.random.normal(0,1,size=N_observations)
-x_train = x[:train_size]
-x_test = x[train_size:]
-y_train = y[:train_size]
-y_test = y[train_size:]
-
-#+end_src
-
 #+RESULTS:
+[[file:./figures/AIC_BIC.png]]
 
-#+begin_src jupyter-python :file ./figures/test_train_example.png
-plt.scatter(x_train,y_train,label='train')
-plt.scatter(x_test,y_test,label='test')
-plt.legend();
-#+end_src
+Both criteria should select a degree close to the true value of 2. BIC will generally prefer an equal or lower degree than AIC because its penalty grows with $n$.
 
-#+RESULTS:
-[[file:./figures/test_train_example.png]]
+** Summary
 
+- /Over-fitting/ occurs when a model is so complex that it fits training-sample noise rather than the true data-generating process. Adding polynomial terms always reduces training MSE but eventually increases test MSE.
+- A /train/test split/ reveals over-fitting: if test MSE is much larger than train MSE the model has over-fit. The test set should be used only once to evaluate the final model.
+- /Ridge regression/ adds a squared-coefficient penalty $\lambda \|\beta\|_2^2$ to the OLS objective. Its closed-form solution $\hat\beta = (X^\top X/n + \lambda\Lambda)^{-1}X^\top y/n$ shrinks all coefficients toward zero without setting any exactly to zero.
+- /Lasso regression/ adds an absolute-value penalty $\lambda \|\beta\|_1$ which can be solved by coordinate descent. The /soft-thresholding/ operator sets small coefficients exactly to zero, performing automatic variable selection. A useful rule of thumb: lasso selects at most as many variables as there are observations.
+- The hyper-parameter $\lambda$ is chosen by $k$ fold cross-validation, which estimates out-of-sample performance by rotating which fold is held out for validation.
 
-
-#+begin_src jupyter-python
-z = np.polyfit(x_train, y_train, 2)
-p = np.poly1d(z)
-range_x = np.arange(np.min(x),np.max(x),0.05)
-#+end_src
-
-#+RESULTS:
-
-
-#+begin_src jupyter-python :file ./figures/fitted_polynomial.png
-plt.scatter(x_train,y_train,label='train')
-plt.scatter(x_test,y_test,label='test')
-plt.plot(range_x,p(range_x))
-plt.legend();
-#+end_src
-
-#+RESULTS:
-[[file:./figures/fitted_polynomial.png]]
-
-- overfitting
-
-#+begin_src jupyter-python :file ./figures/overfit_polynomial.png
-z1 = np.polyfit(x_train, y_train, 4)
-p1 = np.poly1d(z1)
-plt.scatter(x_train,y_train,label='train')
-plt.scatter(x_test,y_test,label='test')
-plt.plot(range_x,p1(range_x))
-plt.legend();
-#+end_src
-
-#+RESULTS:
-[[file:./figures/overfit_polynomial.png]]
-
-- underfitting
-
-
-#+begin_src jupyter-python :file ./figures/underfit_polynomial.png
-z0 = np.polyfit(x_train, y_train, 0)
-p0 = np.poly1d(z0)
-plt.scatter(x_train,y_train,label='train')
-plt.scatter(x_test,y_test,label='test')
-plt.plot(range_x,p0(range_x))
-plt.legend();
-#+end_src
-
-#+RESULTS:
-[[file:./figures/underfit_polynomial.png]]
-
-
-**** TODO ridge and lasso
-- back to lecture 2: we can use ridge and lasso as (mechanical) variable selection
-- reduce overfitting
-- hyper-parameter tuning: too high a penalty and we underfit: delete variables that  actually have an effect
-
+** Review Questions
 
 * Lecture 5: Neural network
 :PROPERTIES:

@@ -1,6 +1,8 @@
 .agent-shell/
 .claude/
 data/
+marimo/
+.noexport/
 
 
 # Byte-compiled / optimized / DLL files
