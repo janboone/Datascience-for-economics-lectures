@@ -1984,7 +1984,12 @@ beta_loop = np.array([
 print(np.allclose(beta_hat, beta_loop))   # should print True
 #+end_src
 
------
+--------------------
+
+#+BEGIN_EXPORT latex
+\newpage
+#+END_EXPORT
+
 
 * Lecture 4: Overfitting and underfitting
 :PROPERTIES:
@@ -2576,1366 +2581,1124 @@ Both criteria should select a degree close to the true value of 2. BIC will gene
 
 ** Review Questions
 
+--------------------
+
+#+BEGIN_EXPORT latex
+\newpage
+#+END_EXPORT
 * Lecture 5: Neural network
 :PROPERTIES:
 :CUSTOM_ID: lecture-neural-network
+:header-args:  :session *lecture_nn* :python ~/my_env/tf_env/bin/python3 :async t  :results output :exports both
 :END:
 
+**Skills you learn in this lecture:** program a neural network and the effects of hyper-parameter choices like the number of hidden layers, nodes per layer, activation function, epochs, learning rate; identify over-fitting and under-fitting.
 
-To get a first sense of how a neural network works, we look at two
-simple python programs that implement these algorithms. For this, we use
-the website from the book
-[[http://homepages.ecs.vuw.ac.nz/~marslast/MLbook.html][machine learning: an algorithmic perspective]].
+** Learning Objectives
+:PROPERTIES:
+:CUSTOM_ID: lecture5-learning-objectives
+:END:
 
-Below you find the code for the files
-[[http://homepages.ecs.vuw.ac.nz/~marslast/Code/Ch3/pcn_logic_eg.py][pcn_logic_eg.py]]
-and
-[[http://homepages.ecs.vuw.ac.nz/~marslast/Code/Ch4/mlp.py][mlp.py]];
-which we adapted for python 3 by adjusting the print statements (should
-be =print()= in python 3).
+After this lecture you will be able to:
+- Describe the architecture of a feedforward neural network with input, hidden, and output layers.
+- Implement forward propagation from scratch using matrix multiplication.
+- Derive and implement the backpropagation algorithm using the chain rule.
+- Explain the role of activation functions (ReLU, sigmoid, tanh, softmax) and choose between them.
+- Identify over-fitting and under-fitting from train and test accuracy.
+- Translate a numpy neural network into TensorFlow code using =tf.GradientTape=.
+- Build the same model concisely using the Keras Sequential API.
 
-By looking at the underlying code we get an idea how neural networks
-work. Then we create a neural network using tensorflow 2.0.
+** Introduction
+:PROPERTIES:
+:CUSTOM_ID: lecture5-introduction
+:END:
 
-The tensorflow syntax is very similar to [[https://keras.io/][Keras]].
-There is a
-[[https://www.datacamp.com/courses/deep-learning-in-python][datacamp course]]
-on deep learning with Keras and
-[[https://www.datacamp.com/courses/introduction-to-tensorflow-in-python][a course on tensorflow 2.0]].
+In lectures 3 and 4 we saw that OLS, ridge, and lasso all fit a linear model. Increasing the polynomial degree adds flexibility but risks over-fitting; regularization trades off bias against variance to control the over-fitting risk.
 
+Neural networks take this logic further. Instead of manually specifying a feature transformation ($x, x^2, x^3, \ldots$), the network /learns/ the transformation from data. Each hidden layer applies a learnable linear map followed by a nonlinear activation function, stacking simple computations to represent surprisingly complex relationships.
 
+For this lecture we move from regression to *classification* using the Iris dataset: 150 measurements of four flower features (sepal length, sepal width, petal length, petal width) for three species -- /setosa/, /versicolor/, and /virginica/. The goal is to predict species from measurements.
 
-- define the relu and softmax functions and plot these functions
+A neural network with one or two hidden layers solves this problem well. We vary hyper-parameters like the number of hidden layers, epochs, learning rate, and activation function in the interactive app to see what the effects are on the model's prediction.
 
-#+begin_src jupyter-python :file ./figures/relu_softmax.png
-def relu(x):
-    return np.clip(x,0,np.inf)
-def softmax(x):
-    return [np.exp(x[i])/np.sum(np.exp(x)) for i in range(len(x))]
+#+caption: Neural network for the Iris dataset
+#+attr_latex: scale=0.3
+#+name: fig:NeuralNetworkIris
+[[file:./figures/nn.png]]
 
-range_x = np.arange(10)-5
-fig, ax = plt.subplots(1,2,figsize=(12,5))
-ax[0].plot(range_x,relu(range_x))
-ax[1].plot(range_x,softmax(range_x),'ro')
-ax[0].set_title('relu')
-ax[1].set_title('softmax');
-#+end_src
+Figure ref:fig:NeuralNetworkIris illustrates the neural network that the app works with. The input layer (left of the figure) has 4 nodes (the four flower features mentioned above) and a bias term (comparable to a constant in an OLS regression) denoted by the $+1$ grey node at the top. Hidden layer 1 has 5 nodes and a bias node. Each line represents a coefficient. That is, a node in the hidden layer receives input from each of the 4 input features plus the bias. This input is of the form $w^T x + b$ where $x$ denotes a vector with the 4 measurements of flower features and $b$ the bias (constant) term. This input is transformed using an activation function to which we return below. The coefficients $w$ and $b$ are referred to as weights. The goal is to estimate the weights of the neural network.
 
-#+RESULTS:
-[[file:./figures/relu_softmax.png]]
+With this vector multiplication, bias and activation function each of the nodes in the hidden layer has a value. Then we do the same again (vector multiplication, bias, activation) as inputs for the second hidden layer. Note that the bias term in the first hidden layer has no line going into it (the constant does not depend on the values from the input layer) but does affect the values of the second hidden layer.
 
+Finally, we do the same from the second layer to the output layer. We use a Softmax function to determine the 3 probabilities that the measurements $x_1 ... x_4$ belong to a Setosa, Versicolor or Virginica iris.
 
-#+begin_src jupyter-python
-np.sum(softmax(range_x))
-#+end_src
-
-#+RESULTS:
-: 1.0
+In the app you can choose between three activation functions which are illustrated in Figure ref:fig:ActivationFunctions. We come back to these functions below. In the app, the Softmax function takes in a vector with three values and turn these into three probabilities: that is, each value is between 0 and 1 and adding the three values gives 1.
 
 
-*** why relu?
+#+caption: Three activation functions
+#+attr_latex: scale=0.3
+#+name: fig:ActivationFunctions
+[[./figures/lecture5_activations.png]]
 
-#+begin_src jupyter-python :file ./figures/relu_approximation.png
-import numpy as np
+
+The app also allows you to choose two hyper-parameters: the number of epochs and the learning rate. Recall that hyper-parameters are parameters that affect the estimation algorithm but are not estimated themselves; they are "tuned". The number of epochs refers to the number of times an observation is used in estimation. Training typically requires multiple epochs because a single pass is rarely sufficient for the model to learn complex patterns. Each subsequent epoch allows the model to refine its accuracy and generalize better to unseen data. Tuning the number of epochs is finding the right balance: too few can lead to under-fitting (the model hasn't learned enough), while too many can cause over-fitting (the model memorizes the training data and fails to generalize).
+
+The learning rate specifies to which extent parameters change given that a change improves the fit (reduces the loss) of the estimation. If the learning rate is too low, it takes a lot of time before the algorithm converges to the parameter values that minimize the loss. If the learning rate is too high, parameters may over-shoot their optimal value and sometimes the algorithm does not converge at all.
+
+
+
+
+
+*** code figure neural network python :noexport:
+
+
+
+
+#+begin_src python
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 
-# ----------------------------
-# Target: cubic polynomial
-# ----------------------------
-def f(x):
-    return x**3 + x**2 - x - 1
+def draw_neural_net(ax, left, right, bottom, top, layer_sizes):
+    n_layers = len(layer_sizes)
+    bias_layers = [0, 1, 2]
+    
+    v_spacing = (top - bottom) / float(max(layer_sizes) + 1)
+    h_spacing = (right - left) / float(n_layers - 1)
+    node_radius = v_spacing / 4.
+    
+    node_positions = []
+    
+    for n, layer_size in enumerate(layer_sizes):
+        has_bias = n in bias_layers
+        total_nodes = layer_size + (1 if has_bias else 0)
+        layer_top = v_spacing * (total_nodes - 1) / 2. + (top + bottom) / 2.
+        positions = []
+        
+        # Draw bias node first (at top)
+        if has_bias:
+            bx = n * h_spacing + left
+            by = layer_top
+            circle = plt.Circle((bx, by), node_radius,
+                                 color='lightgrey', ec='k', zorder=4)
+            ax.add_artist(circle)
+            ax.text(bx, by, '+1', ha='center', va='center',
+                    fontsize=9, zorder=5)
+            positions.append((bx, by, True))
+            layer_top -= v_spacing
+        
+        # Draw regular nodes
+        for m in range(layer_size):
+            cx = n * h_spacing + left
+            cy = layer_top - m * v_spacing
+            circle = plt.Circle((cx, cy), node_radius,
+                                 color='white', ec='k', zorder=4)
+            ax.add_artist(circle)
+            positions.append((cx, cy, False))
+        
+        node_positions.append(positions)
+    
+    # Draw arrows between layers
+    for n in range(len(layer_sizes) - 1):
+        for (x1, y1, _) in node_positions[n]:
+            for (x2, y2, is_bias) in node_positions[n+1]:
+                if is_bias:
+                    continue
+                # Compute direction vector
+                import numpy as np
+                dx = x2 - x1
+                dy = y2 - y1
+                dist = np.sqrt(dx**2 + dy**2)
+                # Shorten start and end by node_radius so arrow touches circle edge
+                ux, uy = dx / dist, dy / dist
+                start_x = x1 + ux * node_radius
+                start_y = y1 + uy * node_radius
+                end_x   = x2 - ux * node_radius
+                end_y   = y2 - uy * node_radius
 
-def relu(z):
-    return np.maximum(0.0, z)
+                ax.annotate("",
+                    xy=(end_x, end_y),
+                    xytext=(start_x, start_y),
+                    arrowprops=dict(
+                        arrowstyle="-|>",
+                        color='k',
+                        lw=0.5,
+                        mutation_scale=6,  # arrowhead size
+                        alpha=0.5
+                    ),
+                    zorder=3
+                )
+    
+    # Layer labels
+    labels = ['Input\n(4 features\n+ bias)', 
+              'Hidden 1\n(5 nodes\n+ bias)', 
+              'Hidden 2\n(5 nodes\n+ bias)', 
+              'Output\n(3 classes)']
+    
+    for n, label in enumerate(labels):
+        ax.text(n * h_spacing + left, bottom - 0.05, label,
+                ha='center', va='top', fontsize=10, fontweight='bold')
+    
+    # Output node labels (iris classes)
+    iris_labels = ['Setosa', 'Versicolor', 'Virginica']
+    for i, (x, y, _) in enumerate(node_positions[-1]):
+        ax.text(x + 0.07, y, iris_labels[i], ha='left', va='center', fontsize=9)
 
-# ----------------------------
-# Build design matrix for fixed knots and slopes
-# Model: y_hat = c0 + sum_{j=1..k} a_j * relu(s_j * (x - t_j))
-# ----------------------------
-def design_matrix(x, knots, slopes):
-    Phi = [np.ones_like(x)]
-    for t, s in zip(knots, slopes):
-        Phi.append(relu(s * (x - t)))
-    return np.column_stack(Phi)
 
-def fit_amplitudes(x, y, knots, slopes):
-    Phi = design_matrix(x, knots, slopes)
-    beta, *_ = np.linalg.lstsq(Phi, y, rcond=None)
-    yhat = Phi @ beta
-    mse = np.mean((y - yhat) ** 2)
-    return beta, yhat, mse
+fig = plt.figure(figsize=(14, 10))
+ax = fig.gca()
+ax.axis('off')
+ax.set_xlim(0, 1)
+ax.set_ylim(0, 1)
 
-# ----------------------------
-# Stagewise: add one knot at a time, search slope for the new knot
-# ----------------------------
-def stagewise_fixed_knots_opt_slopes(x, y, knots, slope_grid):
-    chosen_slopes = []
-    history = []
+draw_neural_net(ax, .1, .9, .1, .9, [4, 5, 5, 3])
 
-    for k in range(1, len(knots) + 1):
-        t_new = knots[k - 1]
-
-        best = None
-        for s_new in slope_grid:
-            trial_slopes = chosen_slopes + [s_new]
-            beta, yhat, mse = fit_amplitudes(x, y, knots[:k], trial_slopes)
-
-            if (best is None) or (mse < best["mse"]):
-                best = {"s_new": s_new, "beta": beta, "yhat": yhat, "mse": mse}
-
-        chosen_slopes.append(best["s_new"])
-        history.append({
-            "k": k,
-            "knots": knots[:k].copy(),
-            "slopes": chosen_slopes.copy(),
-            "beta": best["beta"],
-            "yhat": best["yhat"],
-            "mse": best["mse"],
-        })
-
-    return history
-
-# ----------------------------
-# Demo + plotting (2x3 subfigures)
-# ----------------------------
-# data
-x_min, x_max = -2.0, 1.5
-x = np.linspace(x_min, x_max, 500)
-y = f(x)
-
-# fixed knots (6)
-knots = np.linspace(x_min, x_max, 6)
-
-# small slope grid (keep it simple; widen if needed)
-slope_grid = np.array([-8, -4, -2, -1, -0.5, 0.5, 1, 2, 4, 8], dtype=float)
-
-hist = stagewise_fixed_knots_opt_slopes(x, y, knots, slope_grid)
-
-# plot progression: 6 panels via subfigures(2,3)
-fig = plt.figure(figsize=(12, 7), constrained_layout=True)
-subfigs = fig.subfigures(2, 3)
-
-for i, stage in enumerate(hist):
-    r, c = divmod(i, 3)
-    sf = subfigs[r, c]
-    ax = sf.subplots(1, 1)
-
-    ax.plot(x, y, label="target")
-    ax.plot(x, stage["yhat"], label="ReLU approx")
-
-    # show knots used so far
-    for t in stage["knots"]:
-        ax.axvline(t, linewidth=0.8, alpha=0.3)
-
-    ax.set_title(f"Stage {stage['k']} (MSE={stage['mse']:.2e})")
-    ax.set_xlim(x_min, x_max)
-
-    if i == 0:
-        ax.legend(loc="best")
-
+plt.tight_layout()
+fig.savefig('./figures/nn.png', dpi=150, bbox_inches='tight')
 #+end_src
 
-#+RESULTS:
-[[file:./figures/relu_approximation.png]]
 
-
-
-
-
-** Perceptron
+** App
 :PROPERTIES:
-:CUSTOM_ID: perceptron
+:CUSTOM_ID: lecture5-app
 :END:
-Next we copy from Chapter 3 of Machine Learning: An Algorithmic
-Perspective, the “perceptron”. The code is in the next cell. Try to
-understand the python code.
 
-The main part of the algorithm is in the function (method, actually, but
-do not worry about this) =pcntrain=; the line
+Train a feedforward neural network on the Iris dataset and explore how architecture and hyper-parameters affect train versus test accuracy.  Choose two features for the scatter plot axes: filled circles are correctly classified flowers; open circles are misclassified ones.  The confusion matrices show, for each true species, how many observations were predicted as each class.
 
-=self.weights -= eta*np.dot(np.transpose(inputs),self.activations-targets)=
+#+BEGIN_EXPORT html
+<div style="text-align:center;margin:20px 0;">
+  <a href="https://janboone.github.io/datascience-marimo/lecture5_iris_nn.html"
+     target="_blank"
+     style="background:#1f3c88;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:1em;">
+    &#9654; Open app: Iris neural network
+  </a>
+</div>
+#+END_EXPORT
 
-determines how the weights in the network are updated. This optimization
-step is discussed in
-[[https://campus.datacamp.com/courses/deep-learning-in-python/optimizing-a-neural-network-with-backward-propagation?ex=1][this chapter of the datacamp course.]]
-
-#+begin_src python
-# Code from Chapter 3 of Machine Learning: An Algorithmic Perspective (2nd Edition)
-# by Stephen Marsland (http://stephenmonika.net)
-
-# You are free to use, change, or redistribute the code in any way you wish for
-# non-commercial purposes, but please maintain the name of the original author.
-# This code comes with no warranty of any kind.
-
-# Stephen Marsland, 2008, 2014
-
-
-
-class pcn:
-    """ A basic Perceptron (the same pcn.py except with the weights printed
-    and it does not reorder the inputs)"""
-    
-    def __init__(self,inputs,targets):
-        """ Constructor """
-        # Set up network size
-        if np.ndim(inputs)>1:
-            self.nIn = np.shape(inputs)[1]
-        else: 
-            self.nIn = 1
-    
-        if np.ndim(targets)>1:
-            self.nOut = np.shape(targets)[1]
-        else:
-            self.nOut = 1
-
-        self.nData = np.shape(inputs)[0]
-    
-        # Initialise network
-        self.weights = np.random.rand(self.nIn+1,self.nOut)*0.1-0.05
-
-    def pcntrain(self,inputs,targets,eta,nIterations):
-        """ Train the thing """ 
-        # Add the inputs that match the bias node
-        inputs = np.concatenate((inputs,-np.ones((self.nData,1))),axis=1)
-    
-        # Training
-        change = range(self.nData)
-
-        for n in range(nIterations):
-            
-            self.activations = self.pcnfwd(inputs);
-            self.weights -= eta*np.dot(np.transpose(inputs),self.activations-targets)
-            print("Iteration: ", n)
-            print(self.weights)
-            
-            activations = self.pcnfwd(inputs)
-            print("Final outputs are:")
-            print(activations)
-        #return self.weights
-
-    def pcnfwd(self,inputs):
-        """ Run the network forward """
-
-        # Compute activations
-        activations =  np.dot(inputs,self.weights)
-
-        # Threshold the activations
-        return np.where(activations>0,1,0)
-
-    def confmat(self,inputs,targets):
-        """Confusion matrix"""
-
-        # Add the inputs that match the bias node
-        inputs = np.concatenate((inputs,-np.ones((self.nData,1))),axis=1)
-        outputs = np.dot(inputs,self.weights)
-    
-        nClasses = np.shape(targets)[1]
-
-        if nClasses==1:
-            nClasses = 2
-            outputs = np.where(outputs>0,1,0)
-        else:
-            # 1-of-N encoding
-            outputs = np.argmax(outputs,1)
-            targets = np.argmax(targets,1)
-
-        cm = np.zeros((nClasses,nClasses))
-        for i in range(nClasses):
-            for j in range(nClasses):
-                cm[i,j] = np.sum(np.where(outputs==i,1,0)*np.where(targets==j,1,0))
-
-        print(cm)
-        print(np.trace(cm)/np.sum(cm))
-
-
-#+end_src
-
-Below you see 4 data points with a target value (0 or 1) for each data
-point. We need to predict the target value. We plot this with a red
-color for target 0 and blue for target 1.
-
-Predicting the target here means finding a straight line such that all
-red points are on one side of the line and the blue points on the other
-side of the line. Since this example is very simple, you can draw the
-line yourself (I hope...). This simplicity helps us to understand what
-the algorithm does.
-
-We define a tensor with 4 =inputs= and 4 =targets=. The first element of
-=inputs= (which has two coordinates) corresponds to the first element in
-=targets=.
-
-To refer to the points in the figure, we use “standard” terminology
-\(x\) and \(y\).
-
-#+begin_src python
-inputs = np.array([[0,0],[0,1],[1,0],[1,1]])
-targets = np.array([[0],[1],[1],[1]])
-colors = []
-for i in range(len(targets)):
-    colors.append(['red','blue'][targets[i][0]])
-plt.scatter(inputs[:,0],inputs[:,1],color=colors)
-plt.xlabel('$x$')
-plt.ylabel('$y$')
-plt.show()
-#+end_src
-
-Now we use the =pcn= class and instantiate it with the =inputs= and
-=targets= above. We call =p= an instance of the class =pcn=. In this
-course we will not dwell on the object oriented aspects of python, so do
-not worry if you do not fully understand this. However, as you will see
-below, when we use tensorflow, we have a similar structure: we create an
-instance of a tensorflow class =model=.
-
-The function definition is
-=pcntrain(self,inputs,targets,eta,nIterations)=. Do not worry about the
-=self= part. We call the function as =pcntrain(inputs,targets,0.25,6)=.
-Hence, the first two arguments of the function are our =inputs= and
-=targets= tensors.
-
-The result is that =p= is now associated with our tensors =inputs= and
-=targets=. Now we can use the function (“method”) =pcntrain= to train
-the network. After each iteration, the algorithm prints some
-information. Looking at =pcntrain= above, we can see that the
-information that is printed is:
-
-#+begin_example
-print("Iteration: ", n)
-print(self.weights)
-print("Final outputs are:")
-print(activations)
-#+end_example
-
-So first we see the number of the iteration (and python starts counting
-at 0). Then we see three numbers that correspond to the weights. The
-weights determine the line in the figure above. In particular, if we
-write the weights tensor as \(w = (w_0,w_1,w_2)\), then a line in the
-figure is given by \(w_0 x + w_1 y =w_2\). Equivalently, we can write
-this as:
-
-\begin{equation}
-y = (w_2-w_0 x)/w_1
-\end{equation}
-
-Next, we see the final outputs (targets): this is the “prediction” of
-the algorithm for the vector =targets=. Recall that =targets= is of the
-form [0,1,1,1]. Hence, after the first iteration, we incorrectly label
-the first point as 1 while it should be 0. Hence, the algorithm
-continues and generates different (and ultimately better) predictions.
-
-#+begin_src python
-p = pcn(inputs,targets)
-p.pcntrain(inputs,targets,0.25,6)
-#+end_src
-
-The final weights \(w\) are now equal to:
-
-#+begin_src python
-p.weights
-#+end_src
-
-We can now plot the line \(y=(w_2-w_0 x)/w_1\). Indeed, as you can see,
-the line separates the red point (below the line) from the blue points
-(above the line). If we give the algorithm a point above the line, it
-will predict “blue”, if we give it a point below the line it will
-predict “red”.
-
-Because we only have 4 points here, this is arbitrary for points close
-to the line: we can shift the line, still separate the points, but get
-different predictions for points close to the line.
-
-#+begin_src python
-x0 = 0
-x1 = 1
-y0 = (p.weights[2]-p.weights[0]*x0)/p.weights[1]
-y1 = (p.weights[2]-p.weights[0]*x1)/p.weights[1]
-plt.scatter(inputs[:,0],inputs[:,1],color=colors)
-plt.plot([x0,x1],[y0,y1],'k') #we only need to give two points to plot a line
-plt.xlabel('$x$')
-plt.xlabel('$y$')
-plt.show()
-#+end_src
-
-We can see from the graph and check with the function =pcnfwd= below
-what the predicted labels will be for the points (0.5,0.5) and
-(0.5,-0.5). The =-1= is needed for the “constant” \(w_2\).
-
-#+begin_src python
-p.pcnfwd([[0.5,0.5,-1],[0.5,-0.5,-1]])
-#+end_src
-
-To get a “graphical” intuition what a neural network does, see this
-[[https://playground.tensorflow.org][website]] and play around with the
-dataset that you want to use, the number of hidden layers, number of
-neurons per hidden layer and the features that you want to use.
-
-E.g. choose the dataset where the orange points “circle” the blue
-points. Use only 1 hidden layer (linear model) and 2 neurons in this
-layer. Then you cannot perfectly seperate the points. Play around with
-the options to see how you can separate the points.
-
-
-**** simple example 
-
-From the python code for a neural network:
-
-#+begin_src jupyter-python
-self.weights -= eta*np.dot(np.transpose(inputs),self.activations-targets)
-#+end_src
-
-In equation format, the weights are updated as: $w = w - \eta (prediction - target) x$
-
-Let's look at a simple example to understand why this the correct updating rule. We have 4 observations with two labels (=targets=): red and blue in the figure.
-
-We want to find a line such that all points above the line are blue; the one point below the line is red.
-
-#+begin_src jupyter-python :file ./neural_network.png
-inputs = np.array([[0,0],[0,1],[1,0],[1,1]])
-targets = np.array([[0],[1],[1],[1]])
-colors = []
-for i in range(len(targets)):
-    colors.append(['red','blue'][targets[i][0]])
-plt.scatter(inputs[:,0],inputs[:,1],color=colors)
-plt.plot([0,1],[0.8,0.2],c='k')
-plt.plot([0,1],[0.8,-0.2],'--',c='k')
-
-plt.xlabel('$x$')
-plt.ylabel('$y$')
-plt.show()
-#+end_src
-
-#+RESULTS:
-
-Line of the form $w_0 x + w_1 y - w_2 = 0$ or $y = -w_0/w_1 x + w_2/w_1$.
-
-The solid line mis-classifies one point. To get this classification right, the line needs to become steeper for the point with $x=1$ and $y=0$.
-
-To make the line steeper, $w_0$ needs to increase:
-
-\begin{equation}
-\label{eq:1}
-w_0 = w_0 - \eta (0-1) * 1 = w_0 + \eta
-\end{equation}
-
-If we give the model a new point, it will predict "blue" if the point is above the line and "red" if it is below.
-
-** Multi-layer perceptron
+** Python Code Explanation
 :PROPERTIES:
-:CUSTOM_ID: multi-layer-perceptron
+:CUSTOM_ID: lecture5-python-code
 :END:
-With more than one layer, we get into deep learning. This is what “deep”
-in deep learning refers to: more than one layer.
 
-We use
-[[http://homepages.ecs.vuw.ac.nz/~marslast/Code/Ch4/mlp.py][this mlp code]]
-from Chapter 4 of Machine Learning: An Algorithmic Perspective.
+*** The iris dataset
+:PROPERTIES:
+:CUSTOM_ID: lecture5-iris-data
+:END:
 
-#+begin_src python
+The Iris dataset is one of the most studied datasets in machine learning.  It contains 150 observations: 50 each of /Iris setosa/, /Iris versicolor/, and /Iris virginica/.  Each observation records four continuous measurements in centimetres:
 
-# Code from Chapter 4 of Machine Learning: An Algorithmic Perspective (2nd Edition)
-# by Stephen Marsland (http://stephenmonika.net)
+| Feature      | Description         |
+|--------------+---------------------|
+| Sepal length | Length of the sepal |
+| Sepal width  | Width of the sepal  |
+| Petal length | Length of the petal |
+| Petal width  | Width of the petal  |
 
-# You are free to use, change, or redistribute the code in any way you wish for
-# non-commercial purposes, but please maintain the name of the original author.
-# This code comes with no warranty of any kind.
+The three species appear in order in the raw data (rows 1--50 setosa, 51--100 versicolor, 101--150 virginica), so we shuffle before splitting into train and test sets.  We normalize features by z-scoring: subtracting the training mean and dividing by the training standard deviation.  This ensures that all four features enter the network on a comparable scale, which stabilizes gradient descent. We also use the training mean and standard deviation to normalize the test data.
 
-# Stephen Marsland, 2008, 2014
+Using the dictionary =species_map= and the =map= function we turn the names (strings) into integers 0, 1, 2. 
 
+#+BEGIN_SRC python 
 import numpy as np
-
-class mlp:
-    """ A Multi-Layer Perceptron"""
-    
-    def __init__(self,inputs,targets,nhidden,beta=1,momentum=0.9,outtype='logistic'):
-        """ Constructor """
-        # Set up network size
-        self.nin = np.shape(inputs)[1]
-        self.nout = np.shape(targets)[1]
-        self.ndata = np.shape(inputs)[0]
-        self.nhidden = nhidden
-
-        self.beta = beta
-        self.momentum = momentum
-        self.outtype = outtype
-    
-        # Initialise network
-        self.weights1 = (np.random.rand(self.nin+1,self.nhidden)-0.5)*2/np.sqrt(self.nin)
-        self.weights2 = (np.random.rand(self.nhidden+1,self.nout)-0.5)*2/np.sqrt(self.nhidden)
-
-    def earlystopping(self,inputs,targets,valid,validtargets,eta,niterations=100):
-    
-        valid = np.concatenate((valid,-np.ones((np.shape(valid)[0],1))),axis=1)
-        
-        old_val_error1 = 100002
-        old_val_error2 = 100001
-        new_val_error = 100000
-        
-        count = 0
-        while (((old_val_error1 - new_val_error) > 0.001) or ((old_val_error2 - old_val_error1)>0.001)):
-            count+=1
-            print(count)
-            self.mlptrain(inputs,targets,eta,niterations)
-            old_val_error2 = old_val_error1
-            old_val_error1 = new_val_error
-            validout = self.mlpfwd(valid)
-            new_val_error = 0.5*np.sum((validtargets-validout)**2)
-            
-        print("Stopped", new_val_error,old_val_error1, old_val_error2)
-        return new_val_error
-        
-    def mlptrain(self,inputs,targets,eta,niterations):
-        """ Train the thing """    
-        # Add the inputs that match the bias node
-        inputs = np.concatenate((inputs,-np.ones((self.ndata,1))),axis=1)
-        change = range(self.ndata)
-    
-        updatew1 = np.zeros((np.shape(self.weights1)))
-        updatew2 = np.zeros((np.shape(self.weights2)))
-            
-        for n in range(niterations):
-    
-            self.outputs = self.mlpfwd(inputs)
-
-            error = 0.5*np.sum((self.outputs-targets)**2)
-            if (np.mod(n,100)==0):
-                print("Iteration: ",n, " Error: ",error)
-
-            # Different types of output neurons
-            if self.outtype == 'linear':
-                deltao = (self.outputs-targets)/self.ndata
-            elif self.outtype == 'logistic':
-                deltao = self.beta*(self.outputs-targets)*self.outputs*(1.0-self.outputs)
-            elif self.outtype == 'softmax':
-                deltao = (self.outputs-targets)*(self.outputs*(-self.outputs)+self.outputs)/self.ndata 
-            else:
-                print("error")
-            
-            deltah = self.hidden*self.beta*(1.0-self.hidden)*(np.dot(deltao,np.transpose(self.weights2)))
-                      
-            updatew1 = eta*(np.dot(np.transpose(inputs),deltah[:,:-1])) + self.momentum*updatew1
-            updatew2 = eta*(np.dot(np.transpose(self.hidden),deltao)) + self.momentum*updatew2
-            self.weights1 -= updatew1
-            self.weights2 -= updatew2
-                
-            # Randomise order of inputs (not necessary for matrix-based calculation)
-            #np.random.shuffle(change)
-            #inputs = inputs[change,:]
-            #targets = targets[change,:]
-            
-    def mlpfwd(self,inputs):
-        """ Run the network forward """
-
-        self.hidden = np.dot(inputs,self.weights1);
-        self.hidden = 1.0/(1.0+np.exp(-self.beta*self.hidden))
-        self.hidden = np.concatenate((self.hidden,-np.ones((np.shape(inputs)[0],1))),axis=1)
-
-        outputs = np.dot(self.hidden,self.weights2);
-
-        # Different types of output neurons
-        if self.outtype == 'linear':
-            return outputs
-        elif self.outtype == 'logistic':
-            return 1.0/(1.0+np.exp(-self.beta*outputs))
-        elif self.outtype == 'softmax':
-            normalisers = np.sum(np.exp(outputs),axis=1)*np.ones((1,np.shape(outputs)[0]))
-            return np.transpose(np.transpose(np.exp(outputs))/normalisers)
-        else:
-            print("error")
-
-    def confmat(self,inputs,targets):
-        """Confusion matrix"""
-
-        # Add the inputs that match the bias node
-        inputs = np.concatenate((inputs,-np.ones((np.shape(inputs)[0],1))),axis=1)
-        outputs = self.mlpfwd(inputs)
-        
-        nclasses = np.shape(targets)[1]
-
-        if nclasses==1:
-            nclasses = 2
-            outputs = np.where(outputs>0.5,1,0)
-        else:
-            # 1-of-N encoding
-            outputs = np.argmax(outputs,1)
-            targets = np.argmax(targets,1)
-
-        cm = np.zeros((nclasses,nclasses))
-        for i in range(nclasses):
-            for j in range(nclasses):
-                cm[i,j] = np.sum(np.where(outputs==i,1,0)*np.where(targets==j,1,0))
-
-        print("Confusion matrix is:")
-        print(cm)
-        print("Percentage Correct: ",np.trace(cm)/np.sum(cm)*100)
-#+end_src
-
-This code is more elaborate than the perceptron above. We will go over
-some of the concepts below.
-
-Below we use the famous
-[[http://archive.ics.uci.edu/ml/datasets/Iris][iris dataset]].
-Admittedly, flowers are not directly linked to economics, but this is
-one of the classic datasets in classification. You cannot claim to have
-done “datascience” without having looked at the iris dataset.
-
-We will first download it from the website, just to learn the relevant
-steps here. We will work with it in numpy. In fact, the data is so
-famous that it is included in the tensorflow library, but later you may
-want to analyze data that is not included in any library. Hence, we need
-to learn the download steps as well.
-
-When you look at the downloaded data (in an editor), you will notice
-that it actually includes the names as strings. For us it is easier to
-work with numerical labels 0,1,2. Hence, we use the function
-=preprocessIris=. This function takes two arguments: the input file with
-the data that we downloaded and the output file where the target-labels
-are replaced by 0,1,2.
-
-If you run this notebook for the first time, un-comment the line
-=preprocessIris('iris.data','iris_proc.data')= (that is, remove the
-hashtag “#” at the beginning of the line), where =iris.data= is the name
-of the file that you downloaded and =iris_proc.data= is the name of the
-file with labels 0,1,2. Once the file =iris_proc.data= is created, there
-is no need to run this python command again.
-
-#+begin_src python
-# Code from Chapter 4 of Machine Learning: An Algorithmic Perspective (2nd Edition)
-# by Stephen Marsland (http://stephenmonika.net)
-
-# You are free to use, change, or redistribute the code in any way you wish for
-# non-commercial purposes, but please maintain the name of the original author.
-# This code comes with no warranty of any kind.
-
-# Stephen Marsland, 2008, 2014
-
-# The iris classification example
-
-def preprocessIris(infile,outfile):
-
-    stext1 = 'Iris-setosa'
-    stext2 = 'Iris-versicolor'
-    stext3 = 'Iris-virginica'
-    rtext1 = '0'
-    rtext2 = '1'
-    rtext3 = '2'
-
-    fid = open(infile,"r")
-    oid = open(outfile,"w")
-
-    for s in fid:
-        if s.find(stext1)>-1:
-            oid.write(s.replace(stext1, rtext1))
-        elif s.find(stext2)>-1:
-            oid.write(s.replace(stext2, rtext2))
-        elif s.find(stext3)>-1:
-            oid.write(s.replace(stext3, rtext3))
-    fid.close()
-    oid.close()
-
-## Preprocessor to remove the test (only needed once)
-# preprocessIris('./data/iris.data','./data/iris_proc.data')
-
-iris = np.loadtxt('./data/iris_proc.data',delimiter=',')
-
-# we normalize the data (the features, not the labels):
-iris[:,:4] = iris[:,:4]-iris[:,:4].mean(axis=0)
-imax = np.concatenate((iris.max(axis=0)*np.ones((1,5)),np.abs(iris.min(axis=0)*np.ones((1,5)))),axis=0).max(axis=0)
-iris[:,:4] = iris[:,:4]/imax[:4]
-print(iris[0:5,:])
-
-
-
-# instead of using labels 0,1,2; we use labels like [1,0,0], [0,1,0], [0,0,1]; this is called one-hot encoding
-# algorithm that you use determines what the labels should look like
-# one-hot encoding is often used when analyzing text-data
-target = np.zeros((np.shape(iris)[0],3));
-indices = np.where(iris[:,4]==0) 
-target[indices,0] = 1
-indices = np.where(iris[:,4]==1)
-target[indices,1] = 1
-indices = np.where(iris[:,4]==2)
-target[indices,2] = 1
-
-# Randomly order the data
-order = np.arange(np.shape(iris)[0])
-np.random.shuffle(order)
-iris = iris[order,:]
-target = target[order,:]
-
-# Split into training, validation, and test sets
-train = iris[::2,0:4]
-traint = target[::2]
-valid = iris[1::4,0:4]
-validt = target[1::4]
-test = iris[3::4,0:4]
-testt = target[3::4]
-#+end_src
-
-Uncomment and evaluate the following cell if you want to get an idea
-what the data look like.
-
-#+begin_src python
-#print(iris)
-#print(train.max(axis=0), train.min(axis=0))
-#+end_src
-
-*Exercise* Plot the data with one feature on the horizontal axis and
-another feature on the vertical axis. Then color the observation based
-on the label.
-
-#+begin_src python
-# YOUR CODE HERE
-raise NotImplementedError()
-#+end_src
-
-Next we train the network:
-
-#+begin_src python
-# Train the network
-#import mlp
-net = mlp(train,traint,5,outtype='logistic')
-net.earlystopping(train,traint,valid,validt,0.1)
-net.confmat(test,testt)
-#+end_src
-
-As the choice of train, evaluate and test data is random, the results
-can differ here.
-
-The idea of the confusion matrix is as follows: * the rows are the true
-labels, the columns are the predicted labels; * if all non-diagonal
-entries equal 0, the model gives a perfect prediction; * if the element
-on the 3 rd row and 1st column is positive: some observations that
-actually have the 3rd label are incorrectly predicted to have the 1st
-label.
-
-When there are a lot of labels, looking at the confusion matrix is no
-longer helpful. A number of summary measures have been defined for such
-cases, like accuracy, sensitivity, precision etc.
-
-
-*** neural network graphical illustration
-
-[[file:figures/ANN-with-4-inputs-2-hidden-layers-with-5-neurons-and-3-outputs-Weights-of-connections.png][neural network figure]]
-
-
-* Neural network with tensorflow
-
-
-
-*** using history to check for over/under fitting
-
-- return to neural network with the handwritten digits data set
-- use =history= method to fine tune the number of epochs to avoid under/over-fitting
-
-#+begin_src jupyter-python
-(train_images, train_labels), (test_images, test_labels) =\
-              keras.datasets.mnist.load_data()
-
-model = keras.Sequential([
-    keras.layers.Flatten(input_shape=(28, 28)),
-    keras.layers.Dense(128, activation='relu'),
-    keras.layers.Dense(10, activation='softmax')
-])
-
-model.compile(optimizer='adam',
-              loss='sparse_categorical_crossentropy',
-              metrics=['accuracy'])
-
-
-history = model.fit(train_images,
-                    train_labels,
-                    epochs=60,
-                    batch_size=512,
-                    validation_data=(test_images, test_labels))
-
-#+end_src
-
-
-#+begin_src jupyter-python :file ./figures/history_loss.png
-loss = history.history['loss'][1:]
-val_loss = history.history['val_loss'][1:]
-
-epochs = range(1, len(loss)+1)
-
-plt.plot(epochs, loss, 'bo', label='Training loss')
-plt.plot(epochs, val_loss, 'b', label='Validation loss')
-plt.title('Training and validation loss')
-plt.xlabel('Epochs')
-plt.ylabel('Loss')
-plt.legend()
-plt.show()
-#+end_src
-
-#+RESULTS:
-[[file:./figures/history_loss.png]]
-
-
-**** TODO experiment with architecture: number of nodes and layers; e.g. try to over- or under-fit
-
-*** example neural network: confusion matrix
-
-**** do this with marimo in molab
-- download the data from the jupyterlab server
-- rename the file iris.csv
-- go to [https://molab.marimo.io/notebooks](https://molab.marimo.io/notebooks)
-- sign in (e.g. with your github account)
-- click the button "Generate with AI"
-- upload the dataset iris.csv and use a prompt like: "Attached is the well known iris data set. Present two plots to illustrate how we want to separate the different iris-es. Split the data into train and test set. Estimate a neural network with tensorflow and show the history so that we can tune the number of epochs. Finally present a confusion matrix to judge how well the fit is."
-- https://molab.marimo.io/notebooks/nb_8cFqKF4gmDTrk2QAJ5B888
-- get some intuition in the playground: https://playground.tensorflow.org/
-
-  
-
-**** my own code
-
-We import some data:
-
-#+begin_src jupyter-python :display plain
-import requests
-url = 'https://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data'
-r = requests.get(url, allow_redirects=True)
-filename = "./data/iris.csv"
-open(filename, 'wb').write(r.content)
-
-df = pd.read_csv(filename, header=None, names=['sepal_length','sepal_width',\
-                                         'petal_length','petal_width','species'])
-df.head()
-#+end_src
-
-#+RESULTS:
-:    sepal_length  sepal_width  petal_length  petal_width      species
-: 0           5.1          3.5           1.4          0.2  Iris-setosa
-: 1           4.9          3.0           1.4          0.2  Iris-setosa
-: 2           4.7          3.2           1.3          0.2  Iris-setosa
-: 3           4.6          3.1           1.5          0.2  Iris-setosa
-: 4           5.0          3.6           1.4          0.2  Iris-setosa
-
-
-#+begin_src jupyter-python
-df.shape
-#+end_src
-
-#+RESULTS:
-| 150 | 5 |
-
-#+begin_src jupyter-python
-df.dtypes
-#+end_src
-
-#+RESULTS:
-: sepal_length    float64
-: sepal_width     float64
-: petal_length    float64
-: petal_width     float64
-: species          object
-: dtype: object
-
-#+begin_src jupyter-python
-df.species.unique()
-#+end_src
-
-#+RESULTS:
-: array(['Iris-setosa', 'Iris-versicolor', 'Iris-virginica'], dtype=object)
-
-#+begin_src jupyter-python :display plain
-df["species"].replace({"Iris-setosa":0,"Iris-virginica":1,\
-                       "Iris-versicolor":2},inplace=True)
-df.tail()
-#+end_src
-
-#+RESULTS:
-:      sepal_length  sepal_width  petal_length  petal_width  species
-: 145           6.7          3.0           5.2          2.3        1
-: 146           6.3          2.5           5.0          1.9        1
-: 147           6.5          3.0           5.2          2.0        1
-: 148           6.2          3.4           5.4          2.3        1
-: 149           5.9          3.0           5.1          1.8        1
-
-#+begin_src jupyter-python :file ./figures/iris_scatter1.png
-plt.scatter(df['sepal_width'],df['petal_width'],c=df.species);
-#+end_src
-
-#+RESULTS:
-[[file:./figures/iris_scatter1.png]]
-
-
-
-#+begin_src jupyter-python :file ./figures/iris_scatter2.png
-plt.scatter(df['sepal_length'],df['petal_length'],c=df.species);
-#+end_src
-
-#+RESULTS:
-[[file:./figures/iris_scatter2.png]]
-
-
-- Neural networks do not only use linear functions to separate the data
-- [[https://playground.tensorflow.org/]]
-
-
-Before estimating a neural network, it is a good idea to standardize the features. No need to standardize the labels.
-
-#+begin_src jupyter-python
-X = np.zeros([150,4])
-i = 0
-for col in df.columns[0:4]:
-    x = df[col].values
-    X[:,i] = (x-x.mean())/x.std()
-    i += 1
-
-y = df['species'].values
-
-#+end_src
-
-#+RESULTS:
-
-- Ignoring for now splitting the data into test and train set
-
-#+begin_src jupyter-python
-model = keras.Sequential([
-    keras.layers.Dense(20, input_dim = 4, activation='relu'), # input layer
-    keras.layers.Dense(10, activation = 'relu'),              # hidden
-    keras.layers.Dense(3, activation = 'softmax')             # output
-    ])
-
-model.compile(optimizer='adam',
-              loss='sparse_categorical_crossentropy',
-              metrics=['accuracy'])
-#+end_src
-
-
-
-
-#+begin_src jupyter-python
-model.fit(X,y,epochs=10)
-#+end_src
-
-#+begin_src jupyter-python
-y_pred = model.predict(X)
-matrix = tf.math.confusion_matrix(y, y_pred.argmax(axis=1))
-matrix
-#+end_src
-
-: array([[49,  0,  1],
-:        [ 0, 36, 14],
-:        [ 0,  3, 47]], dtype=int32)>
-
-
-
-
-#+begin_src jupyter-python
-tf.math.confusion_matrix?
-#+end_src
-
-
-
-
-#+begin_src jupyter-python
-print(y[-5:])
-print(y_pred[-5:,:])
-#+end_src
-
-#+RESULTS:
-: [1 1 1 1 1]
-: [[0.2511072  0.4573962  0.29149663]
-:  [0.20105977 0.41601598 0.38292417]
-:  [0.25209847 0.42889777 0.31900376]
-:  [0.15608561 0.36678582 0.47712857]
-:  [0.21452223 0.41034913 0.37512863]]
-
-
-* Economic Neural Networks
-
-
-#+PROPERTY: header-args  :session lecture :kernel tf_env :async yes
-
-** Nonlinear Phillips curve
-
-
-We estimate a **nonlinear Phillips curve** for European countries using a small neural network:
-- Target: monthly **HICP inflation (YoY)**.
-- Features: **unemployment rate** and **lags** of unemployment and inflation.
-- Data: **Eurostat** (HICP: =prc_hicp_manr=; Unemployment: =une_rt_m=)
-  - next week we see how we can download data from Eurostat
-
-The goal is to show an *economic* application of neural nets: letting the network learn curvature/state-dependence in the Phillips relationship, rather than a fixed linear slope.
-
-
-#+begin_src jupyter-python :display plain
 import pandas as pd
-df = pd.read_csv('./data/data_phillips_curve.csv')
-df.head()
-#+end_src
+from sklearn.model_selection import train_test_split
 
-#+RESULTS:
-#+begin_example
-   Unnamed: 0 geo        date  hicp_yoy     urate  hicp_yoy_lag1  \
-0           3  AT  1997-05-01       1.3  5.266667            1.2   
-1           4  AT  1997-06-01       1.0  5.266667            1.3   
-2           5  AT  1997-07-01       0.9  5.300000            1.0   
-3           6  AT  1997-08-01       1.3  5.266667            0.9   
-4           7  AT  1997-09-01       1.2  5.300000            1.3   
+cols = ["sepal_length", "sepal_width", "petal_length", "petal_width", "species"]
+iris = pd.read_csv('./data/iris_data.csv', names=cols)
 
-   hicp_yoy_lag2  hicp_yoy_lag3  urate_lag1  urate_lag2  urate_lag3  
-0            1.2            1.4    5.266667    5.300000    5.266667  
-1            1.2            1.2    5.266667    5.266667    5.300000  
-2            1.3            1.2    5.266667    5.266667    5.266667  
-3            1.0            1.3    5.300000    5.266667    5.266667  
-4            0.9            1.0    5.266667    5.300000    5.266667  
-#+end_example
+species_map = {"Iris-setosa": 0, "Iris-versicolor": 1, "Iris-virginica": 2}
+iris["label"] = iris["species"].map(species_map)
 
+X = iris[["sepal_length", "sepal_width", "petal_length", "petal_width"]].values
+y = iris["label"].values
 
-
-- =urate= denotes unemployment rate
-- =hicp_yoy= Harmonised Index of Consumer Prices (HICP) inflation is a standardized way to measure inflation across the EU; year-over-year (YoY)
-
-#+BEGIN_SRC jupyter-python
-# Choose features & target
-X_cols = ["urate", "urate_lag1", "urate_lag2", "urate_lag3",
-          "hicp_yoy_lag1", "hicp_yoy_lag2", "hicp_yoy_lag3"]
-y_col  = "hicp_yoy"
-
-# Time split (e.g., train up to end-2018; validate out-of-sample afterward)
-df["date"] = [pd.Timestamp(d) for d in df["date"].values]
-cutoff_date = pd.Timestamp("2019-01-01")
-train = df[df["date"] < cutoff_date].copy()
-valid = df[df["date"] >= cutoff_date].copy()
-
-# Standardize features by train stats
-mu, sd = train[X_cols].mean(0), train[X_cols].std(0).replace(0, 1.0)
-train_X, valid_X = (train[X_cols] - mu) / sd, (valid[X_cols] - mu) / sd
-train_y, valid_y = train[y_col].values.astype("float32"),\
-                   valid[y_col].values.astype("float32")
-
-train_X = train_X.values.astype("float32")
-valid_X = valid_X.values.astype("float32")
-
-train.shape, valid.shape, train_X.shape, train_y.shape
-#+END_SRC
-
-#+RESULTS:
-| 8376 | 11 |
-| 2797 | 11 |
-| 8376 |  7 |
-| 8376 |    |
-
-We use a compact MLP with =tanh= (hyperbole tangent function) activations (instead of relu). Students can change widths, epochs, etc.
-#+BEGIN_SRC jupyter-python
-import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras import layers
-
-tf.random.set_seed(0)
-
-model = keras.Sequential([
-    layers.Input(shape=(len(X_cols),)),
-    layers.Dense(32, activation="tanh"),
-    layers.Dense(16, activation="tanh"),
-    layers.Dense(1)
-])
-
-model.compile(optimizer=keras.optimizers.Adam(1e-3), loss="mse",\
-              metrics=["mae"])
-
-history = model.fit(
-    train_X, train_y,
-    validation_data=(valid_X, valid_y),
-    epochs=60,
-    batch_size=256,
-    verbose=1
+# 80/20 split, shuffled
+X_tr_raw, X_te_raw, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=0, shuffle=True
 )
 
-hist = pd.DataFrame(history.history)
-#hist.tail()
+# Z-score normalisation: fit on training set, apply to both sets
+mu  = X_tr_raw.mean(axis=0)
+sig = X_tr_raw.std(axis=0)
+X_train = (X_tr_raw - mu) / sig
+X_test  = (X_te_raw - mu) / sig
+
+print(f"Training: {len(X_train)} samples,  Test: {len(X_test)} samples")
+print(f"Feature means  (train): {np.round(mu,  2)}")
+print(f"Feature stds   (train): {np.round(sig, 2)}")
+print(f"Class counts   (train): {np.bincount(y_train)}")
 #+END_SRC
 
+: Training: 120 samples,  Test: 30 samples
+: Feature means  (train): [5.88 3.05 3.82 1.23]
+: Feature stds   (train): [0.85 0.43 1.78 0.77]
+: Class counts   (train): [39 37 44]
 
 
-#+BEGIN_SRC jupyter-python :file ./figures/learning_curves_Philips_curve.png
+*** Activation functions
+:PROPERTIES:
+:CUSTOM_ID: lecture5-activation-functions
+:END:
+
+Each hidden layer applies a linear transformation followed by a nonlinear /activation function/ $\sigma(\cdot)$.  Without nonlinearity, stacking layers would still produce a linear model.  The output layer uses /softmax/, which converts raw scores into class probabilities.
+
+*Hidden-layer activations*
+
+| Function | Formula                             | Range     | Property                               |
+|----------+-------------------------------------+-----------+----------------------------------------|
+| ReLU     | $\max(0, z)$                        | $[0, \infty)$  | Fast; sparse; most popular in practice |
+| Sigmoid  | $\frac{1}{1+e^{-z}}$                | $(0, 1)$  | Saturates for large $z$                |
+| Tanh     | $\frac{e^z - e^{-z}}{e^z + e^{-z}}$ | $(-1, 1)$ | Zero-centred; also saturates           |
+
+*Output-layer activation: softmax*
+
+For a $K$-class problem the softmax converts a vector of $K$ raw scores $(z_1, \ldots, z_K)$ into probabilities:
+
+$$\hat{y}_k = \frac{e^{z_k}}{\sum_{j=1}^K e^{z_j}}, \qquad k = 1, \ldots, K.$$
+
+All $\hat{y}_k \geq 0$ and they sum to one, so they can be interpreted as class probabilities.
+
+*Cross-entropy loss*
+
+We minimise the average negative log-probability of the true class:
+
+$$L = -\frac{1}{n} \sum_{i=1}^n \log \hat{y}_{y_i},$$
+
+where $\hat{y}_{y_i}$ is the predicted probability for observation $i$'s true class $y_i$.  When $\hat{y}_{y_i} \to 1$ (correct and confident) the loss $\to 0$; when $\hat{y}_{y_i} \to 0$ the loss $\to \infty$.
+
+
+#+BEGIN_SRC python :results graphics file output :file ./figures/lecture5_activations.png
+import numpy as np
 import matplotlib.pyplot as plt
 
-plt.figure()
-plt.plot(hist["loss"], label="train MSE")
-plt.plot(hist["val_loss"], label="valid MSE")
-plt.xlabel("epoch"); plt.ylabel("loss")
-plt.legend()
-plt.title("Learning curves (MSE)")
-plt.show()
-#+END_SRC
+z = np.linspace(-4, 4, 300)
 
-#+RESULTS:
-[[file:./figures/learning_curves_Philips_curve.png]]
+def relu(z):    return np.maximum(0, z)
+def sigmoid(z): return 1 / (1 + np.exp(-z))
+def tanh_fn(z): return np.tanh(z)
 
-#+BEGIN_SRC jupyter-python 
-from sklearn.metrics import mean_absolute_error, mean_squared_error
+# Softmax for 3 classes: vary z_1, fix z_2=0, z_3=-z_1
+Z3 = np.column_stack([z, np.zeros_like(z), -z])
+E  = np.exp(Z3 - Z3.max(axis=1, keepdims=True))
 
-pred_valid = model.predict(valid_X, verbose=0).squeeze()
-mae = mean_absolute_error(valid_y, pred_valid)
-mse = mean_squared_error(valid_y, pred_valid)
+fig, axes = plt.subplots(1, 3, figsize=(12, 3.5))
+fns    = [relu, sigmoid, tanh_fn]
+labels = [r"ReLU: $\max(0,z)$",
+          r"Sigmoid: $1/(1+e^{-z})$",
+          r"Tanh: $(e^z-e^{-z})/(e^z+e^{-z})$"]
+colors = ["crimson", "steelblue", "darkorange"]
 
-print(f"Validation MAE: {mae:.3f} | MSE: {mse:.3f}")
+for ax, fn, label, color in zip(axes, fns, labels, colors):
+    ax.plot(z, fn(z), lw=2.5, color=color)
+    ax.axhline(0, color="grey", lw=0.8, ls="--")
+    ax.axvline(0, color="grey", lw=0.8, ls="--")
+    ax.set_title(label, fontsize=9)
+    ax.set_xlabel(r"$z$")
 
-# plt.figure()
-# plt.scatter(valid_y, pred_valid, s=10)
-# plt.xlabel("Actual inflation (YoY)")
-# plt.ylabel("Predicted inflation (YoY)")
-# plt.title("Predicted vs Actual (validation)");
-#+END_SRC
-
-#+RESULTS:
-: Validation MAE: 1.046 | MSE: 21.818
-
-
-
-
-
-
-
-#+BEGIN_SRC jupyter-python :file ./figures/accuracy_Philips_curve.png
-
-
-# plot a few countries as time series
-countries_to_plot = valid["geo"].unique()[:3]
-n = len(countries_to_plot)
-
-fig, axes = plt.subplots(1, n, figsize=(5*n, 4), sharey=True)
-if n == 1:  # when there's only one country
-    axes = [axes]
-
-for ax, g in zip(axes, countries_to_plot):
-    mask = (valid["geo"] == g).values
-    sub = valid.loc[mask]
-    yhat = pred_valid[mask]  # align predictions with the same rows
-
-    ax.plot(sub["date"], sub["hicp_yoy"], label="Actual")
-    ax.plot(sub["date"], yhat, label="Predicted")
-    ax.set_title(f"{g}: Actual vs Predicted")
-    ax.set_xlabel("Date")
-    ax.tick_params(axis="x", rotation=45)
-
-axes[0].set_ylabel("YoY inflation")
-axes[0].legend(loc="upper left")
+plt.suptitle("Activation functions", fontsize=12, fontweight="bold")
 plt.tight_layout()
 #+END_SRC
 
 #+RESULTS:
-[[file:./figures/accuracy_Philips_curve.png]]
+[[file:./figures/lecture5_activations.png]]
 
-**** leave out the slope of the phillips curve :noexport:
+The key difference between ReLU and sigmoid/tanh is that ReLU does not saturate for large positive values: its gradient is always 1 when $z > 0$.  Sigmoid and tanh both have near-zero slopes when $|z|$ is large, which causes the /vanishing gradient/ problem; layers receive very small gradient signals and learn slowly or not at all.
 
-Economic interpretation: the (local) Phillips slope \( \partial \hat\pi / \partial u \):
-We compute the derivative of predicted inflation w.r.t. unemployment using autodiff at different unemployment levels (holding other features at their means). This traces a *nonlinear Phillips curve* slope.
+*** Neural network in numpy
+:PROPERTIES:
+:CUSTOM_ID: lecture5-numpy-nn
+:END:
 
-#+BEGIN_SRC jupyter-python :file ./figures/derivative_phillips_curve.png
-# Build a baseline feature vector at validation means
-base = pd.Series(0.0, index=X_cols)
-base.loc[X_cols] = valid[X_cols].mean(0)
-# Standardize with train stats:
-base_z = ((base - mu) / sd).values.astype("float32")
+We now implement the full neural network in numpy using matrix notation.  The network has:
+- Input layer: 4 features (one per iris measurement).
+- $H$ hidden layers, each with 5 nodes.
+- Output layer: 3 nodes (one per species), softmax activation.
 
-# Vary the contemporaneous urate around a grid, keep other features at baseline
-u_values = np.linspace(valid["urate"].quantile(0.1),\
-                     valid["urate"].quantile(0.9), 21)
-slopes, preds = [], []
+Parameters are stored as a list of $[\mathbf{W}_k, \mathbf{b}_k]$ pairs.  For layer $k$ with $n_{\text{in}}$ inputs and $n_{\text{out}}$ outputs: weight matrix $\mathbf{W}_k \in \mathbb{R}^{n_{\text{in}} \times n_{\text{out}}}$ and bias $\mathbf{b}_k \in \mathbb{R}^{n_{\text{out}}}$.
 
-for u in u_values:
-    x = base.copy()
-    x["urate"] = u
-    xz = ((x - mu) / sd).values.astype("float32")[None, :]
-    x_tf = tf.convert_to_tensor(xz)
+*Initialisation.*  We use /He initialization/ for ReLU ($\sigma_W = \sqrt{2/n_{\text{in}}}$) and /Xavier initialization/ for sigmoid/tanh ($\sigma_W = \sqrt{1/n_{\text{in}}}$).  Weights that are too large cause exploding activations; too small causes vanishing gradients from the outset.
 
-    with tf.GradientTape() as tape:
-        tape.watch(x_tf)
-        yhat = model(x_tf)  # shape (1,1)
-    # gradient of output w.r.t. inputs (∂π/∂X); pick index 0 which is "urate"
-    grad = tape.gradient(yhat, x_tf).numpy()[0, 0]
-    slopes.append(grad)
-    preds.append(yhat.numpy().item())
+*Forward pass.*  For each layer $k$:
 
-plt.figure(figsize=(10, 4))
+$$\mathbf{Z}_k = \mathbf{A}_{k-1} \mathbf{W}_k + \mathbf{b}_k, \qquad \mathbf{A}_k = \sigma(\mathbf{Z}_k),$$
 
-# Left subplot: local slope
-plt.subplot(1, 2, 1)
-plt.plot(u_values, slopes)
-plt.xlabel("Unemployment rate (level)")
-plt.ylabel("Local slope  ∂π/∂u")
-plt.title("Estimated Phillips curve slope (state-dependent)")
+where $\mathbf{A}_0 = \mathbf{X}$ (the input matrix, rows = observations) and $\sigma = $ softmax for the last layer.
 
-# Right subplot: predicted inflation vs unemployment
-plt.subplot(1, 2, 2)
-plt.plot(u_values, preds)
-plt.xlabel("Unemployment rate (level)")
-plt.ylabel("Predicted inflation (YoY)")
-plt.title("Predicted inflation vs unemployment (holding lags at means)")
+*Backward pass.*  The combined gradient of the cross-entropy loss and the softmax at the output layer is:
 
-plt.tight_layout()
-plt.show()
-    
+$$\frac{\partial L}{\partial \mathbf{Z}_{\text{last}}} = \frac{\hat{\mathbf{Y}} - \mathbf{Y}}{n},$$
+
+where $\mathbf{Y}$ is the one-hot encoded label matrix.  For each earlier layer $k$ we propagate backwards via the chain rule:
+
+$$\frac{\partial L}{\partial \mathbf{W}_k} = \mathbf{A}_{k-1}^\top \frac{\partial L}{\partial \mathbf{Z}_k}, \qquad \frac{\partial L}{\partial \mathbf{Z}_{k-1}} = \left(\frac{\partial L}{\partial \mathbf{Z}_k} \mathbf{W}_k^\top\right) \odot \sigma'(\mathbf{Z}_{k-1}),$$
+
+where $\odot$ denotes element-wise multiplication.  Parameters are updated by gradient descent:
+$\mathbf{W}_k \leftarrow \mathbf{W}_k - \eta \frac{\partial L}{\partial \mathbf{W}_k}$ where $\eta > 0$ is called the learning rate.
+
+#+BEGIN_SRC python :results output :exports both
+
+# ── Activation functions ─────────────────────────────────────────────────────
+def activate(Z, fn):
+    if fn == "relu":    return np.maximum(0, Z)
+    if fn == "sigmoid": return 1 / (1 + np.exp(-np.clip(Z, -40, 40)))
+    return np.tanh(Z)
+
+def activate_grad(Z, A, fn):
+    if fn == "relu":    return (Z > 0).astype(float)
+    if fn == "sigmoid": return A * (1 - A)
+    return 1 - A ** 2
+
+def softmax(Z):
+    E = np.exp(Z - Z.max(axis=1, keepdims=True))
+    return E / E.sum(axis=1, keepdims=True)
+
+# ── Initialisation ────────────────────────────────────────────────────────────
+def init_params(layer_sizes, fn, seed=42):
+    rng = np.random.default_rng(seed)
+    params = []
+    for i in range(len(layer_sizes) - 1):
+        scale = (np.sqrt(2 / layer_sizes[i]) if fn == "relu"
+                 else np.sqrt(1 / layer_sizes[i]))
+        W = rng.normal(0, scale, (layer_sizes[i], layer_sizes[i + 1]))
+        b = np.zeros(layer_sizes[i + 1])
+        params.append([W, b])
+    return params
+
+# ── Forward pass ──────────────────────────────────────────────────────────────
+def forward(X, params, fn):
+    As, Zs = [X], []
+    for k, (W, b) in enumerate(params):
+        Z = As[-1] @ W + b
+        Zs.append(Z)
+        A = activate(Z, fn) if k < len(params) - 1 else softmax(Z)
+        As.append(A)
+    return As, Zs
+
+# ── Backward pass ─────────────────────────────────────────────────────────────
+def backward(As, Zs, params, Y_oh, fn):
+    n     = len(Y_oh)
+    grads = []
+    dZ    = (As[-1] - Y_oh) / n       # softmax + cross-entropy gradient
+    for i in range(len(params) - 1, -1, -1):
+        dW = As[i].T @ dZ
+        db = dZ.sum(axis=0)
+        grads.insert(0, (dW, db))
+        if i > 0:
+            dA = dZ @ params[i][0].T
+            dZ = dA * activate_grad(Zs[i - 1], As[i], fn)
+    return grads
+
+# ── Training loop ─────────────────────────────────────────────────────────────
+layer_sizes = [4, 5, 5, 3]            # two hidden layers of 5 nodes each
+fn, lr      = "relu", 0.1
+Y_oh        = np.eye(3)[y_train]
+params      = init_params(layer_sizes, fn)
+loss_hist   = []
+
+for epoch in range(300):
+    As, Zs = forward(X_train, params, fn)
+    loss   = -np.mean(np.sum(Y_oh * np.log(As[-1] + 1e-12), axis=1))
+    loss_hist.append(loss)
+    grads  = backward(As, Zs, params, Y_oh, fn)
+    for j, (dW, db) in enumerate(grads):
+        params[j][0] -= lr * dW
+        params[j][1] -= lr * db
+
+# ── Evaluate ──────────────────────────────────────────────────────────────────
+def predict(X):
+    As, _ = forward(X, params, fn)
+    return np.argmax(As[-1], axis=1)
+
+train_acc = np.mean(predict(X_train) == y_train)
+test_acc  = np.mean(predict(X_test)  == y_test)
+print(f"Final cross-entropy loss: {loss_hist[-1]:.4f}")
+print(f"Train accuracy:           {train_acc:.1%}")
+print(f"Test  accuracy:           {test_acc:.1%}")
 #+END_SRC
 
 #+RESULTS:
-[[file:./figures/derivative_phillips_curve.png]]
-
-**Discussion:**
-- **Fit**: Report MAE/MSE and visually compare predicted vs. actual inflation in the validation period. If the model underfits, try a slightly larger network or a few more epochs; if it overfits (training loss ↓, validation loss ↑), reduce capacity or add early stopping.
-- **Economic signal**: The derivative \( \partial \hat\pi / \partial u \) shows how sensitive inflation is to unemployment at different levels of slack. A **negative slope** is consistent with a Phillips tradeoff; **state dependence** (slope more negative at high unemployment) suggests nonlinearities.
-- **Country heterogeneity**: Add country fixed effects (one-hot dummies) to the features or estimate separate models by country. You can also replace unemployment with a broader slack measure (e.g., job vacancy rate where available).
-- **Robustness**: Try using **core HICP** (exclude energy/food) by selecting the appropriate COICOP aggregate (e.g., without CP01 and CP03) or using Eurostat "ex energy" series if available.
-- **Caveats**: This is reduced-form; identification is not causal. For causal claims, you need instruments or structural models. Still, the NN summarizes a flexible Phillips relationship that students can analyze and compare to OLS.
+: f1f9773a-ba5d-461c-89f7-60090f8c0baa
 
 
 
-** Solving for equilibrium
-- https://cournot-nn.streamlit.app/
-
-*** Model
-- Inverse demand: \(p(x_1,x_2) = 1 - x_1 - x_2\).
-- Costs: \(C_i(x_i) = \tfrac{1}{2} c_i x_i^2\).
-- Profits: \(\pi_i = p(x_1,x_2) x_i - \tfrac{1}{2} c_i x_i^2\).
-
-*** Closed-form solution (for verification)
-Solving
-\[(2+c_1)x_1 + x_2 = 1,\qquad x_1 + (2+c_2)x_2 = 1\]
-yields
-\[
-x_1^*(c_1,c_2)=\frac{1+c_2}{(2+c_1)(2+c_2)-1},\quad
-x_2^*(c_1,c_2)=\frac{1+c_1}{(2+c_1)(2+c_2)-1}.
-\]
+: Final cross-entropy loss: 0.0725
+: Train accuracy:           96.7%
+: Test  accuracy:           96.7%
 
 
-*** Goal
-Solve a Cournot duopoly by training a tiny neural network that maps cost parameters \((c_1,c_2)\) to outputs \((x_1,x_2)\) so that each firm’s **first-order condition (FOC)** holds:
-\[\frac{\partial \pi_i}{\partial x_i} = 0.\]
-We keep the code as simple and readable as possible (no decorators, default TF dtypes).
+*** Neural network in TensorFlow with GradientTape
+:PROPERTIES:
+:CUSTOM_ID: lecture5-tensorflow-nn
+:END:
 
+TensorFlow provides /automatic differentiation/: you specify only the forward pass inside a =tf.GradientTape()= context, and TensorFlow computes all gradients automatically.  This is more convenient than hand-coding backpropagation and scales to any architecture without modification.
 
-#+BEGIN_SRC jupyter-python
+The code below replicates the numpy network exactly -- same architecture, same He initialisation, same gradient-descent update -- but using TensorFlow variables and operations.
+
+#+BEGIN_SRC python :results output :exports both
 import tensorflow as tf
 
-def price(x1, x2):
-    return 1.0 - x1 - x2
+# ── Define weight variables ───────────────────────────────────────────────────
+rng         = np.random.default_rng(42)
+layer_sizes = [4, 5, 5, 3]
+weights, biases = [], []
+for i in range(len(layer_sizes) - 1):
+    scale = np.sqrt(2 / layer_sizes[i])   # He initialisation
+    W = tf.Variable(rng.normal(0, scale, (layer_sizes[i], layer_sizes[i+1])),
+                    dtype=tf.float32)
+    b = tf.Variable(tf.zeros(layer_sizes[i + 1]), dtype=tf.float32)
+    weights.append(W)
+    biases.append(b)
 
-def closed_form_x(c1, c2):
-    denom = (2.0 + c1) * (2.0 + c2) - 1.0
-    x1_star = (1.0 + c2) / denom
-    x2_star = (1.0 + c1) / denom
-    return x1_star, x2_star
+trainable_vars = weights + biases
 
-c1_min, c1_max = 0.0, 3.0
-c2_min, c2_max = 0.0, 3.0
+# ── Forward pass using TensorFlow ops ────────────────────────────────────────
+def forward_tf(X):
+    A = tf.cast(X, tf.float32)
+    for k in range(len(weights)):
+        Z = A @ weights[k] + biases[k]
+        A = tf.nn.relu(Z) if k < len(weights) - 1 else tf.nn.softmax(Z)
+    return A
 
-def sample_costs(n):
-    c1 = tf.random.uniform((n,1), c1_min, c1_max)
-    c2 = tf.random.uniform((n,1), c2_min, c2_max)
-    return tf.concat([c1, c2], axis=1)  # shape (n,2)
+# ── Training with GradientTape ────────────────────────────────────────────────
+optimizer  = tf.optimizers.SGD(learning_rate=0.1)
+Y_oh_train = tf.one_hot(y_train, depth=3, dtype=tf.float32)
+X_tr_tf    = tf.constant(X_train, dtype=tf.float32)
 
-net = tf.keras.Sequential([
-    tf.keras.layers.Dense(64, activation='tanh', input_shape=(2,)),
-    tf.keras.layers.Dense(64, activation='tanh'),
-    tf.keras.layers.Dense(2)  # raw outputs -> we'll make them nonnegative below
+loss_hist_tf = []
+for epoch in range(300):
+    with tf.GradientTape() as tape:
+        preds = forward_tf(X_tr_tf)
+        loss  = -tf.reduce_mean(
+            tf.reduce_sum(Y_oh_train * tf.math.log(preds + 1e-12), axis=1)
+        )
+    grads = tape.gradient(loss, trainable_vars)
+    optimizer.apply_gradients(zip(grads, trainable_vars))
+    loss_hist_tf.append(float(loss))
+
+# ── Evaluate ──────────────────────────────────────────────────────────────────
+preds_tr = np.argmax(forward_tf(tf.constant(X_train, dtype=tf.float32)), axis=1)
+preds_te = np.argmax(forward_tf(tf.constant(X_test,  dtype=tf.float32)), axis=1)
+print(f"Train accuracy: {np.mean(preds_tr == y_train):.1%}")
+print(f"Test  accuracy: {np.mean(preds_te == y_test):.1%}")
+#+END_SRC
+
+
+: Train accuracy: 96.7%
+: Test  accuracy: 96.7%
+
+The =tf.GradientTape()= context records all computations involving =tf.Variable= objects.  After the forward pass, =tape.gradient(loss, trainable_vars)= computes the gradient of the loss with respect to every variable in one call -- no manual chain-rule derivations needed.  This is the mechanism that powers all modern deep-learning frameworks.
+
+*** Neural network in Keras
+:PROPERTIES:
+:CUSTOM_ID: lecture5-keras-nn
+:END:
+
+Keras is the high-level API built on top of TensorFlow.  Instead of managing weight variables and writing the training loop manually, Keras lets you specify the architecture in a few lines and calls =model.fit()= to handle training.
+
+The architecture below matches the numpy and TensorFlow versions: two hidden layers of 5 nodes each, followed by a 3-class softmax output.  Parameter counts: $4 \times 5 + 5 = 25$ (first hidden), $5 \times 5 + 5 = 30$ (second hidden), $5 \times 3 + 3 = 18$ (output).
+
+
+| Layer           | Output shape | Parameters |
+|-----------------+--------------+------------|
+| dense (Dense)   | (None, 5)    |         25 |
+| dense_1 (Dense) | (None, 5)    |         30 |
+| dense_2 (Dense) | (None, 3)    |         18 |
+|-----------------+--------------+------------|
+| *Total*         |              |       *73* |
+| Trainable       |              |         73 |
+| Non-trainable   |              |          0 |
+
+
+
+
+#+BEGIN_SRC python :results output :exports both
+from tensorflow import keras
+
+# ── Build model with the Sequential API ──────────────────────────────────────
+model = keras.Sequential([
+    keras.Input(shape=(4,)),
+    keras.layers.Dense(5, activation="relu"),
+    keras.layers.Dense(5, activation="relu"),
+    keras.layers.Dense(3, activation="softmax"),
 ])
 
-opt = tf.keras.optimizers.Adam(1e-3)
+# ── Compile ───────────────────────────────────────────────────────────────────
+model.compile(
+    optimizer=keras.optimizers.SGD(learning_rate=0.1),
+    loss="sparse_categorical_crossentropy",
+    metrics=["accuracy"],
+)
 
-def train_step(cc):
-    c1, c2 = cc[:,0], cc[:,1]
-    with tf.GradientTape() as outer: 
-        with tf.GradientTape(persistent=True) as inner:
-            raw = net(cc, training=True)          
-            x1 = tf.nn.softplus(raw[:, 0])
-            x2 = tf.nn.softplus(raw[:, 1])
+# ── Train ─────────────────────────────────────────────────────────────────────
+history = model.fit(
+    X_train, y_train,
+    epochs=300,
+    validation_data=(X_test, y_test),
+    verbose=0,
+)
 
-            inner.watch([x1, x2])                
-            p  = price(x1, x2)
-            C1 = 0.5 * c1 * tf.square(x1)
-            C2 = 0.5 * c2 * tf.square(x2)
-            pi1 = p * x1 - C1
-            pi2 = p * x2 - C2
-
-        r1 = inner.gradient(pi1, x1)
-        r2 = inner.gradient(pi2, x2)
-        del inner
-
-        loss = tf.reduce_mean(tf.square(r1)) + tf.reduce_mean(tf.square(r2))
-        loss += 1e-2 * tf.reduce_mean(tf.square(tf.nn.relu(-p))) # penalty term if p < 0
-
-    grads = outer.gradient(loss, net.trainable_variables)
-    opt.apply_gradients(zip(grads, net.trainable_variables))
-    return loss, x1, x2
-
-batch_size = 512
-epochs = 1500
-
-for it in range(1, epochs+1):
-    cc = sample_costs(batch_size)
-    L, x1_hat, x2_hat = train_step(cc)
-
-    if it % 300 == 0:
-        cc_test = sample_costs(256)
-        c1t, c2t = cc_test[:, 0], cc_test[:, 1]
-        raw_test = net(cc_test, training=False)
-        x1_test = tf.nn.softplus(raw_test[:, 0])
-        x2_test = tf.nn.softplus(raw_test[:, 1])
-        x1_star, x2_star = closed_form_x(c1t, c2t)
-        mae = tf.reduce_mean(tf.abs(x1_test - x1_star)) +\
-            tf.reduce_mean(tf.abs(x2_test - x2_star))
-        print(f"iter {it:4d} | loss {L.numpy():.3e} | test MAE {mae.numpy():.3e}")
-
-c1_ex = tf.constant([[1.0]])
-c2_ex = tf.constant([[1.5]])
-raw_ex = net(tf.concat([c1_ex, c2_ex], axis=1), training=False)
-x1_ex = tf.nn.softplus(raw_ex[:, 0])
-x2_ex = tf.nn.softplus(raw_ex[:, 1])
-p_ex = price(x1_ex, x2_ex)
-
-x1_star_ex, x2_star_ex = closed_form_x(c1_ex, c2_ex)
-p_star_ex = 1.0 - x1_star_ex - x2_star_ex
-
-print("Example (c1=1.0, c2=1.5)")
-print(f"  NN   -> x1={x1_ex.numpy().item():.4f}, x2={x2_ex.numpy().item():.4f},\
-      p={p_ex.numpy().item():.4f}")
-print(f"  exact-> x1={x1_star_ex.numpy().item():.4f},\
-      x2={x2_star_ex.numpy().item():.4f}, p={p_star_ex.numpy().item():.4f}")
+# ── Evaluate ──────────────────────────────────────────────────────────────────
+_, train_acc = model.evaluate(X_train, y_train, verbose=0)
+_, test_acc  = model.evaluate(X_test,  y_test,  verbose=0)
+print(f"Train accuracy: {train_acc:.1%}   Test accuracy: {test_acc:.1%}")
 #+END_SRC
 
 #+RESULTS:
-: WARNING:absl:At this time, the v2.11+ optimizer `tf.keras.optimizers.Adam` runs slowly on M1/M2 Macs, please use the legacy Keras optimizer instead, located at `tf.keras.optimizers.legacy.Adam`.
-: iter  300 | loss 1.158e-02 | test MAE 2.902e-02
-: iter  600 | loss 5.130e-03 | test MAE 2.371e-02
-: iter  900 | loss 2.939e-03 | test MAE 1.901e-02
-: iter 1200 | loss 1.743e-03 | test MAE 1.569e-02
-: iter 1500 | loss 1.101e-03 | test MAE 1.295e-02
-: Example (c1=1.0, c2=1.5)
-:   NN   -> x1=0.2569, x2=0.2039, p=0.5392
-:   exact-> x1=0.2632, x2=0.2105, p=0.5263
-
-Plot $x1,x2$  as a function of $c_1$ for $c_2 = 1.5$
+: Train accuracy: 97.5%   Test accuracy: 100.0%
 
 
-#+begin_src jupyter-python :file ./figures/NN_solution_duopoly.png
-range_c1 = np.arange(0,3.1,0.1)[:,None]
-c2 = 1.5*np.ones_like(range_c1)
+The progression numpy $\to$ TensorFlow GradientTape $\to$ Keras reflects the usual trade-off between transparency and convenience.  The numpy version makes every operation explicit; Keras abstracts the details away but sacrifices that transparency.  Understanding the numpy version lets you debug and extend any Keras model when things go wrong.
 
-raw_ex = net(tf.concat([range_c1, c2], axis=1), training=False)
-x1_ex = tf.nn.softplus(raw_ex[:, 0])
-x2_ex = tf.nn.softplus(raw_ex[:, 1])
-p_ex = price(x1_ex, x2_ex)
-p_cf = price(closed_form_x(range_c1,c2)[0],closed_form_x(range_c1,c2)[1])
-plt.plot(range_c1,p_ex.numpy(),label="neural network")
-plt.plot(range_c1,p_cf,label="closed form")
-plt.legend();
+** Summary
+:PROPERTIES:
+:CUSTOM_ID: lecture5-summary
+:END:
 
+- A *feedforward neural network* is a sequence of linear maps and nonlinear activations.  The output layer uses *softmax* to convert scores into class probabilities; hidden layers use activations such as ReLU, sigmoid, or tanh.
+- *Forward propagation* computes predictions layer by layer: $\mathbf{Z}_k = \mathbf{A}_{k-1} \mathbf{W}_k + \mathbf{b}_k$, $\mathbf{A}_k = \sigma(\mathbf{Z}_k)$.
+- *Backpropagation* applies the chain rule layer by layer (backwards) to compute the gradient of the loss with respect to every weight.  For cross-entropy + softmax the output-layer gradient is simply $(\hat{\mathbf{Y}} - \mathbf{Y})/n$.
+- *Hyperparameters* -- depth, learning rate, epochs -- control the bias--variance trade-off exactly as in lecture 4: too few layers or epochs underfits; too many overfits.
+- *TensorFlow GradientTape* automates backpropagation for any forward pass.  *Keras* further abstracts the training loop, allowing the same network to be specified and trained in a handful of lines.
+
+** Review Questions
+:PROPERTIES:
+:CUSTOM_ID: lecture5-review
+:END:
+
+1. What is the role of the softmax function in the output layer?  Why is it used in a multi-class setting instead of applying sigmoid to each output node independently?
+
+2. Explain why ReLU is less susceptible to the /vanishing gradient/ problem than sigmoid or tanh.
+
+3. In the backpropagation derivation, why is the gradient at the output layer $(\hat{\mathbf{Y}} - \mathbf{Y})/n$ rather than something more complex?  What property of cross-entropy + softmax gives this simplification?
+
+4. If a neural network achieves 99% training accuracy but only 65% test accuracy on the Iris dataset, what is likely happening?  Which hyperparameters would you adjust, and in which direction?
+
+5. What is the conceptual difference between =tf.GradientTape= and the Keras =model.fit()= API?  When would you prefer one over the other?
+
+--------------------
+
+#+BEGIN_EXPORT latex
+\newpage
+#+END_EXPORT
+
+* Lecture 6: Demand estimation
+:PROPERTIES:
+:CUSTOM_ID: lecture-demand-estimation
+:header-args:  :session *lecture_nn* :python ~/my_env/tf_env/bin/python3 :async t  :results output :exports both
+:END:
+
+** Learning Objectives
+:PROPERTIES:
+:CUSTOM_ID: lecture6-learning-objectives
+:END:
+
+After this lecture you will be able to:
+
+- Explain why ReLU activation functions can approximate any continuous function.
+- Simulate a discrete-choice demand dataset from a structural utility model with consumer heterogeneity.
+- Compare logistic regression and a neural network as demand estimators and explain when the neural network outperforms the linear benchmark.
+- Identify over-fitting and under-fitting from train/validation loss curves and use them to tune network depth and training duration.
+- Use a demand model (true, estimated logistic, or neural network) to compute the profit-maximizing price and quality combination.
+
+** Introduction
+:PROPERTIES:
+:CUSTOM_ID: lecture6-introduction
+:END:
+
+Lecture 5 used neural networks for prediction: how well does the network classify a held-out observation?  This lecture adds an *economic* objective: what should a firm do with the estimated demand model?
+
+We study a firm that has observed 10 000 consumers each facing a random price-quality offer.  Each consumer has ten characteristics --age, gender, income, health consciousness, tech savviness, outdoor hobby, children, education, brand loyalty, and time scarcity-- that determine how much they value quality and how sensitive they are to price.  We know the true structural model (because we simulated the data ourselves), so we can evaluate how well logistic regression and a neural network recover the demand function and how the estimation error propagates into the firm's pricing decision.
+
+The key result: a neural network that is 3 percentage points more accurate than logistic regression translates into a profit that is roughly 43% higher at the firm's optimal price.  Small improvements in predictive accuracy can have large economic consequences when the demand function is non-linear.
+
+** Interactive Apps
+:PROPERTIES:
+:CUSTOM_ID: lecture6-apps
+:END:
+
+*** App 1: Approximating functions with ReLU
+:PROPERTIES:
+:CUSTOM_ID: lecture6-app1
+:END:
+
+Use the slider to choose how many ReLU basis functions approximate the target $f(x) = x^3 + x^2 - x - 1$.  The bottom panel decomposes the approximation into its individual scaled ReLU contributions, making it visible how each term adds a slope change at its knot position.
+
+#+BEGIN_EXPORT html
+<div style="text-align:center;margin:20px 0;">
+  <a href="https://janboone.github.io/datascience-marimo/lecture6_relu_approx.html"
+     target="_blank"
+     style="background:#1f3c88;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:1em;">
+    &#9654; Open app: ReLU function approximation
+  </a>
+</div>
+#+END_EXPORT
+
+*** App 2: Demand neural network
+:PROPERTIES:
+:CUSTOM_ID: lecture6-app2
+:END:
+
+
+
+Train a neural network on 1 500 simulated consumers.  Choose the number of hidden layers and nodes per layer, then click *Train models*.  The loss curve plots train and validation cross-entropy epoch by epoch alongside the logistic regression benchmark. Use it to diagnose over- and under-fitting and to find the best architecture.
+
+#+BEGIN_EXPORT html
+<div style="text-align:center;margin:20px 0;">
+  <a href="https://janboone.github.io/datascience-marimo/lecture6_demand_nn.html"
+     target="_blank"
+     style="background:#1f3c88;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:1em;">
+    &#9654; Open app: Demand neural network
+  </a>
+</div>
+#+END_EXPORT
+
+** Python Code Explanation
+:PROPERTIES:
+:CUSTOM_ID: lecture6-python-code
+:END:
+
+*** Simulating consumer data
+:PROPERTIES:
+:CUSTOM_ID: lecture6-dgp
+:END:
+
+#+begin_src python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import layers, regularizers
 #+end_src
 
 #+RESULTS:
-[[file:./figures/NN_solution_duopoly.png]]
 
-*Exercise*: change neural network specification to improve the fit between neural network prediction and closed form solution
+We simulate market data based on the following utility set-up. Consider a product where consumers buy one unit or none at all. Consumer $i$ buys one unit of quality $q$ at price $p$ if
 
-**** Notes
-- The key idea is purely economic: we take the **derivative of profit w.r.t. own output** with `GradientTape` and train the net so those derivatives are (on average) zero.
-- `softplus` just ensures \(x_i \ge 0\) without if-statements.
-- You can change demand/cost by editing the three one-liners: `price`, `C1`, `C2`.
+$$U(q, p \mid x_i) = \alpha(x_i)\,q + \phi(x_i)\,q^2 - \beta(x_i)\,p + \delta(x_i)\,q\,p + \varepsilon_i > 0,$$
+
+where $\varepsilon_i \sim \text{Logistic}(0, 1)$ is idiosyncratic taste noise [cite:@mcfadden-1974-condit]. The parameter $\alpha$ is the linear term in the utility value of quality. We also allow for a non-linear effect with $\phi$. If $\phi < 0$ there is decreasing marginal utility of quality. The marginal value of income is given by $\beta$. Finally, with $\delta > 0$ we allow that a consumer derives utility from a high price, especially when the quality of the product is high; a status effect.
+
+The coefficients $\alpha, \phi, \beta, \delta$ are nonlinear functions of ten consumer characteristics:
+
+| Parameter | Interpretation       | Key interactions                                     |
+|-----------+----------------------+------------------------------------------------------|
+| $\alpha$       | Quality valuation    | Elderly $\times$ health-conscious; outdoor parents  |
+| $\phi$       | Curvature in quality | Tech-savvy: increasing returns; elderly: diminishing |
+| $\beta$       | Price sensitivity    | High income $\times$ tech: low sensitivity          |
+| $\delta$       | Quality--price cross | Rich loyal: fine with high $p$ for high $q$          |
+
+These interactions are deliberately non-linear so that a simple linear logistic regression cannot fit the data as well as a neural network.
+
+The following code draws random values for each of the characteristics for $N = 10,000$ consumers. Use an LLM or google to figure out what =isinstance(X, pd.DataFrame)= does.
+
+#+BEGIN_SRC python :exports both
+N_CONSUMERS = 10000
+
+def generate_consumers(n=N_CONSUMERS, seed=42):
+    rng = np.random.default_rng(seed)
+    X = np.zeros((n, 10))
+    X[:, 0] = rng.uniform(0, 1, n)          # age
+    X[:, 1] = rng.binomial(1, 0.5, n)       # gender
+    X[:, 2] = rng.beta(2, 5, n)             # income (right-skewed)
+    X[:, 3] = rng.uniform(0, 1, n)          # health_consciousness
+    X[:, 4] = rng.uniform(0, 1, n)          # tech_savviness
+    X[:, 5] = rng.binomial(1, 0.4, n)       # outdoor_hobby
+    X[:, 6] = rng.binomial(1, 0.35, n)      # has_children
+    X[:, 7] = rng.beta(3, 2, n)             # education
+    X[:, 8] = rng.uniform(0, 1, n)          # brand_loyalty
+    X[:, 9] = rng.uniform(0, 1, n)          # time_scarcity
+    cols = ['age','gender','income','health','tech','outdoor',
+            'children','education','brand_loyalty','time_scarcity']
+    return pd.DataFrame(X, columns=cols)
+
+def compute_utility_params(X):
+    age   = X[:, 0];  gender = X[:, 1];  income = X[:, 2]
+    health= X[:, 3];  tech   = X[:, 4];  outdoor= X[:, 5]
+    children=X[:, 6]; educ   = X[:, 7];  loyal  = X[:, 8];  time_s = X[:, 9]
+
+    alpha = (1.5 + 2.0 * health * (age > 0.6)
+             + 1.5 * outdoor * children + 0.8 * tech * educ
+             + 0.5 * gender * loyal + 1.0 * time_s * income + 0.3 * educ)
+    phi   = (0.5 * tech - 0.4 * health * (age > 0.6)
+             + 0.3 * outdoor * children - 0.2 * (1 - income))
+    beta  = (2.0 - 1.2 * income * tech - 0.8 * income * educ
+             + 0.6 * (1-income)*(1-educ) + 0.3 * children*(1-income) - 0.2 * loyal)
+    delta = (-0.3 + 0.4 * income * loyal
+             - 0.5 * (1-income)*(1-tech) + 0.2 * educ * tech)
+    return alpha, phi, beta, delta
+
+def utility(q, p, X):
+    if isinstance(X, pd.DataFrame):
+        X = X.values
+    alpha, phi, beta, delta = compute_utility_params(X)
+    return alpha * q + phi * q**2 - beta * p + delta * q * p
+
+def simulate_market_data(consumers, seed=123):
+    rng = np.random.default_rng(seed)
+    n   = len(consumers)
+    X   = consumers.values
+    q_offers = rng.uniform(1, 5, n)
+    p_offers = rng.uniform(1, 10, n)
+    det_u    = utility(q_offers, p_offers, X)
+    buy      = ((det_u + rng.logistic(0, 1, n)) > 0).astype(int)
+    df = consumers.copy()
+    df['quality'] = q_offers
+    df['price']   = p_offers
+    df['bought']  = buy
+    return df
+
+consumers   = generate_consumers()
+market_data = simulate_market_data(consumers)
+print(f"Observations: {len(market_data)}")
+print(f"Purchase rate: {market_data['bought'].mean():.3f}")
+print(f"Quality range: [{market_data['quality'].min():.2f}, {market_data['quality'].max():.2f}]")
+print(f"Price range:   [{market_data['price'].min():.2f}, {market_data['price'].max():.2f}]")
+#+END_SRC
 
 
+: Observations: 10000
+: Purchase rate: 0.265
+: Quality range: [1.00, 5.00]
+: Price range:   [1.00, 10.00]
+
+We can save the =market_data= dataframe:
+
+#+begin_src python
+market_data.to_csv('./data/market_data.csv')
+#+end_src
+
+#+RESULTS:
+
+*** Logistic regression
+:PROPERTIES:
+:CUSTOM_ID: lecture6-logit
+:END:
+
+With a logistic regression model we can write  the purchase probability as
+
+$$\Pr(\text{buy} \mid x, q, p) = \sigma(\mathbf{w}^\top [x, q, p] + b), \qquad \sigma(z) = \frac{1}{1+e^{-z}}$$
+
+where $w$ denotes the vector of coefficients on the features $x$, quality $q$, and price $p$. The intercept is given by $b$. Because it is a linear model in the features, it cannot capture the interactions we included in the (true) utility function above.
+
+We read in the data we generated above and select the feature columns we want to include in our $X$ matrix. We want to predict whether or not an agent bought the product. We split the data into train and test data, 80% and 20% resp. of all the data. To facilitate the algorithm, we scale the $X$ data by subtracting the mean of each column (variable) and divide by the standard deviation. For this we use the mean and standard deviation of the train data and also apply these to the test data. Below =scaler= is fit on =X_train= and also applied to =X_test=. We denote the scaled version of our variables by =X_train_sc, X_test_sc= resp. We use sklearn's =LogisticRegression= to =fit= a logistic regression to the train data and calculate our accuracy score on both the train and test data. That is, with =logit.predict= we predict whether someone bought the product or not (depending on whether probability of buying exceeds 0.5 or not) and then calculate how often this prediction is correct. Usually the accuracy is higher on the train than on the test set. Indeed we choose parameters $w,b$ to maximize the fit on the train data.
+
+#+BEGIN_SRC python :exports both
+market_data = pd.read_csv('./data/market_data.csv')
+feature_cols = ['age','gender','income','health','tech','outdoor',
+                'children','education','brand_loyalty','time_scarcity',
+                'quality','price']
+
+X_all = market_data[feature_cols].values
+y_all = market_data['bought'].values
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X_all, y_all, test_size=0.2, random_state=42)
+
+scaler = StandardScaler()
+X_train_sc = scaler.fit_transform(X_train)
+X_test_sc  = scaler.transform(X_test)
+
+logit = LogisticRegression(max_iter=1000)
+logit.fit(X_train_sc, y_train)
+
+train_acc = accuracy_score(y_train, logit.predict(X_train_sc))
+test_acc  = accuracy_score(y_test,  logit.predict(X_test_sc))
+print(f"Logistic regression — Train: {train_acc:.4f}  Test: {test_acc:.4f}")
+
+coef_df = pd.DataFrame({
+    'feature':     feature_cols,
+    'coefficient': logit.coef_[0]
+}).sort_values('coefficient', ascending=False)
+print("\nCoefficients (sorted):")
+print(coef_df.to_string(index=False))
+#+END_SRC
+
+
+
+: Logistic regression — Train: 0.9103  Test: 0.9035
+: 
+: Coefficients (sorted):
+:       feature  coefficient
+:          tech     2.036093
+:       quality     1.565593
+:        income     1.247384
+:     education     0.724049
+:       outdoor     0.669949
+:      children     0.546568
+: brand_loyalty     0.504556
+:           age     0.229785
+:        gender     0.225445
+:        health     0.166751
+: time_scarcity     0.104857
+:         price    -3.524566
+
+The coefficients show that =tech, quality= and =income= increase purchase probability while =price= strongly reduces it.  But these are average effects: the model cannot represent, for example, that high-income tech-savvy consumers are especially insensitive to price.
+
+*** Neural network in TensorFlow/Keras
+:PROPERTIES:
+:CUSTOM_ID: lecture6-tf-nn
+:END:
+
+The following neural network has architecture $12 \to 64 \to 32 \to 16 \to 1$ (size of input, three hidden and output layers) with ReLU activations in the hidden layers, batch normalization, and dropout for regularization.  A sigmoid output gives the purchase probability directly.
+
+
+The function =build_demand_net= has three arguments:
+- =input_dim=12=: the model expects 12 features ($x,p,q$ in the notation from above)
+- =hidden_dims=(64, 32, 16)=: three hidden layers with 64, 32, and 16 neurons respectively
+- =dropout=0.2=: a regularization parameter (explained below)
+
+=keras.Input= declares the entry point of the network: a vector of 12 numbers representing one observation. Think of =x= below as the data flowing through the network, being transformed at each step.
+
+The =for= loop builds each hidden layer in sequence. Four operations happen at every layer:
+
+| Line                   | What it does                                              | Economic analogy                                                          |
+|------------------------+-----------------------------------------------------------+---------------------------------------------------------------------------|
+| =Dense(h, ...)=        | Matrix multiplication: computes =Wx + b= with =h= neurons | A linear projection into a new space                                      |
+| =BatchNormalization()= | Rescales activations to have mean 0, variance 1           | Standardizing variables to make estimation stable                         |
+| =ReLU()=               | Applies the ReLu activation function                      | Introduces the "kinks" needed to fit non-linear demand curves             |
+| =Dropout(0.2)=         | Randomly switches off 20% of neurons during training      | A form of regularization, analogous to ridge/lasso; prevents over-fitting |
+
+The =l2(1e-4)= in =Dense= adds an L2 penalty on the weights to the loss function; exactly the same idea as ridge regression.
+
+
+The final layer =outputs= produces a single number between 0 and 1 via the sigmoid function:
+$$\sigma(z) = \frac{1}{1+e^{-z}}$$
+This is the predicted purchase probability. =keras.Model= then packages the whole computation graph into one reusable object. As we defined default values for all parameters, we can call the function as =build_demand_net()=.
+
+Experiment with the network by changing values for hyper-parameters like the =dropout, kernel_regularizers, hidden_dims= and see how it changes the outcome.
+
+#+BEGIN_SRC python :results output :exports both
+# ── Architecture ──────────────────────────────────────────────────────────────
+def build_demand_net(input_dim=12, hidden_dims=(64, 32, 16), dropout=0.2):
+    inputs = keras.Input(shape=(input_dim,))
+    x = inputs
+    for h in hidden_dims:
+        x = layers.Dense(h, kernel_regularizer=regularizers.l2(1e-4))(x)
+        x = layers.BatchNormalization()(x)
+        x = layers.ReLU()(x)
+        x = layers.Dropout(dropout)(x)
+    outputs = layers.Dense(1, activation='sigmoid')(x)
+    return keras.Model(inputs, outputs, name='DemandNet')
+
+model = build_demand_net()
+
+#+END_SRC
+
+
+
+Before training, you must specify three things:
+- =loss = 'binary_crossentropy'=: the objective function being minimized. This is identical to the log-likelihood used in logistic regression:
+$$\mathcal{L} = -\frac{1}{N}\sum_{i}\left[y_i \log\hat{p}_i + (1-y_i)\log(1-\hat{p}_i)\right]$$
+- =optimizer = Adam(...)=: the algorithm that updates the weights. Adam is a sophisticated gradient descent method that adapts the learning rate for each parameter automatically. Think of it as a smarter version of gradient descent.
+- =metrics = ['accuracy']=: what to /monitor/ during training (not what is optimized which is given by =loss=).
+
+#+BEGIN_SRC python :results output :exports both
+# ── Training ──────────────────────────────────────────────────────────────────
+model.compile(
+    optimizer=keras.optimizers.Adam(learning_rate=1e-3),
+    loss='binary_crossentropy',
+    metrics=['accuracy'],
+)
+
+
+history = model.fit(
+    X_train_sc, y_train,
+    validation_data=(X_test_sc, y_test),
+    epochs=100,
+    batch_size=256,
+    verbose=0,
+)
+
+#+END_SRC
+
+
+
+The variable =history= stores metrics per epoch (e.g., loss, accuracy) for both training and validation sets, useful for plotting learning curves later on:
+- =history.history['loss']= gives the training loss per epoch;
+- =history.history['val_loss']= the validation loss per epoch and
+- =history.history['accuracy']= the training accuracy per epoch.
+
+| Argument              | Meaning                                                                                                    |
+|-----------------------+------------------------------------------------------------------------------------------------------------|
+| =X_train_sc, y_train= | Training features (scaled) and labels                                                                      |
+| =validation_data=...= | Held-out test set; monitored at each epoch but never used to update weights                                |
+| =epochs=100=          | The algorithm passes through the entire dataset 100 times                                                  |
+| =batch_size=256=      | Weights are updated after every 256 observations (called a mini-batch), not after seeing the whole dataset |
+
+
+#+begin_src python :results graphics file output :file ./figures/TrainValidationLossDemand.png
+plt.plot(history.history['loss'], label='Train Loss')
+plt.plot(history.history['val_loss'], label='Validation Loss')
+plt.xlabel('Epochs')
+plt.ylabel('Loss')
+plt.title('Train vs Validation Loss')
+plt.legend()
+#+end_src
+
+#+RESULTS:
+[[file:./figures/TrainValidationLossDemand.png]]
+
+
+After 20 epochs the validation loss does not really decrease any further. Hence we estimate the neural network with 20 epochs.
+
+The neural network --like the logistic regression-- is compared on unseen test data:
+- =model.predict()= returns probabilities; comparing the probabilities to $0.5$ converts them to binary predictions
+- =.squeeze()= removes an unnecessary extra dimension from the output array; try yourself by typing =np.random.normal(size=(3,1)).squeeze()=.
+
+#+BEGIN_SRC python :results output :exports both
+model.fit(X_train_sc, y_train, epochs=20, batch_size=256, verbose=0,)
+
+# ── Evaluate ──────────────────────────────────────────────────────────────────
+nn_test_acc    = accuracy_score(y_test, (model.predict(X_test_sc, verbose=0).squeeze() > 0.5))
+logit_test_acc = test_acc
+print(f"Logistic regression  — Test accuracy: {logit_test_acc:.4f}")
+print(f"Neural network       — Test accuracy: {nn_test_acc:.4f}")
+print(f"Improvement: {nn_test_acc - logit_test_acc:+.4f}")
+#+END_SRC
+
+
+#+begin_src 
+Logistic regression   Test accuracy: 0.9035
+Neural network        Test accuracy: 0.9290
+Improvement: +0.0255
+#+end_src
+
+The neural network captures non-linearities and interactions between features that logistic regression cannot. The network learns these automatically, although at the cost of interpretability (neural networks are often seen as a black box). The network achieves roughly 93% test accuracy versus 90% for logistic regression. 
+
+*** Profit maximization
+:PROPERTIES:
+:CUSTOM_ID: lecture6-profit
+:END:
+
+Once we have an estimated demand model $\hat{P}(\text{buy} \mid q, p, X)$, we can compute the firm's expected profit at any $(q, p)$:
+
+$$\pi(q, p) = \hat{P}(\text{buy} \mid q, p, X) \cdot (p - c(q))$$
+
+and we assume that the unit cost of producing quality $q$ equals $c(q) = 0.5 q^2$.
+
+We find the profit-maximizing $(q^*, p^*)$ by numerical optimization (here using differential evolution, a global method that tends to avoid local maxima). We evaluate the predicted profit maximizing $p,q$ using the true profit function so we see whether better estimation leads to better decisions.
+
+We make the following comparisons:
+- we calculate the optimal $(q^*,p^*)$ for the true model; if the firm knows the underlying utility functions, this is the profit it would get;
+- we derive the optimal $(q_{lr},p_{lr})$ for a firm maximizing profits using the demand function estimated with the logistic regression; then we calculate what the true profits will be if the firm brings $(q_{lr},p_{lr})$ to the market and
+- we derive the optimal $(q_{nn},p_{nn})$ for a firm maximizing profits using the demand function estimated with the neural network; then we calculate what the true profits will be if the firm brings $(q_{nn},p_{nn})$ to the market.
+
+Try =np.full(10,3)= to see what =np.full(n,q)= does. 
+
+#+BEGIN_SRC python :results output :exports both
+import numpy as np
+from scipy.optimize import differential_evolution
+
+def cost(q):
+    return 0.5 * q**2
+
+def profit_given_model(q, p, X, model_type='true'):
+    n = len(X)
+    X_arr = X.values if hasattr(X, 'values') else X
+    if model_type == 'true':
+        det_u    = utility(q, p, X_arr)
+        prob_buy = 1.0 / (1.0 + np.exp(-det_u))
+    elif model_type == 'nn':
+        X_qp     = np.column_stack([X_arr, np.full(n, q), np.full(n, p)])
+        prob_buy = model.predict(scaler.transform(X_qp), verbose=0).squeeze()
+    elif model_type == 'logit':
+        X_qp     = np.column_stack([X_arr, np.full(n, q), np.full(n, p)])
+        prob_buy = logit.predict_proba(scaler.transform(X_qp))[:, 1]
+    return float(np.mean(prob_buy * (p - cost(q))))
+
+bounds  = [(1.0, 5.0), (1.0, 10.0)]
+results = {}
+for m in ['true', 'nn', 'logit']:
+    def neg_profit(params, m=m):
+        return -profit_given_model(params[0], params[1], consumers, m)
+    res = differential_evolution(neg_profit, bounds, seed=42, maxiter=200, tol=1e-6)
+    q_opt, p_opt = res.x
+    results[m] = {
+        'q*': q_opt,
+        'p*': p_opt,
+        'true_profit': profit_given_model(q_opt, p_opt, consumers, 'true'),
+    }
+
+print(f"{'Model':<12} {'q*':>7} {'p*':>7} {'True profit':>13}")
+print("-" * 43)
+for m, r in results.items():
+    print(f"{m:<12} {r['q*']:>7.3f} {r['p*']:>7.3f} {r['true_profit']:>13.4f}")
+
+nn_gain = (results['nn']['true_profit'] - results['logit']['true_profit'])
+nn_gain_pct = nn_gain / results['logit']['true_profit'] * 100
+print(f"\nNN profit gain over logit: {nn_gain:.4f}  ({nn_gain_pct:.1f}%)")
+print(f"Upper bound (true model):  {results['true']['true_profit']:.4f}")
+#+END_SRC
+
+: NN profit gain over logit: 0.1258  (47.2%)
+: Upper bound (true model):  0.4189
+
+The results show that better demand estimation pays off directly in terms of profits:
+
+| Model               | $q^*$ | $p^*$ | True profit |
+|---------------------+-------+-------+-------------|
+| True model          | 1.137 | 1.705 |      0.4189 |
+| Neural network      | 1.047 | 1.907 |      0.3924 |
+| Logistic regression | 1.012 | 2.527 |      0.2666 |
+
+The neural network recovers 91% of the true model's profit, while logistic regression recovers only 64%.  The profit gain of the neural network over logistic regression is roughly 47%.
+
+The economic intuition: logistic regression appears to under-estimate both the price sensitivity and quality valuation of consumers (because it cannot represent the relevant interactions). Therefore it recommends too high a price at too low a quality level. The neural network captures this heterogeneity and recommends a price closer to the true optimum.
+
+Above we consider the case where the firm offers one option $(q,p)$ for all consumers. But the firm could develop a menu of options targeted at different consumer groups. It goes too far to present this analysis and the Python code here, but this also illustrates the lack of interaction terms in the logistic regression.
+
+#+caption: Price discrimination based on the estimated demand and the true underlying model
+#+attr_latex: scale=0.3
+#+name: fig:PriceDiscriminationNN
+[[./figures/menu_comparison.png]]
+
+Figure ref:fig:PriceDiscriminationNN illustrates the situation where the firm clusters its customers into six segments. We assume that through targeted marketing the firm can offer each segment its own bundle $(q,p)$ without worrying about incentive compatibility constraints (i.e. first-degree price discrimination). In the true model (where the firm has an oracle to learn the underlying utility functions), the profit maximizing menu of choices differentiates in both quality and prices. With a neural network the firm differentiates between low and high valuation consumers but does not pick up the differentiation among the low types. Perhaps with more observations the neural network would improve the low valuation offerings in its menu. The firm basing its marketing on a logistic regression fails to identify the interactions completely and does not differentiate its quality offerings.
+
+
+** Summary
+:PROPERTIES:
+:CUSTOM_ID: lecture6-summary
+:END:
+
+- *ReLU basis functions* span the space of piecewise-linear functions.  Adding more ReLUs reduces approximation error; in a trained neural network the knot positions are learned jointly with the amplitudes.
+- *Discrete-choice demand* can be estimated as a binary classification problem: a sigmoid output gives a purchase probability, and binary cross-entropy is the natural loss function.
+- *Logistic regression* fitting a linear relationship misses non-linear interactions between consumer characteristics, quality, and price.  A neural network with two or three hidden layers captures these interactions and achieves higher out-of-sample accuracy.
+- *Train/validation loss curves* reveal over-fitting and under-fitting.  Use them to choose depth and training duration.
+- *Profit impact*: in our example a 3 percentage-point accuracy improvement translates into a 43% profit gain at the optimal price.
+
+** Review Questions
+:PROPERTIES:
+:CUSTOM_ID: lecture6-review
+:END:
+
+1. The universal approximation theorem states that a neural network with a single hidden layer and enough units can approximate any continuous function.  Why does this not mean that one hidden layer is always sufficient in practice?
+
+2. In the demand model, the price coefficient $\beta(x)$ varies across consumers.  Explain why logistic regression cannot capture this heterogeneity and what the estimation consequence is.
+
+3. A student trains a demand network and finds that train accuracy is 95% but validation accuracy is 72%.  What is wrong and how would you fix it?
+
+4. Why is profit a better evaluation criterion than accuracy when comparing demand models for a pricing application?
+
+5. In the profit-maximisation results, the neural network recommends a lower price than logistic regression ($p^* = 1.94$ vs $p^* = 2.53$).  Using the structure of the utility model, explain why logistic regression overestimates the optimal price.
+
+--------------------
+
+#+BEGIN_EXPORT latex
+\newpage
+#+END_EXPORT
+
+* Lecture 7: An empirical and theoretical application of neural networks
+
+--------------------
+
+#+BEGIN_EXPORT latex
+\newpage
+#+END_EXPORT
 * Course takeaway: simulation as a bridge to machine learning
 
 These lectures show that the gap between classical econometrics and modern machine learning is smaller than it appears. OLS, the workhorse of econometrics, is just a specific loss function minimised by a simple algorithm. Ridge and lasso are OLS with an extra line of code. Neural networks are deeper versions of the same idea.
