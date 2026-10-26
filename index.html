@@ -114,142 +114,142 @@ org_html_manager.setup();  // activate after the parameters are set
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#orgde92144">Preamble</a></li>
-<li><a href="#org503b0c1">Marimo</a></li>
-<li><a href="#org8c1d93c">Introduction</a></li>
+<li><a href="#org6d5a4c5">Preamble</a></li>
+<li><a href="#org77f0ec0">Marimo</a></li>
+<li><a href="#org4beaa8e">Introduction</a></li>
 <li><a href="#lecture-hacking">Lecture 1: Statistical Hacking — Distributions and Bootstrapping</a>
 <ul>
-<li><a href="#org4e47645">Learning Objectives</a></li>
-<li><a href="#org0bcba2a">Introduction</a></li>
-<li><a href="#orgcbe5e87">Apps</a>
+<li><a href="#orgd86fee3">Learning Objectives</a></li>
+<li><a href="#orgb3096b3">Introduction</a></li>
+<li><a href="#org039cf45">Apps</a>
 <ul>
-<li><a href="#org8f744b7">Distribution of an estimator</a></li>
-<li><a href="#org974cc1e">Bootstrap hypothesis test</a></li>
+<li><a href="#orgf3f0b99">Distribution of an estimator</a></li>
+<li><a href="#org83515ae">Bootstrap hypothesis test</a></li>
 </ul>
 </li>
-<li><a href="#org2140245">Python Code Explanation</a>
+<li><a href="#org89f8d99">Python Code Explanation</a>
 <ul>
-<li><a href="#org3a0c8f5">Simulating sampling distributions</a>
+<li><a href="#org24f5b05">Simulating sampling distributions</a>
 <ul>
-<li><a href="#org09ab45a">Import libraries and set parameters</a></li>
-<li><a href="#org756e8a7">Generate the data</a></li>
-<li><a href="#org11d6332">Plot the histogram</a></li>
+<li><a href="#org2060161">Import libraries and set parameters</a></li>
+<li><a href="#org205ecc8">Generate the data</a></li>
+<li><a href="#org9074f18">Plot the histogram</a></li>
 </ul>
 </li>
-<li><a href="#org7046c66">Distribution of the OLS slope</a>
+<li><a href="#org7085ad8">Distribution of the OLS slope</a>
 <ul>
-<li><a href="#orgfee1a8e">Generate data with broadcasting</a></li>
-<li><a href="#orgac54518">Compute OLS slops</a></li>
+<li><a href="#org4daf86c">Generate data with broadcasting</a></li>
+<li><a href="#org7b2c501">Compute OLS slops</a></li>
 </ul>
 </li>
-<li><a href="#org07e579e">Bootstrapping</a>
+<li><a href="#orge6765b1">Bootstrapping</a>
 <ul>
-<li><a href="#orge0f9e20">Generate two groups</a></li>
-<li><a href="#org1e1fe28">Combine the samples</a></li>
-<li><a href="#org764a14f">Run the permutation test</a></li>
-<li><a href="#orgb818856">Compute the p-value</a></li>
+<li><a href="#org573bfa2">Generate two groups</a></li>
+<li><a href="#org64e77ec">Combine the samples</a></li>
+<li><a href="#org595a084">Run the permutation test</a></li>
+<li><a href="#org41edb00">Compute the p-value</a></li>
 </ul>
 </li>
-<li><a href="#org447392b">OLS from scratch: the optimization approach</a>
+<li><a href="#org6ce0559">OLS from scratch: the optimization approach</a>
 <ul>
-<li><a href="#org8b41348">Generate data</a></li>
-<li><a href="#org7441878">Define the OLS loss</a></li>
-<li><a href="#org0d972ae">Minimize the loss</a></li>
-<li><a href="#org62ec7c7">Ridge and lasso penalties</a></li>
+<li><a href="#orgae694d8">Generate data</a></li>
+<li><a href="#orgc4683fc">Define the OLS loss</a></li>
+<li><a href="#org6336a9d">Minimize the loss</a></li>
+<li><a href="#orgedab780">Ridge and lasso penalties</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#org276a125">Summary</a></li>
-<li><a href="#orgcaba32e">Review Questions</a>
+<li><a href="#orgd609f3b">Summary</a></li>
+<li><a href="#org84a1e8d">Review Questions</a>
 <ul>
 <li>
 <ul>
-<li><a href="#org865f0e3"><span class="todo TODO">TODO</span> review questions:</a></li>
+<li><a href="#org5ab9353"><span class="todo TODO">TODO</span> review questions:</a></li>
 </ul>
 </li>
-<li><a href="#orgedf051c">Question 1: Distribution of the sample standard deviation</a></li>
-<li><a href="#org0635ce4">Hint</a></li>
-<li><a href="#orgcd757e7">Question 2: OLS with correlated predictors</a></li>
-<li><a href="#orgb495169">Question 3: Ridge regression and variable selection</a></li>
-<li><a href="#org7964292">Hint</a></li>
-<li><a href="#orgd6bb219">Question 4: One-sided vs two-sided bootstrap test</a></li>
-<li><a href="#orgd2132b5">Question 5: Bootstrap confidence interval</a></li>
-<li><a href="#org86fff2c">Hint</a></li>
+<li><a href="#org666f4b3">Question 1: Distribution of the sample standard deviation</a></li>
+<li><a href="#orgb35b5bf">Hint</a></li>
+<li><a href="#org3572b40">Question 2: OLS with correlated predictors</a></li>
+<li><a href="#orgf2a7366">Question 3: Ridge regression and variable selection</a></li>
+<li><a href="#org84e19da">Hint</a></li>
+<li><a href="#orgcd5896a">Question 4: One-sided vs two-sided bootstrap test</a></li>
+<li><a href="#orga971541">Question 5: Bootstrap confidence interval</a></li>
+<li><a href="#org93ed033">Hint</a></li>
 </ul>
 </li>
 </ul>
 </li>
 <li><a href="#lecture-causality">Lecture 2: Variable selection and causality</a>
 <ul>
-<li><a href="#orgf4fbe4c">Learning Objectives</a></li>
-<li><a href="#org59e6039">Introduction</a></li>
-<li><a href="#org6678108">Apps</a>
+<li><a href="#org42f0f84">Learning Objectives</a></li>
+<li><a href="#org71a986e">Introduction</a></li>
+<li><a href="#orgfbd497b">Apps</a>
 <ul>
-<li><a href="#orgbd7f418">Significance and variable selection</a></li>
-<li><a href="#org14dbd2e">Fork, pipe, and collider</a></li>
+<li><a href="#orgab07822">Significance and variable selection</a></li>
+<li><a href="#org1a9eaee">Fork, pipe, and collider</a></li>
 </ul>
 </li>
-<li><a href="#org3822ca7">Python Code Explanation</a>
+<li><a href="#org8eefdab">Python Code Explanation</a>
 <ul>
-<li><a href="#org4ee3ad5">Multiple testing</a>
+<li><a href="#org2f24cc8">Multiple testing</a>
 <ul>
-<li><a href="#org31ab97a">Simulate many &ldquo;null variables&rdquo;</a></li>
-<li><a href="#org8a9ed39">Compute t-statistics for the multiple regression</a></li>
-<li><a href="#orgadddb91">Distribution of false discoveries across repetitions</a></li>
+<li><a href="#org8841efa">Simulate many &ldquo;null variables&rdquo;</a></li>
+<li><a href="#orgfd8cf1e">Compute t-statistics for the multiple regression</a></li>
+<li><a href="#orgc0869f1">Distribution of false discoveries across repetitions</a></li>
 </ul>
 </li>
-<li><a href="#org65493c0">Simulating fork, pipe, and collider</a>
+<li><a href="#orgcdac5b9">Simulating fork, pipe, and collider</a>
 <ul>
-<li><a href="#org83b64d9">The fork</a></li>
-<li><a href="#org5f79c06">The pipe</a></li>
-<li><a href="#org3e68ce9">The collider</a></li>
-<li><a href="#org16c7aa6">collider bias with simulated data</a></li>
-<li><a href="#org2b30ccb">collider bias with real data</a></li>
+<li><a href="#org9a9ed0f">The fork</a></li>
+<li><a href="#org400f340">The pipe</a></li>
+<li><a href="#org76c330c">The collider</a></li>
+<li><a href="#org99fd47e">collider bias with simulated data</a></li>
+<li><a href="#org61b9fc6">collider bias with real data</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#org8cabbb9">Summary</a></li>
-<li><a href="#orgfda444f">Review Questions</a>
+<li><a href="#org0d629d5">Summary</a></li>
+<li><a href="#org3453e76">Review Questions</a>
 <ul>
-<li><a href="#orga31b895">Question 1: False discovery rate</a></li>
-<li><a href="#org3cd537e">Question 2: Fork with partial effect</a></li>
-<li><a href="#org0301e92"><span class="todo TODO">TODO</span> Question 3: Costly data acquisition</a></li>
-<li><a href="#org9d960ae"><span class="todo TODO">TODO</span> Question 4: Treatment effects</a></li>
-<li><a href="#org17f8319">Hint</a></li>
+<li><a href="#org40c00bf">Question 1: False discovery rate</a></li>
+<li><a href="#org792ec52">Question 2: Fork with partial effect</a></li>
+<li><a href="#orge810971"><span class="todo TODO">TODO</span> Question 3: Costly data acquisition</a></li>
+<li><a href="#orgc0785df"><span class="todo TODO">TODO</span> Question 4: Treatment effects</a></li>
+<li><a href="#org9839b6a">Hint</a></li>
 </ul>
 </li>
 </ul>
 </li>
 <li><a href="#lecture-tensors">Lecture 3: Tensors, broadcasting, indexing, matrix operations</a>
 <ul>
-<li><a href="#org6288c11">Learning Objectives</a></li>
-<li><a href="#org4358da0">Introduction</a></li>
-<li><a href="#org6d17197">Apps</a>
+<li><a href="#orgb9e55ef">Learning Objectives</a></li>
+<li><a href="#orgc3bef32">Introduction</a></li>
+<li><a href="#orge34c132">Apps</a>
 <ul>
-<li><a href="#org2c53aea">Interactive matrix operations</a></li>
-<li><a href="#org14ffe00">Gradient descent for linear regression</a></li>
+<li><a href="#org8db9eb5">Interactive matrix operations</a></li>
+<li><a href="#org2a30478">Gradient descent for linear regression</a></li>
 </ul>
 </li>
-<li><a href="#orgec96eb3">Python Code Explanation</a>
+<li><a href="#org51d341e">Python Code Explanation</a>
 <ul>
-<li><a href="#orgc169b9e">Tensors and shape</a></li>
-<li><a href="#orgd3ac2af">Slicing and indexing</a></li>
-<li><a href="#org41f567b">Broadcasting</a></li>
-<li><a href="#org59a6cea">Matrix operations</a></li>
-<li><a href="#org9bc050c">Gradient descent from scratch</a></li>
+<li><a href="#org84e29d7">Tensors and shape</a></li>
+<li><a href="#org906688f">Slicing and indexing</a></li>
+<li><a href="#org7f4de52">Broadcasting</a></li>
+<li><a href="#org04706ee">Matrix operations</a></li>
+<li><a href="#orgc2a96ac">Gradient descent from scratch</a></li>
 </ul>
 </li>
-<li><a href="#org7b91133">Summary</a></li>
-<li><a href="#org015f7e4">Review Questions</a>
+<li><a href="#org4223a87">Summary</a></li>
+<li><a href="#org9b489ef">Review Questions</a>
 <ul>
-<li><a href="#org21aaafa">Question 1: Slicing and fancy indexing on panel data</a></li>
-<li><a href="#orgb91745c">Question 2: Sampling distributions without loops</a></li>
-<li><a href="#org6c076e1">Question 3: Multicollinearity and the matrix inverse</a></li>
-<li><a href="#orgb8f936d">Question 4: Batched OLS with <code>np.matmul</code></a>
+<li><a href="#orgb69e84c">Question 1: Slicing and fancy indexing on panel data</a></li>
+<li><a href="#orge1a7a8f">Question 2: Sampling distributions without loops</a></li>
+<li><a href="#orgb7adcf5">Question 3: Multicollinearity and the matrix inverse</a></li>
+<li><a href="#org77610f9">Question 4: Batched OLS with <code>np.matmul</code></a>
 <ul>
-<li><a href="#org0fee850">Hint: how to prompt an LLM</a></li>
+<li><a href="#orga30bb35">Hint: how to prompt an LLM</a></li>
 </ul>
 </li>
 </ul>
@@ -258,28 +258,28 @@ org_html_manager.setup();  // activate after the parameters are set
 </li>
 <li><a href="#lecture-overfitting">Lecture 4: Overfitting and underfitting</a>
 <ul>
-<li><a href="#orge2daf9e">Learning Objectives</a></li>
-<li><a href="#org59a0c6d">Introduction</a></li>
-<li><a href="#org61d1485">Apps</a>
+<li><a href="#orgdc48e46">Learning Objectives</a></li>
+<li><a href="#orgc090094">Introduction</a></li>
+<li><a href="#org9fee371">Apps</a>
 <ul>
-<li><a href="#org5ab855e">Polynomial regression: over-fitting and under-fitting</a></li>
-<li><a href="#org4bac7f3">Ridge and lasso regularisation</a></li>
+<li><a href="#orgf806dd4">Polynomial regression: over-fitting and under-fitting</a></li>
+<li><a href="#org6419536">Ridge and lasso regularisation</a></li>
 </ul>
 </li>
-<li><a href="#org665c565">Python Code Explanation</a>
+<li><a href="#org7e19b74">Python Code Explanation</a>
 <ul>
-<li><a href="#orgd10a25c">Polynomial features and train/test split</a></li>
-<li><a href="#org3e6c6e4">Ridge regression: shrinking coefficients</a></li>
-<li><a href="#org17bdd5f">Lasso regression: coordinate descent and sparsity</a></li>
-<li><a href="#orgb91c1fb">Tuning \(\lambda\) with cross-validation</a></li>
-<li><a href="#org773c371">Bias&ndash;variance decomposition</a></li>
-<li><a href="#org90e9f76">Why lasso gives sparsity but ridge does not</a></li>
-<li><a href="#org1248c06">Regularisation path</a></li>
-<li><a href="#orgd887e81">Information criteria</a></li>
+<li><a href="#orgbdd91be">Polynomial features and train/test split</a></li>
+<li><a href="#org441a993">Ridge regression: shrinking coefficients</a></li>
+<li><a href="#org658fbf2">Lasso regression: coordinate descent and sparsity</a></li>
+<li><a href="#orgef6a0a6">Tuning \(\lambda\) with cross-validation</a></li>
+<li><a href="#orgdf3abe3">Bias&ndash;variance decomposition</a></li>
+<li><a href="#orgbe300de">Why lasso gives sparsity but ridge does not</a></li>
+<li><a href="#org84ef4d1">Regularisation path</a></li>
+<li><a href="#org5a23848">Information criteria</a></li>
 </ul>
 </li>
-<li><a href="#org77431d4">Summary</a></li>
-<li><a href="#org32d2864">Review Questions</a></li>
+<li><a href="#orgea5c9bc">Summary</a></li>
+<li><a href="#org4573993">Review Questions</a></li>
 </ul>
 </li>
 <li><a href="#lecture-neural-network">Lecture 5: Neural network</a>
@@ -322,16 +322,45 @@ org_html_manager.setup();  // activate after the parameters are set
 <li><a href="#lecture6-review">Review Questions</a></li>
 </ul>
 </li>
-<li><a href="#org357dcd2">Lecture 7: An empirical and theoretical application of neural networks</a></li>
-<li><a href="#org569ed0e">Course takeaway: simulation as a bridge to machine learning</a></li>
-<li><a href="#org801bb43">Bibliography</a></li>
+<li><a href="#lecture-nn-applications">Lecture 7: An empirical and theoretical application of neural networks</a>
+<ul>
+<li><a href="#lecture7-learning-objectives">Learning Objectives</a></li>
+<li><a href="#lecture7-introduction">Introduction</a></li>
+<li><a href="#lecture7-app">Interactive App</a></li>
+<li><a href="#lecture7-python-code">Python Code Explanation</a>
+<ul>
+<li><a href="#lecture7-phillips-curve">Nonlinear Phillips curve</a>
+<ul>
+<li><a href="#org88e4d51">Data and train/validation split</a></li>
+<li><a href="#org2225769">Why the temporal split matters</a></li>
+<li><a href="#org549e5b2">Network architecture: <code>tanh</code> instead of ReLU</a></li>
+<li><a href="#orga4cf0a6">Learning curves and validation MAE</a></li>
+</ul>
+</li>
+<li><a href="#lecture7-cournot">Neural network solution of the Cournot equilibrium</a>
+<ul>
+<li><a href="#org9cd824b">The Cournot model</a></li>
+<li><a href="#org143fb36">Equilibrium-solving network</a></li>
+<li><a href="#orgb30f64e">The training step with <code>GradientTape</code></a></li>
+<li><a href="#orga707d09">Training loop</a></li>
+<li><a href="#org5ee0a49">Visualising the result</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#lecture7-summary">Summary</a></li>
+<li><a href="#lecture7-review">Review Questions</a></li>
+</ul>
+</li>
+<li><a href="#org7748aff">Course takeaway: simulation as a bridge to machine learning</a></li>
+<li><a href="#orgeb091f7">Bibliography</a></li>
 </ul>
 </div>
 </div>
 <main>
-<div id="outline-container-orgde92144" class="outline-2">
-<h2 id="orgde92144">Preamble</h2>
-<div class="outline-text-2" id="text-orgde92144">
+<div id="outline-container-org6d5a4c5" class="outline-2">
+<h2 id="org6d5a4c5">Preamble</h2>
+<div class="outline-text-2" id="text-org6d5a4c5">
 <p>
 There are two versions of this document:
 </p>
@@ -345,9 +374,9 @@ The html version uses the <a href="https://github.com/fniessen/org-html-themes">
 </p>
 </div>
 </div>
-<div id="outline-container-org503b0c1" class="outline-2">
-<h2 id="org503b0c1">Marimo</h2>
-<div class="outline-text-2" id="text-org503b0c1">
+<div id="outline-container-org77f0ec0" class="outline-2">
+<h2 id="org77f0ec0">Marimo</h2>
+<div class="outline-text-2" id="text-org77f0ec0">
 <p>
 In the lectures we use <a href="https://marimo.io/">marimo notebooks</a>. If you follow these lectures as a Tilburg University student, marimo is available at <a href="https://jupyterlab.uvt.nl/">jupyterlab server.</a>
 </p>
@@ -357,9 +386,9 @@ Information on how to install marimo on your own computer can be found <a href="
 </p>
 </div>
 </div>
-<div id="outline-container-org8c1d93c" class="outline-2">
-<h2 id="org8c1d93c">Introduction</h2>
-<div class="outline-text-2" id="text-org8c1d93c">
+<div id="outline-container-org4beaa8e" class="outline-2">
+<h2 id="org4beaa8e">Introduction</h2>
+<div class="outline-text-2" id="text-org4beaa8e">
 <p>
 The goal of these lectures is to build intuition for statistical and machine-learning concepts through simulation. Rather than deriving results analytically, we generate data ourselves, repeat an experiment thousands of times, and read the answer directly from the resulting distribution. This approach — sometimes called <b>statistical hacking</b> — serves two purposes: you always know exactly where your data comes from, and you sharpen your Python skills along the way.
 </p>
@@ -411,9 +440,9 @@ The lectures build on each other. We begin with foundational ideas in statistics
 <b>Skills you learn in this lecture:</b> simulating sampling distributions, visualising histograms, implementing bootstrapping and OLS from scratch using Python and numpy.
 </p>
 </div>
-<div id="outline-container-org4e47645" class="outline-3">
-<h3 id="org4e47645">Learning Objectives</h3>
-<div class="outline-text-3" id="text-org4e47645">
+<div id="outline-container-orgd86fee3" class="outline-3">
+<h3 id="orgd86fee3">Learning Objectives</h3>
+<div class="outline-text-3" id="text-orgd86fee3">
 <p>
 After completing this lecture you should be able to:
 </p>
@@ -427,9 +456,9 @@ After completing this lecture you should be able to:
 </ul>
 </div>
 </div>
-<div id="outline-container-org0bcba2a" class="outline-3">
-<h3 id="org0bcba2a">Introduction</h3>
-<div class="outline-text-3" id="text-org0bcba2a">
+<div id="outline-container-orgb3096b3" class="outline-3">
+<h3 id="orgb3096b3">Introduction</h3>
+<div class="outline-text-3" id="text-orgb3096b3">
 <p>
 In your statistics and econometrics courses you have seen analytical results: the sample mean follows an approximately normal distribution by the Central Limit Theorem; the OLS slope has a t-distribution under certain assumptions. These results are elegant but limited. Modern machine-learning models are so complex that no such closed-form distributions exist for their estimated parameters. So how do you assess uncertainty?
 </p>
@@ -457,16 +486,16 @@ If you like this approach to statistics, you can read a <a href="https://greente
 </p>
 </div>
 </div>
-<div id="outline-container-orgcbe5e87" class="outline-3">
-<h3 id="orgcbe5e87">Apps</h3>
-<div class="outline-text-3" id="text-orgcbe5e87">
+<div id="outline-container-org039cf45" class="outline-3">
+<h3 id="org039cf45">Apps</h3>
+<div class="outline-text-3" id="text-org039cf45">
 <p>
 This lecture has two interactive apps. The first shows how the sampling distribution of the mean and the OLS slope change as you adjust the sample size and noise level. The second demonstrates bootstrap hypothesis testing: you control the effect size and watch whether the test detects it.
 </p>
 </div>
-<div id="outline-container-org8f744b7" class="outline-4 section">
-<h4 id="org8f744b7">Distribution of an estimator</h4>
-<div class="outline-text-4" id="text-org8f744b7">
+<div id="outline-container-orgf3f0b99" class="outline-4 section">
+<h4 id="orgf3f0b99">Distribution of an estimator</h4>
+<div class="outline-text-4" id="text-orgf3f0b99">
 <p>
 In your statistics classes you have probably done hypothesis testing on a sample mean. Then there was &ldquo;something&rdquo; with a normal distribution and &ldquo;another thing&rdquo; with \(\sqrt{n}\) where \(n\) was the sample size. Depending on the math content of your course, you have seen these results proved (or not). Here we will explain what these results are and what the intuition is by programming/simulating them. To illustrate, we calculate the mean of \(n\) draws out of a uniform distribution; then we do this, say, 10,000 times. Thus we have 10,000 means and we can show the histogram of these means. What does this histogram look like; put differently, what is the distribution of these means? What is the standard deviation of these 10,000 means?
 </p>
@@ -493,9 +522,9 @@ In the second part you choose a true slope \(\beta_1\), a noise level \(\sigma\)
 </div>
 </div>
 </div>
-<div id="outline-container-org974cc1e" class="outline-4 section">
-<h4 id="org974cc1e">Bootstrap hypothesis test</h4>
-<div class="outline-text-4" id="text-org974cc1e">
+<div id="outline-container-org83515ae" class="outline-4 section">
+<h4 id="org83515ae">Bootstrap hypothesis test</h4>
+<div class="outline-text-4" id="text-org83515ae">
 <p>
 Above we assume that we know the relevant theoretical (underlying) distributions and draw samples from it. But what if you have a real world dataset and no information on the distribution from which this data is drawn? How can the \(n\) sample with \(N\) repetitions work then? We illustrate this with data from two groups \(A\) and \(B\) and we want to test whether the population means of the two groups are the same. That is, the null hypothesis is: \(\mu_A = \mu_B\).
 </p>
@@ -522,9 +551,9 @@ Drag \(\delta\) from \(0.80\) toward \(1.00\) to watch the p-value rise above \(
 </div>
 </div>
 </div>
-<div id="outline-container-org2140245" class="outline-3">
-<h3 id="org2140245">Python Code Explanation</h3>
-<div class="outline-text-3" id="text-org2140245">
+<div id="outline-container-org89f8d99" class="outline-3">
+<h3 id="org89f8d99">Python Code Explanation</h3>
+<div class="outline-text-3" id="text-org89f8d99">
 <p>
 In this section we explain the Python code for the apps above. Open a <code>marimo</code> notebook alongside this document and type the code yourself; do not just copy and paste. Getting errors and fixing them is the fastest way to learn.
 </p>
@@ -533,13 +562,13 @@ In this section we explain the Python code for the apps above. Open a <code>mari
 We focus here on modelling the statistical intuitions not on the interactive elements in the <code>marimo</code> notebooks.
 </p>
 </div>
-<div id="outline-container-org3a0c8f5" class="outline-4">
-<h4 id="org3a0c8f5">Simulating sampling distributions</h4>
-<div class="outline-text-4" id="text-org3a0c8f5">
+<div id="outline-container-org24f5b05" class="outline-4">
+<h4 id="org24f5b05">Simulating sampling distributions</h4>
+<div class="outline-text-4" id="text-org24f5b05">
 </div>
-<div id="outline-container-org09ab45a" class="outline-5">
-<h5 id="org09ab45a">Import libraries and set parameters</h5>
-<div class="outline-text-5" id="text-org09ab45a">
+<div id="outline-container-org2060161" class="outline-5">
+<h5 id="org2060161">Import libraries and set parameters</h5>
+<div class="outline-text-5" id="text-org2060161">
 <p>
 We use <code>numpy</code> for numerical computation and <code>matplotlib</code> for plotting. 
 </p>
@@ -554,9 +583,9 @@ We use <code>numpy</code> for numerical computation and <code>matplotlib</code> 
 </div>
 </div>
 </div>
-<div id="outline-container-org756e8a7" class="outline-5">
-<h5 id="org756e8a7">Generate the data</h5>
-<div class="outline-text-5" id="text-org756e8a7">
+<div id="outline-container-org205ecc8" class="outline-5">
+<h5 id="org205ecc8">Generate the data</h5>
+<div class="outline-text-5" id="text-org205ecc8">
 <p>
 The key idea: instead of drawing one sample, we draw <code>N_simulations</code> samples at once by creating a 2D array (matrix). Each row is one sample (of \(n\) draws); each column is one observation within that sample.
 </p>
@@ -577,9 +606,9 @@ The key idea: instead of drawing one sample, we draw <code>N_simulations</code> 
 </p>
 </div>
 </div>
-<div id="outline-container-org11d6332" class="outline-5">
-<h5 id="org11d6332">Plot the histogram</h5>
-<div class="outline-text-5" id="text-org11d6332">
+<div id="outline-container-org9074f18" class="outline-5">
+<h5 id="org9074f18">Plot the histogram</h5>
+<div class="outline-text-5" id="text-org9074f18">
 <p>
 Setting <code>density=True</code> normalizes the histogram so that the total area equals 1, which makes it comparable to a probability density function. The <code>alpha</code> parameter controls transparency (0 = invisible, 1 = opaque).
 </p>
@@ -603,7 +632,7 @@ ax.legend()
 </div>
 
 
-<div id="orga5fe588" class="figure">
+<div id="org49f2b7c" class="figure">
 <p><img src="./figures/sampling_distribution_mean.png" alt="sampling_distribution_mean.png" />
 </p>
 </div>
@@ -616,16 +645,16 @@ We compute the normal PDF manually using the formula \(f(x) = \frac{1}{\sigma\sq
 </div>
 </div>
 </div>
-<div id="outline-container-org7046c66" class="outline-4">
-<h4 id="org7046c66">Distribution of the OLS slope</h4>
-<div class="outline-text-4" id="text-org7046c66">
+<div id="outline-container-org7085ad8" class="outline-4">
+<h4 id="org7085ad8">Distribution of the OLS slope</h4>
+<div class="outline-text-4" id="text-org7085ad8">
 <p>
 To simulate the distribution of an OLS slope, we need to generate \(n\) draws of (x, y) pairs, fit a regression to this sample, record the slope, and repeat this \(N\) times.
 </p>
 </div>
-<div id="outline-container-orgfee1a8e" class="outline-5">
-<h5 id="orgfee1a8e">Generate data with broadcasting</h5>
-<div class="outline-text-5" id="text-orgfee1a8e">
+<div id="outline-container-org4daf86c" class="outline-5">
+<h5 id="org4daf86c">Generate data with broadcasting</h5>
+<div class="outline-text-5" id="text-org4daf86c">
 <div class="org-src-container">
 <pre class="src src-python"><code><span style="color: #ffcb6b;">N_simulations</span> <span style="color: #89DDFF;">=</span> 1000
 <span style="color: #ffcb6b;">n_sample_size</span> <span style="color: #89DDFF;">=</span> 20
@@ -644,9 +673,9 @@ Here <code>true_slope * x</code> multiplies every element of the matrix <code>x<
 </p>
 </div>
 </div>
-<div id="outline-container-orgac54518" class="outline-5">
-<h5 id="orgac54518">Compute OLS slops</h5>
-<div class="outline-text-5" id="text-orgac54518">
+<div id="outline-container-org7b2c501" class="outline-5">
+<h5 id="org7b2c501">Compute OLS slops</h5>
+<div class="outline-text-5" id="text-org7b2c501">
 <p>
 The OLS slope formula for <a href="https://en.wikipedia.org/wiki/Ordinary_least_squares#Simple_linear_regression_model">a simple regression</a> is \(\hat\beta_1 = \frac{\sum(x_i - \bar x)(y_i - \bar y)}{\sum(x_i - \bar x)^2}\). We can compute this for all simulations at once:
 </p>
@@ -692,7 +721,7 @@ plt.tight_layout()
 </div>
 
 
-<div id="org27ce019" class="figure">
+<div id="org300c00f" class="figure">
 <p><img src="./figures/sampling_distribution_OLS_slopes.png" alt="sampling_distribution_OLS_slopes.png" />
 </p>
 </div>
@@ -701,13 +730,13 @@ plt.tight_layout()
 </div>
 </div>
 </div>
-<div id="outline-container-org07e579e" class="outline-4">
-<h4 id="org07e579e">Bootstrapping</h4>
-<div class="outline-text-4" id="text-org07e579e">
+<div id="outline-container-orge6765b1" class="outline-4">
+<h4 id="orge6765b1">Bootstrapping</h4>
+<div class="outline-text-4" id="text-orge6765b1">
 </div>
-<div id="outline-container-orge0f9e20" class="outline-5">
-<h5 id="orge0f9e20">Generate two groups</h5>
-<div class="outline-text-5" id="text-orge0f9e20">
+<div id="outline-container-org573bfa2" class="outline-5">
+<h5 id="org573bfa2">Generate two groups</h5>
+<div class="outline-text-5" id="text-org573bfa2">
 <p>
 We generate the \(A\) sample from a normal distribution. The \(B\) sample is \(\delta \in \langle 0,1]\) from the \(A\) sample. Hence we know that \(\mu_B \leq \mu_A\) (with probability 1.0). Note that we generate these \(A\) and \(B\) samples once. Above we generated these samples \(N\) times; but here we generate the repetitions in a different way.
 </p>
@@ -727,9 +756,9 @@ The observed difference equals 0.51
 </p>
 </div>
 </div>
-<div id="outline-container-org1e1fe28" class="outline-5">
-<h5 id="org1e1fe28">Combine the samples</h5>
-<div class="outline-text-5" id="text-org1e1fe28">
+<div id="outline-container-org64e77ec" class="outline-5">
+<h5 id="org64e77ec">Combine the samples</h5>
+<div class="outline-text-5" id="text-org64e77ec">
 <p>
 Under the null hypothesis (\(H_0\): both groups come from the same distribution); in other words, the group labels are arbitrary. We combine the two samples:
 </p>
@@ -740,9 +769,9 @@ Under the null hypothesis (\(H_0\): both groups come from the same distribution)
 </div>
 </div>
 </div>
-<div id="outline-container-org764a14f" class="outline-5">
-<h5 id="org764a14f">Run the permutation test</h5>
-<div class="outline-text-5" id="text-org764a14f">
+<div id="outline-container-org595a084" class="outline-5">
+<h5 id="org595a084">Run the permutation test</h5>
+<div class="outline-text-5" id="text-org595a084">
 <p>
 We randomly relabel the combined sample <code>N_boot</code> times and record the difference in means each time. Using <code>np.random.choice</code> we generate a matrix with labels for the permutation. To see what this function does, check out <code>np.random.choice(5,size=(15,10),replace=True)</code>. Also try <code>replace=False</code> and see what happens.
 </p>
@@ -768,9 +797,9 @@ For each of the \(N\) repetitions (which are in rows, <code>axis = 0</code>), we
 </p>
 </div>
 </div>
-<div id="outline-container-orgb818856" class="outline-5">
-<h5 id="orgb818856">Compute the p-value</h5>
-<div class="outline-text-5" id="text-orgb818856">
+<div id="outline-container-org41edb00" class="outline-5">
+<h5 id="org41edb00">Compute the p-value</h5>
+<div class="outline-text-5" id="text-org41edb00">
 <div class="org-src-container">
 <pre class="src src-python"><code><span style="color: #ffcb6b;">p_value</span> <span style="color: #89DDFF;">=</span> np.mean((boot_diff) <span style="color: #89DDFF;">&gt;=</span> (observed_difference))
 <span style="color: #82aaff;">print</span>(f<span style="color: #c3e88d;">"p-value: </span>{p_value:.4f}<span style="color: #c3e88d;">"</span>)
@@ -789,16 +818,16 @@ p-value: 0.0063
 </div>
 </div>
 </div>
-<div id="outline-container-org447392b" class="outline-4">
-<h4 id="org447392b">OLS from scratch: the optimization approach</h4>
-<div class="outline-text-4" id="text-org447392b">
+<div id="outline-container-org6ce0559" class="outline-4">
+<h4 id="org6ce0559">OLS from scratch: the optimization approach</h4>
+<div class="outline-text-4" id="text-org6ce0559">
 <p>
 The final topic of this lecture (with statistical concepts you have probably seen before) is OLS. Above we use the analytical expression for the slope of a simple regression (i.e. only one independent variable): \(\hat\beta_1 = \frac{\sum(x_i - \bar x)(y_i - \bar y)}{\sum(x_i - \bar x)^2}\). The same result can be obtained by minimizing the mean squared error loss function directly. This is useful because the loss function can later be extended with penalty terms to give ridge or lasso.
 </p>
 </div>
-<div id="outline-container-org8b41348" class="outline-5">
-<h5 id="org8b41348">Generate data</h5>
-<div class="outline-text-5" id="text-org8b41348">
+<div id="outline-container-orgae694d8" class="outline-5">
+<h5 id="orgae694d8">Generate data</h5>
+<div class="outline-text-5" id="text-orgae694d8">
 <div class="org-src-container">
 <pre class="src src-python"><code><span style="color: #89DDFF;">from</span> scipy <span style="color: #89DDFF;">import</span> optimize
 
@@ -814,9 +843,9 @@ The final topic of this lecture (with statistical concepts you have probably see
 </div>
 </div>
 </div>
-<div id="outline-container-org7441878" class="outline-5">
-<h5 id="org7441878">Define the OLS loss</h5>
-<div class="outline-text-5" id="text-org7441878">
+<div id="outline-container-orgc4683fc" class="outline-5">
+<h5 id="orgc4683fc">Define the OLS loss</h5>
+<div class="outline-text-5" id="text-orgc4683fc">
 <p>
 The OLS estimator minimizes the mean squared error:
 </p>
@@ -835,9 +864,9 @@ L(w) = \frac{1}{n} \sum_{i=1}^n \bigl(w_0 + w_1 x_{1i} + w_2 x_{2i} - y_i\bigr)^
 </div>
 </div>
 </div>
-<div id="outline-container-org0d972ae" class="outline-5">
-<h5 id="org0d972ae">Minimize the loss</h5>
-<div class="outline-text-5" id="text-org0d972ae">
+<div id="outline-container-org6336a9d" class="outline-5">
+<h5 id="org6336a9d">Minimize the loss</h5>
+<div class="outline-text-5" id="text-org6336a9d">
 <div class="org-src-container">
 <pre class="src src-python"><code><span style="color: #ffcb6b;">result</span> <span style="color: #89DDFF;">=</span> optimize.minimize(loss_ols, x0<span style="color: #89DDFF;">=</span>[0.0, 0.0, 0.0])
 <span style="color: #82aaff;">print</span>(<span style="color: #c3e88d;">"Estimated coefficients:"</span>, result.x)
@@ -853,9 +882,9 @@ Estimated coefficients: [ 1.00394757 -2.96011743  2.05995201]
 </p>
 </div>
 </div>
-<div id="outline-container-org62ec7c7" class="outline-5">
-<h5 id="org62ec7c7">Ridge and lasso penalties</h5>
-<div class="outline-text-5" id="text-org62ec7c7">
+<div id="outline-container-orgedab780" class="outline-5">
+<h5 id="orgedab780">Ridge and lasso penalties</h5>
+<div class="outline-text-5" id="text-orgedab780">
 <p>
 Ridge and lasso add a penalty on the coefficients to the loss function. This discourages the model from assigning large coefficients to variables that have little predictive power; a problem that becomes serious when you have many variables.
 </p>
@@ -895,9 +924,9 @@ The key difference: lasso can shrink coefficients exactly to zero (performing va
 </div>
 </div>
 </div>
-<div id="outline-container-org276a125" class="outline-3">
-<h3 id="org276a125">Summary</h3>
-<div class="outline-text-3" id="text-org276a125">
+<div id="outline-container-orgd609f3b" class="outline-3">
+<h3 id="orgd609f3b">Summary</h3>
+<div class="outline-text-3" id="text-orgd609f3b">
 <p>
 In this lecture we introduced statistical simulation as a practical complement to analytical theory. We illustrated the Central Limit Theorem by plotting sampling distributions of the mean, and showed that OLS slope estimates also have a distribution that widens with noise and narrows with sample size.
 </p>
@@ -921,18 +950,18 @@ Vectorised <code>numpy</code> operations replace explicit Python loops and are o
 </p>
 </div>
 </div>
-<div id="outline-container-orgcaba32e" class="outline-3">
-<h3 id="orgcaba32e">Review Questions</h3>
-<div class="outline-text-3" id="text-orgcaba32e">
+<div id="outline-container-org84a1e8d" class="outline-3">
+<h3 id="org84a1e8d">Review Questions</h3>
+<div class="outline-text-3" id="text-org84a1e8d">
 <p>
 Test your understanding. For each question, write the code in your own <code>marimo</code> notebook.
 </p>
 
 <hr />
 </div>
-<div id="outline-container-org865f0e3" class="outline-5">
-<h5 id="org865f0e3"><span class="todo TODO">TODO</span> review questions:</h5>
-<div class="outline-text-5" id="text-org865f0e3">
+<div id="outline-container-org5ab9353" class="outline-5">
+<h5 id="org5ab9353"><span class="todo TODO">TODO</span> review questions:</h5>
+<div class="outline-text-5" id="text-org5ab9353">
 <ul class="org-ul">
 <li>plot std of mean(x) against \(\sigma/\sqrt(n)\)</li>
 <li>test signif. of slope with bootstrapping; how can we bootstrap under null hypoth. that slope equals 0</li>
@@ -940,23 +969,23 @@ Test your understanding. For each question, write the code in your own <code>mar
 </ul>
 </div>
 </div>
-<div id="outline-container-orgedf051c" class="outline-4">
-<h4 id="orgedf051c">Question 1: Distribution of the sample standard deviation</h4>
-<div class="outline-text-4" id="text-orgedf051c">
+<div id="outline-container-org666f4b3" class="outline-4">
+<h4 id="org666f4b3">Question 1: Distribution of the sample standard deviation</h4>
+<div class="outline-text-4" id="text-org666f4b3">
 <p>
 Above we looked at the distribution of the sample <i>mean</i>. The sample <i>standard deviation</i> \(s\) also has a distribution.
 </p>
 
 <p>
-a. Using the same setup as in section <a href="#org3a0c8f5">Simulating sampling distributions</a>, simulate the distribution of \(s\) across <code>N_simulations</code> samples. Plot its histogram.
+a. Using the same setup as in section <a href="#org24f5b05">Simulating sampling distributions</a>, simulate the distribution of \(s\) across <code>N_simulations</code> samples. Plot its histogram.
 b. What is the probability that \(s < 0.28\)? Compute this from the simulated distribution.
 c. How does the shape of the distribution of \(s\) change as you increase <code>sample_size</code>? Is it symmetric?
 </p>
 </div>
 </div>
-<div id="outline-container-org0635ce4" class="outline-4">
-<h4 id="org0635ce4">Hint</h4>
-<div class="outline-text-4" id="text-org0635ce4">
+<div id="outline-container-orgb35b5bf" class="outline-4">
+<h4 id="orgb35b5bf">Hint</h4>
+<div class="outline-text-4" id="text-orgb35b5bf">
 <details>
 <summary><strong>click here</strong></summary>
 <ul class="org-ul">
@@ -968,9 +997,9 @@ c. How does the shape of the distribution of \(s\) change as you increase <code>
 <hr />
 </div>
 </div>
-<div id="outline-container-orgcd757e7" class="outline-4">
-<h4 id="orgcd757e7">Question 2: OLS with correlated predictors</h4>
-<div class="outline-text-4" id="text-orgcd757e7">
+<div id="outline-container-org3572b40" class="outline-4">
+<h4 id="org3572b40">Question 2: OLS with correlated predictors</h4>
+<div class="outline-text-4" id="text-org3572b40">
 <p>
 In the data-generating process above, <code>x1</code> and <code>x2</code> are independent. Now generate correlated predictors:
 </p>
@@ -990,9 +1019,9 @@ b. Simulate the distribution of the estimated slope on <code>x1</code> for 1000 
 <hr />
 </div>
 </div>
-<div id="outline-container-orgb495169" class="outline-4">
-<h4 id="orgb495169">Question 3: Ridge regression and variable selection</h4>
-<div class="outline-text-4" id="text-orgb495169">
+<div id="outline-container-orgf2a7366" class="outline-4">
+<h4 id="orgf2a7366">Question 3: Ridge regression and variable selection</h4>
+<div class="outline-text-4" id="text-orgf2a7366">
 <p>
 Use the setup from but now generate five predictors, of which only two have a non-zero true coefficient:
 </p>
@@ -1012,9 +1041,9 @@ c. Minimise the lasso loss with \(\lambda = 0.1\). Are any coefficients exactly 
 </p>
 </div>
 </div>
-<div id="outline-container-org7964292" class="outline-4">
-<h4 id="org7964292">Hint</h4>
-<div class="outline-text-4" id="text-org7964292">
+<div id="outline-container-org84e19da" class="outline-4">
+<h4 id="org84e19da">Hint</h4>
+<div class="outline-text-4" id="text-org84e19da">
 <details>
 <summary><strong>click here</strong></summary>
 <ul class="org-ul">
@@ -1026,9 +1055,9 @@ c. Minimise the lasso loss with \(\lambda = 0.1\). Are any coefficients exactly 
 <hr />
 </div>
 </div>
-<div id="outline-container-orgd6bb219" class="outline-4">
-<h4 id="orgd6bb219">Question 4: One-sided vs two-sided bootstrap test</h4>
-<div class="outline-text-4" id="text-orgd6bb219">
+<div id="outline-container-orgcd5896a" class="outline-4">
+<h4 id="orgcd5896a">Question 4: One-sided vs two-sided bootstrap test</h4>
+<div class="outline-text-4" id="text-orgcd5896a">
 <p>
 The bootstrap test we implemented is <b>two-sided</b>: we ask whether \(|D_\text{boot}| \geq |D_\text{obs}|\). In some situations we have a directional hypothesis — for instance, we expect \(A > B\).
 </p>
@@ -1041,9 +1070,9 @@ b. For a fixed \(\delta = 0.95\) and \(n = 50\), run the test 200 times and reco
 <hr />
 </div>
 </div>
-<div id="outline-container-orgd2132b5" class="outline-4">
-<h4 id="orgd2132b5">Question 5: Bootstrap confidence interval</h4>
-<div class="outline-text-4" id="text-orgd2132b5">
+<div id="outline-container-orga971541" class="outline-4">
+<h4 id="orga971541">Question 5: Bootstrap confidence interval</h4>
+<div class="outline-text-4" id="text-orga971541">
 <p>
 Instead of a hypothesis test, you can also use the bootstrap to construct a confidence interval for the difference in means.
 </p>
@@ -1054,9 +1083,9 @@ b. Does this interval contain zero when \(\delta = 1\)? What about when \(\delta
 </p>
 </div>
 </div>
-<div id="outline-container-org86fff2c" class="outline-4">
-<h4 id="org86fff2c">Hint</h4>
-<div class="outline-text-4" id="text-org86fff2c">
+<div id="outline-container-org93ed033" class="outline-4">
+<h4 id="org93ed033">Hint</h4>
+<div class="outline-text-4" id="text-org93ed033">
 <details>
 <summary><strong>click here</strong></summary>
 <ul class="org-ul">
@@ -1077,9 +1106,9 @@ b. Does this interval contain zero when \(\delta = 1\)? What about when \(\delta
 <b>Skills you learn in this lecture:</b> recognizing that significance is not a variable selection criterion, reading and reasoning with directed acyclic graphs (DAGs), simulating fork, pipe, and collider structures in Python to see how controlling for variables changes OLS estimates.
 </p>
 </div>
-<div id="outline-container-orgf4fbe4c" class="outline-3">
-<h3 id="orgf4fbe4c">Learning Objectives</h3>
-<div class="outline-text-3" id="text-orgf4fbe4c">
+<div id="outline-container-org42f0f84" class="outline-3">
+<h3 id="org42f0f84">Learning Objectives</h3>
+<div class="outline-text-3" id="text-org42f0f84">
 <p>
 After completing this lecture you should be able to:
 </p>
@@ -1092,9 +1121,9 @@ After completing this lecture you should be able to:
 </ul>
 </div>
 </div>
-<div id="outline-container-org59e6039" class="outline-3">
-<h3 id="org59e6039">Introduction</h3>
-<div class="outline-text-3" id="text-org59e6039">
+<div id="outline-container-org71a986e" class="outline-3">
+<h3 id="org71a986e">Introduction</h3>
+<div class="outline-text-3" id="text-org71a986e">
 <p>
 In your statistics and econometrics courses you have learned that OLS measures correlations. A regression coefficient tells you how \(Y\) changes with changing values for \(X\), but it does not say whether there is a causal relationship. In economics, causal questions matter enormously: if you advise the government to adopt policy \(X\) because it will raise \(Y\), you need to be sure that \(X\) actually <i>causes</i> \(Y\), not just that the two are correlated.
 </p>
@@ -1104,11 +1133,11 @@ Two common but mistaken shortcuts that researchers use when they move from corre
 </p>
 
 <p>
-First, some people select control variables based on statistical significance: add a variable, check whether it is significant, keep it if yes. The xkcd cartoon in Figure <a href="#org5e5430a">1</a> illustrates the absurdity of this approach. If you test 20 unrelated variables at the 5% level, you expect one to appear significant purely by chance. The first app in this lecture lets you explore this <a href="https://en.wikipedia.org/wiki/Multiple_comparisons_problem">multiple testing problem</a> directly.
+First, some people select control variables based on statistical significance: add a variable, check whether it is significant, keep it if yes. The xkcd cartoon in Figure <a href="#org982a929">1</a> illustrates the absurdity of this approach. If you test 20 unrelated variables at the 5% level, you expect one to appear significant purely by chance. The first app in this lecture lets you explore this <a href="https://en.wikipedia.org/wiki/Multiple_comparisons_problem">multiple testing problem</a> directly.
 </p>
 
 
-<div id="org5e5430a" class="figure">
+<div id="org982a929" class="figure">
 <p><img src="https://imgs.xkcd.com/comics/significant.png" alt="significant.png" />
 </p>
 <p><span class="figure-number">Figure 1: </span>Significance cannot be used for variable selection (in case you need <a href="https://www.explainxkcd.com/wiki/index.php/882:_Significant">an explanation</a>).</p>
@@ -1139,16 +1168,16 @@ Each of these three structures is represented by a directed acyclic graph (DAG):
 </p>
 </div>
 </div>
-<div id="outline-container-org6678108" class="outline-3">
-<h3 id="org6678108">Apps</h3>
-<div class="outline-text-3" id="text-org6678108">
+<div id="outline-container-orgfbd497b" class="outline-3">
+<h3 id="orgfbd497b">Apps</h3>
+<div class="outline-text-3" id="text-orgfbd497b">
 <p>
 This lecture has two interactive apps. The first demonstrates the multiple testing problem. The second shows the fork, pipe, and collider structures and lets you observe how adding a control variable \(Z\) to the regression changes the estimated effect of \(X\) on \(Y\).
 </p>
 </div>
-<div id="outline-container-orgbd7f418" class="outline-4 section">
-<h4 id="orgbd7f418">Significance and variable selection</h4>
-<div class="outline-text-4" id="text-orgbd7f418">
+<div id="outline-container-orgab07822" class="outline-4 section">
+<h4 id="orgab07822">Significance and variable selection</h4>
+<div class="outline-text-4" id="text-orgab07822">
 <p>
 All \(k\) variables in this app are generated independently of \(Y\) — none has a true effect. Nevertheless, some will appear significant at the chosen \(\alpha\) level just by chance. The histogram shows the distribution of t-statistics across all \(k\) regressions; the red lines mark the critical values. The bar chart on the right compares the expected number of false discoveries (\(\alpha \times k\)) with the number actually observed. Increase \(k\) to 100 or 200 to see how many spurious findings accumulate.
 </p>
@@ -1162,9 +1191,9 @@ All \(k\) variables in this app are generated independently of \(Y\) — none ha
 </div>
 </div>
 </div>
-<div id="outline-container-org14dbd2e" class="outline-4 section">
-<h4 id="org14dbd2e">Fork, pipe, and collider</h4>
-<div class="outline-text-4" id="text-org14dbd2e">
+<div id="outline-container-org1a9eaee" class="outline-4 section">
+<h4 id="org1a9eaee">Fork, pipe, and collider</h4>
+<div class="outline-text-4" id="text-org1a9eaee">
 <p>
 Select a DAG type from the dropdown and watch the bar chart on the right. The two bars show the OLS coefficient of \(X\) from a bivariate regression (\(Y \sim X\)) and from a multiple regression that also includes \(Z\) (\(Y \sim X + Z\)). The t-statistics are shown in the chart title. The callout below the chart gives the interpretation: for the fork, controlling for \(Z\) is the right thing to do; for the pipe and the collider, it is not.
 </p>
@@ -1183,9 +1212,9 @@ Increase the effect strength \(\gamma\) to make the bias more visible, or reduce
 </div>
 </div>
 </div>
-<div id="outline-container-org3822ca7" class="outline-3">
-<h3 id="org3822ca7">Python Code Explanation</h3>
-<div class="outline-text-3" id="text-org3822ca7">
+<div id="outline-container-org8eefdab" class="outline-3">
+<h3 id="org8eefdab">Python Code Explanation</h3>
+<div class="outline-text-3" id="text-org8eefdab">
 <p>
 In this section we explain the key ideas behind the two apps. Open a <code>marimo</code> notebook alongside this document and type the code yourself.
 </p>
@@ -1194,13 +1223,13 @@ In this section we explain the key ideas behind the two apps. Open a <code>marim
 We focus on the statistical logic — how to simulate each causal structure and how to compute OLS coefficients from scratch. The interactive elements (sliders etc.) in the apps are added on top of this code.
 </p>
 </div>
-<div id="outline-container-org4ee3ad5" class="outline-4">
-<h4 id="org4ee3ad5">Multiple testing</h4>
-<div class="outline-text-4" id="text-org4ee3ad5">
+<div id="outline-container-org2f24cc8" class="outline-4">
+<h4 id="org2f24cc8">Multiple testing</h4>
+<div class="outline-text-4" id="text-org2f24cc8">
 </div>
-<div id="outline-container-org31ab97a" class="outline-5">
-<h5 id="org31ab97a">Simulate many &ldquo;null variables&rdquo;</h5>
-<div class="outline-text-5" id="text-org31ab97a">
+<div id="outline-container-org8841efa" class="outline-5">
+<h5 id="org8841efa">Simulate many &ldquo;null variables&rdquo;</h5>
+<div class="outline-text-5" id="text-org8841efa">
 <p>
 We generate \(k\) variables that have no effect on \(Y\) and run a multiple regression of \(Y\) on all \(k\) variables. The matrix \(\mathbf{X}\) has shape \((n,\, k+1)\): \(n\) observations in our (simulated) sample, a column of ones for the intercept and one column per variable.
 </p>
@@ -1215,9 +1244,9 @@ We generate \(k\) variables that have no effect on \(Y\) and run a multiple regr
 </div>
 </div>
 </div>
-<div id="outline-container-org8a9ed39" class="outline-5">
-<h5 id="org8a9ed39">Compute t-statistics for the multiple regression</h5>
-<div class="outline-text-5" id="text-org8a9ed39">
+<div id="outline-container-orgfd8cf1e" class="outline-5">
+<h5 id="orgfd8cf1e">Compute t-statistics for the multiple regression</h5>
+<div class="outline-text-5" id="text-orgfd8cf1e">
 <p>
 OLS gives \(\hat\beta = (\mathbf{X}^\top \mathbf{X})^{-1} \mathbf{X}^\top Y\) and the covariance matrix of \(\hat\beta\) is \(\hat\sigma^2 (\mathbf{X}^\top \mathbf{X})^{-1}\) where \(\hat\sigma^2 = \text{RSS}/(n - k - 1)\) and \(RSS\) denotes Residual Sum of Squares.
 </p>
@@ -1259,9 +1288,9 @@ Every significant result here is a false discovery — by construction.
 </p>
 </div>
 </div>
-<div id="outline-container-orgadddb91" class="outline-5">
-<h5 id="orgadddb91">Distribution of false discoveries across repetitions</h5>
-<div class="outline-text-5" id="text-orgadddb91">
+<div id="outline-container-orgc0869f1" class="outline-5">
+<h5 id="orgc0869f1">Distribution of false discoveries across repetitions</h5>
+<div class="outline-text-5" id="text-orgc0869f1">
 <p>
 One run gives one draw from the distribution of false discoveries. To see the full distribution we repeat the simulation \(N = 10{,}000\) times and record the number of significant variables for each draw.
 </p>
@@ -1314,7 +1343,7 @@ plt.tight_layout()
 </div>
 
 
-<div id="orgc614113" class="figure">
+<div id="org9da5d28" class="figure">
 <p><img src="./figures/distribution_signif_variables.png" alt="distribution_signif_variables.png" />
 </p>
 </div>
@@ -1323,9 +1352,9 @@ plt.tight_layout()
 </div>
 </div>
 </div>
-<div id="outline-container-org65493c0" class="outline-4">
-<h4 id="org65493c0">Simulating fork, pipe, and collider</h4>
-<div class="outline-text-4" id="text-org65493c0">
+<div id="outline-container-orgcdac5b9" class="outline-4">
+<h4 id="orgcdac5b9">Simulating fork, pipe, and collider</h4>
+<div class="outline-text-4" id="text-orgcdac5b9">
 <p>
 For all three structures it is convenient to define a helper function that computes OLS coefficients for a simple or multiple regression using <code>numpy</code> linear algebra. As above, the matrix \(\mathbf{X}\) starts with a column of ones (the intercept) and the predictor columns. The estimated coefficients are given by \(\hat\beta = (\mathbf{X}^\top \mathbf{X})^{-1} \mathbf{X}^\top Y\).
 </p>
@@ -1338,9 +1367,9 @@ For all three structures it is convenient to define a helper function that compu
 </code></pre>
 </div>
 </div>
-<div id="outline-container-org83b64d9" class="outline-5">
-<h5 id="org83b64d9">The fork</h5>
-<div class="outline-text-5" id="text-org83b64d9">
+<div id="outline-container-org9a9ed0f" class="outline-5">
+<h5 id="org9a9ed0f">The fork</h5>
+<div class="outline-text-5" id="text-org9a9ed0f">
 <p>
 \(Z\) causes both \(X\) and \(Y\); there is no direct effect from \(X\) to \(Y\).
 </p>
@@ -1374,9 +1403,9 @@ The bivariate regression picks up the spurious correlation created by \(Z\). Add
 </p>
 </div>
 </div>
-<div id="outline-container-org5f79c06" class="outline-5">
-<h5 id="org5f79c06">The pipe</h5>
-<div class="outline-text-5" id="text-org5f79c06">
+<div id="outline-container-org400f340" class="outline-5">
+<h5 id="org400f340">The pipe</h5>
+<div class="outline-text-5" id="text-org400f340">
 <p>
 \(X\) causes \(Z\) which causes \(Y\); the causal effect of \(X\) on \(Y\) is fully mediated by \(Z\).
 </p>
@@ -1404,9 +1433,9 @@ An economic example: the effect of schooling on income is partly mediated throug
 </p>
 </div>
 </div>
-<div id="outline-container-org3e68ce9" class="outline-5">
-<h5 id="org3e68ce9">The collider</h5>
-<div class="outline-text-5" id="text-org3e68ce9">
+<div id="outline-container-org76c330c" class="outline-5">
+<h5 id="org76c330c">The collider</h5>
+<div class="outline-text-5" id="text-org76c330c">
 <p>
 \(X\) and \(Y\) are independent. Both cause \(Z\). Conditioning on \(Z\) induces a spurious negative correlation between \(X\) and \(Y\).
 </p>
@@ -1438,9 +1467,9 @@ Finally, we consider the collider in two situations where there is correlation b
 </p>
 </div>
 </div>
-<div id="outline-container-org16c7aa6" class="outline-5">
-<h5 id="org16c7aa6">collider bias with simulated data</h5>
-<div class="outline-text-5" id="text-org16c7aa6">
+<div id="outline-container-org99fd47e" class="outline-5">
+<h5 id="org99fd47e">collider bias with simulated data</h5>
+<div class="outline-text-5" id="text-org99fd47e">
 <p>
 Many people have the intuition that adding a control variable to a regression (especially when it turns out to be significant) is a good idea. However, this intuition is wrong if it is applied without thinking. The pipe and collider above are examples where this reasoning is incorrect. Here we consider a collider in a more elaborate example.
 </p>
@@ -1464,7 +1493,7 @@ on the child, <i>controlling</i> for the parent&rsquo;s education.
 </p>
 
 
-<div id="org81374f1" class="figure">
+<div id="org9fd61f5" class="figure">
 <p><img src="./figures/Collider.png" alt="Collider.png" />
 </p>
 <p><span class="figure-number">Figure 2: </span>A collider in a more complicated context.</p>
@@ -1501,7 +1530,7 @@ which differs between parent and child.
 </p>
 
 
-<div id="org824c875" class="figure">
+<div id="org7bcbcc2" class="figure">
 <p><img src="./figures/Collider2.png" alt="Collider2.png" />
 </p>
 <p><span class="figure-number">Figure 3: </span>The education example from McElreath (<a href="#citeproc_bib_item_3">2020</a>).</p>
@@ -1557,7 +1586,7 @@ Now we run the regression of \(Y\) on \(X\) controlling for \(Z\).
 </code></pre>
 </div>
 
-<pre class="example" id="orga70db44">
+<pre class="example" id="org29b5844">
                             OLS Regression Results                            
 ==============================================================================
 Dep. Variable:                      Y   R-squared:                       0.889
@@ -1654,9 +1683,9 @@ chart_collider.save(<span style="color: #c3e88d;">'./figures/ChartCollider.html'
 <iframe src="./figures/ChartCollider.html" width="800" height="600"></iframe>
 </div>
 </div>
-<div id="outline-container-org2b30ccb" class="outline-5">
-<h5 id="org2b30ccb">collider bias with real data</h5>
-<div class="outline-text-5" id="text-org2b30ccb">
+<div id="outline-container-org61b9fc6" class="outline-5">
+<h5 id="org61b9fc6">collider bias with real data</h5>
+<div class="outline-text-5" id="text-org61b9fc6">
 <p>
 Downey (<a href="#citeproc_bib_item_2">2023, chap. 7</a>) discusses a great example of collider bias suggesting (incorrectly) that mothers who smoke during pregnancy have a &ldquo;protective effect&rdquo; on their babies if these happen to have low birth weight.
 </p>
@@ -1694,9 +1723,9 @@ Then follow Allen Downey&rsquo;s presentation/notebook/book chapter.
 </div>
 </div>
 </div>
-<div id="outline-container-org8cabbb9" class="outline-3">
-<h3 id="org8cabbb9">Summary</h3>
-<div class="outline-text-3" id="text-org8cabbb9">
+<div id="outline-container-org0d629d5" class="outline-3">
+<h3 id="org0d629d5">Summary</h3>
+<div class="outline-text-3" id="text-org0d629d5">
 <p>
 This lecture introduced two practical pitfalls in variable selection and causal interpretation.
 </p>
@@ -1724,18 +1753,18 @@ Significance of a coefficient does not mean the variable belongs in your model. 
 </p>
 </div>
 </div>
-<div id="outline-container-orgfda444f" class="outline-3">
-<h3 id="orgfda444f">Review Questions</h3>
-<div class="outline-text-3" id="text-orgfda444f">
+<div id="outline-container-org3453e76" class="outline-3">
+<h3 id="org3453e76">Review Questions</h3>
+<div class="outline-text-3" id="text-org3453e76">
 <p>
 Test your understanding. For each question, write the code in your own <code>marimo</code> notebook.
 </p>
 
 <hr />
 </div>
-<div id="outline-container-orga31b895" class="outline-4">
-<h4 id="orga31b895">Question 1: False discovery rate</h4>
-<div class="outline-text-4" id="text-orga31b895">
+<div id="outline-container-org40c00bf" class="outline-4">
+<h4 id="org40c00bf">Question 1: False discovery rate</h4>
+<div class="outline-text-4" id="text-org40c00bf">
 <p>
 Repeat the multiple testing simulation but now generate \(k\) variables where exactly half have a true slope of 0.5 (and half are null).
 </p>
@@ -1749,9 +1778,9 @@ c. How does the false-discovery fraction change as you increase \(k\) while keep
 <hr />
 </div>
 </div>
-<div id="outline-container-org3cd537e" class="outline-4">
-<h4 id="org3cd537e">Question 2: Fork with partial effect</h4>
-<div class="outline-text-4" id="text-org3cd537e">
+<div id="outline-container-org792ec52" class="outline-4">
+<h4 id="org792ec52">Question 2: Fork with partial effect</h4>
+<div class="outline-text-4" id="text-org792ec52">
 <p>
 In the fork simulation above, \(X\) has no direct effect on \(Y\). Now add a direct effect:
 </p>
@@ -1770,9 +1799,9 @@ c. Run both regressions and check whether the simulated coefficients match your 
 <hr />
 </div>
 </div>
-<div id="outline-container-org0301e92" class="outline-4">
-<h4 id="org0301e92"><span class="todo TODO">TODO</span> Question 3: Costly data acquisition</h4>
-<div class="outline-text-4" id="text-org0301e92">
+<div id="outline-container-orge810971" class="outline-4">
+<h4 id="orge810971"><span class="todo TODO">TODO</span> Question 3: Costly data acquisition</h4>
+<div class="outline-text-4" id="text-orge810971">
 <p>
 Suppose you work at a ministry and you and your team need to figure out what the effect is of a policy \(x\) on an outcome \(y\). You can gather data on this relation between \(x\) and \(y\) but the problem is that the data acquisition is rather expensive. Hence, your colleagues suggest that you gather data sequentially (over time) until you find that the coefficient of \(x\) (on \(y\)) is significant.
 </p>
@@ -1786,9 +1815,9 @@ Use data simulation to convince your colleagues that collecting data in this way
 </p>
 </div>
 </div>
-<div id="outline-container-org9d960ae" class="outline-4">
-<h4 id="org9d960ae"><span class="todo TODO">TODO</span> Question 4: Treatment effects</h4>
-<div class="outline-text-4" id="text-org9d960ae">
+<div id="outline-container-orgc0785df" class="outline-4">
+<h4 id="orgc0785df"><span class="todo TODO">TODO</span> Question 4: Treatment effects</h4>
+<div class="outline-text-4" id="text-orgc0785df">
 <p>
 One of the complications when using IV to find causal effects is that treatment effects can differ between subgroups and that these subgroups react differently to the treatment/instrument. Our discussion here is based on Chapter 4 of Angrist and Pischke (2009).
 </p>
@@ -2069,9 +2098,9 @@ results_second_stage = smf.ols(&rsquo;earnings ~ invited&rsquo;, data=df_prob).f
 </p>
 </div>
 </div>
-<div id="outline-container-org17f8319" class="outline-4">
-<h4 id="org17f8319">Hint</h4>
-<div class="outline-text-4" id="text-org17f8319">
+<div id="outline-container-org9839b6a" class="outline-4">
+<h4 id="org9839b6a">Hint</h4>
+<div class="outline-text-4" id="text-org9839b6a">
 <details>
 <summary><strong>click here</strong></summary>
 <ul class="org-ul">
@@ -2093,9 +2122,9 @@ results_second_stage = smf.ols(&rsquo;earnings ~ invited&rsquo;, data=df_prob).f
 <b>Skills you learn in this lecture:</b> working with multi-dimensional arrays (tensors), selecting data with slicing and fancy indexing, combining arrays with broadcasting, performing matrix algebra, and understanding gradient descent — the algorithm behind neural network training.
 </p>
 </div>
-<div id="outline-container-org6288c11" class="outline-3">
-<h3 id="org6288c11">Learning Objectives</h3>
-<div class="outline-text-3" id="text-org6288c11">
+<div id="outline-container-orgb9e55ef" class="outline-3">
+<h3 id="orgb9e55ef">Learning Objectives</h3>
+<div class="outline-text-3" id="text-orgb9e55ef">
 <p>
 After completing this lecture you should be able to:
 </p>
@@ -2108,9 +2137,9 @@ After completing this lecture you should be able to:
 </ul>
 </div>
 </div>
-<div id="outline-container-org4358da0" class="outline-3">
-<h3 id="org4358da0">Introduction</h3>
-<div class="outline-text-3" id="text-org4358da0">
+<div id="outline-container-orgc3bef32" class="outline-3">
+<h3 id="orgc3bef32">Introduction</h3>
+<div class="outline-text-3" id="text-orgc3bef32">
 <p>
 In Lectures 1 and 2 we worked with one- and two-dimensional arrays: vectors of observations and matrices with rows as observations and columns as variables. Real-world data often has a more complicated structure than that. An image is a 2D grid of pixel intensities; a dataset of images adds a third dimension for the image index. A panel of incomes across countries, ages and time periods can be viewed as a 3D array. Machine learning frameworks handle this kind of data through <i>tensors</i>; <code>numpy</code> arrays generalized to any number of dimensions.
 </p>
@@ -2124,16 +2153,16 @@ The second half of the lecture introduces <i>gradient descent</i>, the optimizat
 </p>
 </div>
 </div>
-<div id="outline-container-org6d17197" class="outline-3">
-<h3 id="org6d17197">Apps</h3>
-<div class="outline-text-3" id="text-org6d17197">
+<div id="outline-container-orge34c132" class="outline-3">
+<h3 id="orge34c132">Apps</h3>
+<div class="outline-text-3" id="text-orge34c132">
 <p>
 This lecture has two interactive apps. The first lets you enter two \(3 \times 3\) matrices and observe matrix operations: addition, subtraction, multiplication, transposition, and inverse. The second app runs gradient descent for a small linear regression and shows both the loss surface and the convergence path.
 </p>
 </div>
-<div id="outline-container-org2c53aea" class="outline-4 section">
-<h4 id="org2c53aea">Interactive matrix operations</h4>
-<div class="outline-text-4" id="text-org2c53aea">
+<div id="outline-container-org8db9eb5" class="outline-4 section">
+<h4 id="org8db9eb5">Interactive matrix operations</h4>
+<div class="outline-text-4" id="text-org8db9eb5">
 <p>
 Enter values for two \(3 \times 3\) matrices \(A\) and \(B\). The app instantly displays their sum, difference, matrix products \(AB\) and \(BA\) (where these two matrix products are usually not the same), the transpose \(A^\top\), the determinant and rank of \(A\), and the inverse \(A^{-1}\) &ndash; provided \(A\) has full rank. Try setting one row of \(A\) to a linear combination of another row to see the inverse become undefined.
 </p>
@@ -2147,9 +2176,9 @@ Enter values for two \(3 \times 3\) matrices \(A\) and \(B\). The app instantly 
 </div>
 </div>
 </div>
-<div id="outline-container-org14ffe00" class="outline-4 section">
-<h4 id="org14ffe00">Gradient descent for linear regression</h4>
-<div class="outline-text-4" id="text-org14ffe00">
+<div id="outline-container-org2a30478" class="outline-4 section">
+<h4 id="org2a30478">Gradient descent for linear regression</h4>
+<div class="outline-text-4" id="text-org2a30478">
 <p>
 The app generates 60 observations from a known linear relationship and asks gradient descent (starting at slope \(= 0\), intercept \(= 0\)) to recover the best-fit line. The left panel shows the mean squared error \(L(m, b)\) as a contour plot (representing a bowl in 3D) with the gradient-descent path overlaid. The OLS estimate sits at the bottom of the bowl (lowest point). The right panel tracks the loss at each iteration.
 </p>
@@ -2168,16 +2197,16 @@ Use the sliders to vary the learning rate \(\eta\) and the number of steps. With
 </div>
 </div>
 </div>
-<div id="outline-container-orgec96eb3" class="outline-3">
-<h3 id="orgec96eb3">Python Code Explanation</h3>
-<div class="outline-text-3" id="text-orgec96eb3">
+<div id="outline-container-org51d341e" class="outline-3">
+<h3 id="org51d341e">Python Code Explanation</h3>
+<div class="outline-text-3" id="text-org51d341e">
 <p>
 Open a <code>marimo</code> notebook alongside this document and type the code yourself. We build up from basic tensor manipulation to gradient descent.
 </p>
 </div>
-<div id="outline-container-orgc169b9e" class="outline-4">
-<h4 id="orgc169b9e">Tensors and shape</h4>
-<div class="outline-text-4" id="text-orgc169b9e">
+<div id="outline-container-org84e29d7" class="outline-4">
+<h4 id="org84e29d7">Tensors and shape</h4>
+<div class="outline-text-4" id="text-org84e29d7">
 <p>
 A <i>tensor</i> is a <code>numpy</code> array with one or more dimensions. Every array has a <code>.shape</code> attribute &ndash;a tuple giving its size along each axis&ndash; and <code>.ndim</code> for the number of dimensions.
 </p>
@@ -2239,9 +2268,9 @@ Instead of <code>np.newaxis</code> you can also use <code>None</code> like <code
 </p>
 </div>
 </div>
-<div id="outline-container-orgd3ac2af" class="outline-4">
-<h4 id="orgd3ac2af">Slicing and indexing</h4>
-<div class="outline-text-4" id="text-orgd3ac2af">
+<div id="outline-container-org906688f" class="outline-4">
+<h4 id="org906688f">Slicing and indexing</h4>
+<div class="outline-text-4" id="text-org906688f">
 <p>
 Slicing uses the notation <code>start:stop:step</code> for each dimension, separated by commas. <code>:</code> means &ldquo;all elements&rdquo;. The notation <code>::2</code> then means &ldquo;every other element&rdquo;.
 </p>
@@ -2303,15 +2332,15 @@ plt.plot(t[y <span style="color: #89DDFF;">&gt;=</span> 0], y[y <span style="col
 </div>
 
 
-<div id="orgec1b18d" class="figure">
+<div id="org384b334" class="figure">
 <p><img src="./figures/colored_sin.png" alt="colored_sin.png" />
 </p>
 </div>
 </div>
 </div>
-<div id="outline-container-org41f567b" class="outline-4">
-<h4 id="org41f567b">Broadcasting</h4>
-<div class="outline-text-4" id="text-org41f567b">
+<div id="outline-container-org7f4de52" class="outline-4">
+<h4 id="org7f4de52">Broadcasting</h4>
+<div class="outline-text-4" id="text-org7f4de52">
 <p>
 Broadcasting lets <code>numpy</code> combine arrays of different shapes by stretching dimensions of size 1 to match the other array. The broadcasting rule: check from the rightmost dimension leftward whether:
 </p>
@@ -2375,9 +2404,9 @@ For more information on broadcasting check this <a href="https://numpy.org/doc/s
 </p>
 </div>
 </div>
-<div id="outline-container-org59a6cea" class="outline-4">
-<h4 id="org59a6cea">Matrix operations</h4>
-<div class="outline-text-4" id="text-org59a6cea">
+<div id="outline-container-org04706ee" class="outline-4">
+<h4 id="org04706ee">Matrix operations</h4>
+<div class="outline-text-4" id="text-org04706ee">
 <p>
 The key matrix operations in <code>numpy</code> with \(k\) by \(l\) matrix \(A\) and \(m\) by \(n\) matrix \(B\):
 </p>
@@ -2540,9 +2569,9 @@ A square \(n \times n\) matrix \(A= X^\top X\) is invertible if and only if det\
 </p>
 </div>
 </div>
-<div id="outline-container-org9bc050c" class="outline-4">
-<h4 id="org9bc050c">Gradient descent from scratch</h4>
-<div class="outline-text-4" id="text-org9bc050c">
+<div id="outline-container-orgc2a96ac" class="outline-4">
+<h4 id="orgc2a96ac">Gradient descent from scratch</h4>
+<div class="outline-text-4" id="text-orgc2a96ac">
 <p>
 The OLS formula \(\hat\beta = (X^\top X)^{-1} X^\top y\) minimizes the MSE analytically. For models with no closed-form solution (like a neural network) we use <i>gradient descent</i>: start somewhere and step downhill.
 </p>
@@ -2687,7 +2716,7 @@ As above, we use gradient descent to gradually improve our guess for <code>m</co
 </code></pre>
 </div>
 
-<pre class="example" id="org13d1294">
+<pre class="example" id="org6c95d1b">
 Step 0, Loss 0.698773
 Step 20, Loss 0.022170
 Step 40, Loss 0.022144
@@ -2762,9 +2791,9 @@ z.assign_sub(1.0)
 </div>
 </div>
 </div>
-<div id="outline-container-org7b91133" class="outline-3">
-<h3 id="org7b91133">Summary</h3>
-<div class="outline-text-3" id="text-org7b91133">
+<div id="outline-container-org4223a87" class="outline-3">
+<h3 id="org4223a87">Summary</h3>
+<div class="outline-text-3" id="text-org4223a87">
 <p>
 This lecture introduced the technical Python toolkit needed for machine learning.
 </p>
@@ -2796,18 +2825,18 @@ OLS is the analytical solution to the same minimization problem that gradient de
 </p>
 </div>
 </div>
-<div id="outline-container-org015f7e4" class="outline-3">
-<h3 id="org015f7e4">Review Questions</h3>
-<div class="outline-text-3" id="text-org015f7e4">
+<div id="outline-container-org9b489ef" class="outline-3">
+<h3 id="org9b489ef">Review Questions</h3>
+<div class="outline-text-3" id="text-org9b489ef">
 <p>
 Test your understanding. For each question, write the code in your own <code>marimo</code> notebook.
 </p>
 
 <hr />
 </div>
-<div id="outline-container-org21aaafa" class="outline-4">
-<h4 id="org21aaafa">Question 1: Slicing and fancy indexing on panel data</h4>
-<div class="outline-text-4" id="text-org21aaafa">
+<div id="outline-container-orgb69e84c" class="outline-4">
+<h4 id="orgb69e84c">Question 1: Slicing and fancy indexing on panel data</h4>
+<div class="outline-text-4" id="text-orgb69e84c">
 <p>
 Suppose you have simulated a small panel dataset: 500 observations on 8 variables. Variable 0 is a binary indicator (0/1), variable 3 is income, and variable 7 is an outcome of interest.
 </p>
@@ -2835,9 +2864,9 @@ d. Select all rows where variable 3 (income) is above its 75th percentile. Hint:
 <hr />
 </div>
 </div>
-<div id="outline-container-orgb91745c" class="outline-4">
-<h4 id="orgb91745c">Question 2: Sampling distributions without loops</h4>
-<div class="outline-text-4" id="text-orgb91745c">
+<div id="outline-container-orge1a7a8f" class="outline-4">
+<h4 id="orge1a7a8f">Question 2: Sampling distributions without loops</h4>
+<div class="outline-text-4" id="text-orge1a7a8f">
 <p>
 In Lecture 1 we plotted the sampling distribution of the mean by drawing many samples. Use broadcasting to simulate <code>R = 10_000</code> draws of the sample mean for <i>each</i> of the sample sizes \(n \in \{10, 50, 100, 500\}\) simultaneously — with no Python loop over either <code>R</code> or <code>n</code>.
 </p>
@@ -2852,9 +2881,9 @@ c. Verify numerically that the standard deviation of the sample mean is approxim
 <hr />
 </div>
 </div>
-<div id="outline-container-org6c076e1" class="outline-4">
-<h4 id="org6c076e1">Question 3: Multicollinearity and the matrix inverse</h4>
-<div class="outline-text-4" id="text-org6c076e1">
+<div id="outline-container-orgb7adcf5" class="outline-4">
+<h4 id="orgb7adcf5">Question 3: Multicollinearity and the matrix inverse</h4>
+<div class="outline-text-4" id="text-orgb7adcf5">
 <p>
 Start with the OLS example from the Python Code Explanation section (<code>n=200</code>, <code>k=4</code> predictors). Then add a fifth predictor that is <i>exactly</i> the sum of predictors 1 and 2.
 </p>
@@ -2878,9 +2907,9 @@ This illustrates why near-multicollinearity is dangerous even when <code>solve</
 <hr />
 </div>
 </div>
-<div id="outline-container-orgb8f936d" class="outline-4">
-<h4 id="orgb8f936d">Question 4: Batched OLS with <code>np.matmul</code></h4>
-<div class="outline-text-4" id="text-orgb8f936d">
+<div id="outline-container-org77610f9" class="outline-4">
+<h4 id="org77610f9">Question 4: Batched OLS with <code>np.matmul</code></h4>
+<div class="outline-text-4" id="text-org77610f9">
 <p>
 In this question you run \(N\) OLS regressions simultaneously — one per dataset — using numpy tensor operations on the last two dimensions, with no Python loop.
 </p>
@@ -2904,9 +2933,9 @@ c. Similarly compute <code>XTy</code> of shape <code>(N, k+1)</code> or <code>(N
 d. Solve all \(N\) systems \((\mathbf{X}^\top \mathbf{X})\hat\beta = \mathbf{X}^\top y\) in one call using <code>np.linalg.solve</code>. The result <code>beta_hat</code> should have shape <code>(N, k+1)</code>. Verify that <code>beta_hat.mean(axis=0)</code> is close to the true coefficients.
 </p>
 </div>
-<div id="outline-container-org0fee850" class="outline-5">
-<h5 id="org0fee850">Hint: how to prompt an LLM</h5>
-<div class="outline-text-5" id="text-org0fee850">
+<div id="outline-container-orga30bb35" class="outline-5">
+<h5 id="orga30bb35">Hint: how to prompt an LLM</h5>
+<div class="outline-text-5" id="text-orga30bb35">
 <p>
 If you get stuck on parts (b)–(d), use the following prompt (adapted to what you have already tried):
 </p>
@@ -2943,9 +2972,9 @@ After you get a working solution, check that it gives the same answer as a loop:
 <b>Skills you learn in this lecture:</b> splitting data into train and test sets, diagnosing over-fitting and under-fitting by comparing train and test errors, regularizing with ridge and lasso regression, and tuning the regularization strength with cross-validation.
 </p>
 </div>
-<div id="outline-container-orge2daf9e" class="outline-3">
-<h3 id="orge2daf9e">Learning Objectives</h3>
-<div class="outline-text-3" id="text-orge2daf9e">
+<div id="outline-container-orgdc48e46" class="outline-3">
+<h3 id="orgdc48e46">Learning Objectives</h3>
+<div class="outline-text-3" id="text-orgdc48e46">
 <p>
 After completing this lecture you should be able to:
 </p>
@@ -2959,9 +2988,9 @@ After completing this lecture you should be able to:
 </ul>
 </div>
 </div>
-<div id="outline-container-org59a0c6d" class="outline-3">
-<h3 id="org59a0c6d">Introduction</h3>
-<div class="outline-text-3" id="text-org59a0c6d">
+<div id="outline-container-orgc090094" class="outline-3">
+<h3 id="orgc090094">Introduction</h3>
+<div class="outline-text-3" id="text-orgc090094">
 <p>
 In machine learning and econometrics we face a fundamental tension: a more complex model (more parameters) always fits the training data better, but a model that is <i>too</i> complex will fit the noise in the training sample rather than the underlying signal. That is, the model picks up structure that is specific for the sample and does not generalize to the population.
 </p>
@@ -2998,9 +3027,9 @@ A practical remedy for over-fitting is <i>regularization</i>: add a penalty for 
 </p>
 </div>
 </div>
-<div id="outline-container-org61d1485" class="outline-3">
-<h3 id="org61d1485">Apps</h3>
-<div class="outline-text-3" id="text-org61d1485">
+<div id="outline-container-org9fee371" class="outline-3">
+<h3 id="org9fee371">Apps</h3>
+<div class="outline-text-3" id="text-org9fee371">
 <p>
 This lecture has two interactive apps. The first shows how train and test errors diverge as polynomial degree increases. The second applies ridge and lasso regularization to an over-parameterized polynomial and illustrates how the optimal penalty balances the bias&ndash;variance trade-off.
 </p>
@@ -3009,9 +3038,9 @@ This lecture has two interactive apps. The first shows how train and test errors
 Two remarks; first, we are not particularly interested in polynomial regression. But it is an intuitive way in which to make the model more complex and the over-fitting pattern is obvious in a simple figure. Second, in the app the train/test split of the data is done on sorted data which is not advisable in practice but helps to illustrate the effect in the figures.
 </p>
 </div>
-<div id="outline-container-org5ab855e" class="outline-4 section">
-<h4 id="org5ab855e">Polynomial regression: over-fitting and under-fitting</h4>
-<div class="outline-text-4" id="text-org5ab855e">
+<div id="outline-container-orgf806dd4" class="outline-4 section">
+<h4 id="orgf806dd4">Polynomial regression: over-fitting and under-fitting</h4>
+<div class="outline-text-4" id="text-orgf806dd4">
 <p>
 Data come from the true model \(y = 1 + 2x^2 + \varepsilon\). We split 30 observations into 20 training and 10 test points and fit a polynomial of degree \(d\) only to the training data.
 </p>
@@ -3029,9 +3058,9 @@ Use the slider to vary \(d\) from 1 to 9. The top figure shows all data together
 </div>
 </div>
 </div>
-<div id="outline-container-org4bac7f3" class="outline-4 section">
-<h4 id="org4bac7f3">Ridge and lasso regularisation</h4>
-<div class="outline-text-4" id="text-org4bac7f3">
+<div id="outline-container-org6419536" class="outline-4 section">
+<h4 id="org6419536">Ridge and lasso regularisation</h4>
+<div class="outline-text-4" id="text-org6419536">
 <p>
 We fix a degree-9 polynomial (10 coefficients, only 20 training observations) and add ridge and lasso regularization. Use the slider to vary \(\lambda\).
 </p>
@@ -3052,16 +3081,16 @@ We fix a degree-9 polynomial (10 coefficients, only 20 training observations) an
 </div>
 </div>
 </div>
-<div id="outline-container-org665c565" class="outline-3">
-<h3 id="org665c565">Python Code Explanation</h3>
-<div class="outline-text-3" id="text-org665c565">
+<div id="outline-container-org7e19b74" class="outline-3">
+<h3 id="org7e19b74">Python Code Explanation</h3>
+<div class="outline-text-3" id="text-org7e19b74">
 <p>
 Open a <code>marimo</code> notebook alongside this document and type the code yourself. We build up from polynomial features and the train/test split to regularized regression and cross-validation.
 </p>
 </div>
-<div id="outline-container-orgd10a25c" class="outline-4">
-<h4 id="orgd10a25c">Polynomial features and train/test split</h4>
-<div class="outline-text-4" id="text-orgd10a25c">
+<div id="outline-container-orgbdd91be" class="outline-4">
+<h4 id="orgbdd91be">Polynomial features and train/test split</h4>
+<div class="outline-text-4" id="text-orgbdd91be">
 <p>
 We generate data from the true quadratic model and split into train and test sets using <code>numpy</code> slicing. We split the data on sorted data for &ldquo;dramatic effect&rdquo; in our figures.
 </p>
@@ -3154,7 +3183,7 @@ plt.yscale(<span style="color: #c3e88d;">"log"</span>); plt.legend()
 </div>
 
 
-<div id="org84fc4b2" class="figure">
+<div id="org99418a4" class="figure">
 <p><img src="./figures/OLS_under_over_fitting.png" alt="OLS_under_over_fitting.png" />
 </p>
 </div>
@@ -3164,9 +3193,9 @@ The train MSE curve is monotonically decreasing; the test MSE curve has a U-shap
 </p>
 </div>
 </div>
-<div id="outline-container-org3e6c6e4" class="outline-4">
-<h4 id="org3e6c6e4">Ridge regression: shrinking coefficients</h4>
-<div class="outline-text-4" id="text-org3e6c6e4">
+<div id="outline-container-org441a993" class="outline-4">
+<h4 id="org441a993">Ridge regression: shrinking coefficients</h4>
+<div class="outline-text-4" id="text-org441a993">
 <p>
 Ridge regression adds a squared-coefficient penalty to the OLS objective:
 </p>
@@ -3238,9 +3267,9 @@ Ridge shrinks all coefficients continuously but never sets any exactly to zero.
 </p>
 </div>
 </div>
-<div id="outline-container-org17bdd5f" class="outline-4">
-<h4 id="org17bdd5f">Lasso regression: coordinate descent and sparsity</h4>
-<div class="outline-text-4" id="text-org17bdd5f">
+<div id="outline-container-org658fbf2" class="outline-4">
+<h4 id="org658fbf2">Lasso regression: coordinate descent and sparsity</h4>
+<div class="outline-text-4" id="text-org658fbf2">
 <p>
 The lasso uses an \(L_1\) penalty:
 </p>
@@ -3369,9 +3398,9 @@ Lasso sets coefficients exactly to zero (sparse solution) because the \(L_1\) pe
 </p>
 </div>
 </div>
-<div id="outline-container-orgb91c1fb" class="outline-4">
-<h4 id="orgb91c1fb">Tuning \(\lambda\) with cross-validation</h4>
-<div class="outline-text-4" id="text-orgb91c1fb">
+<div id="outline-container-orgef6a0a6" class="outline-4">
+<h4 id="orgef6a0a6">Tuning \(\lambda\) with cross-validation</h4>
+<div class="outline-text-4" id="text-orgef6a0a6">
 <p>
 The hyper-parameter \(\lambda\) controls the bias-variance trade-off. We choose it by \(k\) fold cross-validation: split the training data into \(k\) equal folds; in each iteration use \(k-1\) folds to fit the model and the remaining fold to evaluate the loss. The average validation loss across folds estimates out-of-sample performance without ever touching the test set.
 </p>
@@ -3416,7 +3445,7 @@ plt.legend()
 </div>
 
 
-<div id="org3436231" class="figure">
+<div id="org3a82a79" class="figure">
 <p><img src="./figures/cross_validation_lasso_ridge.png" alt="cross_validation_lasso_ridge.png" />
 </p>
 </div>
@@ -3426,9 +3455,9 @@ Both curves have a U-shape: too small \(\lambda\) leads to over-fitting; too lar
 </p>
 </div>
 </div>
-<div id="outline-container-org773c371" class="outline-4">
-<h4 id="org773c371">Bias&ndash;variance decomposition</h4>
-<div class="outline-text-4" id="text-org773c371">
+<div id="outline-container-orgdf3abe3" class="outline-4">
+<h4 id="orgdf3abe3">Bias&ndash;variance decomposition</h4>
+<div class="outline-text-4" id="text-orgdf3abe3">
 <p>
 Assume the true relationship is \(y = f(x) + \varepsilon\), where
 \(\varepsilon \sim (0, \sigma^2)\) is independent noise. Let \(\hat{y}\)
@@ -3541,7 +3570,7 @@ plt.tight_layout()
 </div>
 
 
-<div id="org0ce1fce" class="figure">
+<div id="orgc119d7b" class="figure">
 <p><img src="./figures/bias_variance_tradeoff.png" alt="bias_variance_tradeoff.png" />
 </p>
 </div>
@@ -3551,9 +3580,9 @@ Compare the total \(\text{Bias}^{2}\) + Variance across degrees 1, 5 and 9 to tr
 </p>
 </div>
 </div>
-<div id="outline-container-org90e9f76" class="outline-4">
-<h4 id="org90e9f76">Why lasso gives sparsity but ridge does not</h4>
-<div class="outline-text-4" id="text-org90e9f76">
+<div id="outline-container-orgbe300de" class="outline-4">
+<h4 id="orgbe300de">Why lasso gives sparsity but ridge does not</h4>
+<div class="outline-text-4" id="text-orgbe300de">
 <p>
 Both penalties shrink coefficients toward zero, but only lasso can set them <i>exactly</i> to zero. The reason is geometric.
 </p>
@@ -3602,7 +3631,7 @@ plt.tight_layout()
 </div>
 
 
-<div id="org8be1133" class="figure">
+<div id="org700c8fd" class="figure">
 <p><img src="./figures/lasso_to_zero.png" alt="lasso_to_zero.png" />
 </p>
 </div>
@@ -3612,9 +3641,9 @@ The corner of the lasso diamond lies on the \(\beta_2 = 0\) axis: wherever the O
 </p>
 </div>
 </div>
-<div id="outline-container-org1248c06" class="outline-4">
-<h4 id="org1248c06">Regularisation path</h4>
-<div class="outline-text-4" id="text-org1248c06">
+<div id="outline-container-org84ef4d1" class="outline-4">
+<h4 id="org84ef4d1">Regularisation path</h4>
+<div class="outline-text-4" id="text-org84ef4d1">
 <p>
 The <i>regularisation path</i> shows how each coefficient changes as \(\lambda\) varies from zero (OLS) to a large value (strong shrinkage). It helps identify which variables are most important: lasso paths hit zero at different \(\lambda\) values, effectively ordering variables by their relevance.
 </p>
@@ -3643,7 +3672,7 @@ plt.tight_layout()
 </div>
 
 
-<div id="org9319a38" class="figure">
+<div id="org5db6eb6" class="figure">
 <p><img src="./figures/regularisation_path.png" alt="regularisation_path.png" />
 </p>
 </div>
@@ -3653,9 +3682,9 @@ In the ridge path all curves approach zero asymptotically but never reach it. In
 </p>
 </div>
 </div>
-<div id="outline-container-orgd887e81" class="outline-4">
-<h4 id="orgd887e81">Information criteria</h4>
-<div class="outline-text-4" id="text-orgd887e81">
+<div id="outline-container-org5a23848" class="outline-4">
+<h4 id="org5a23848">Information criteria</h4>
+<div class="outline-text-4" id="text-org5a23848">
 <p>
 An alternative to cross-validation that you may find in the literature is an <i>information criterion</i>: penalize the log-likelihood (or equivalently the in-sample fit) for model complexity directly, without holding out data. Two common choices are:
 </p>
@@ -3713,7 +3742,7 @@ plt.legend()
 </div>
 
 
-<div id="orgfe50a15" class="figure">
+<div id="orgde6a9ad" class="figure">
 <p><img src="./figures/AIC_BIC.png" alt="AIC_BIC.png" />
 </p>
 </div>
@@ -3724,9 +3753,9 @@ Both criteria should select a degree close to the true value of 2. BIC will gene
 </div>
 </div>
 </div>
-<div id="outline-container-org77431d4" class="outline-3">
-<h3 id="org77431d4">Summary</h3>
-<div class="outline-text-3" id="text-org77431d4">
+<div id="outline-container-orgea5c9bc" class="outline-3">
+<h3 id="orgea5c9bc">Summary</h3>
+<div class="outline-text-3" id="text-orgea5c9bc">
 <ul class="org-ul">
 <li><i>Over-fitting</i> occurs when a model is so complex that it fits training-sample noise rather than the true data-generating process. Adding polynomial terms always reduces training MSE but eventually increases test MSE.</li>
 <li>A <i>train/test split</i> reveals over-fitting: if test MSE is much larger than train MSE the model has over-fit. The test set should be used only once to evaluate the final model.</li>
@@ -3736,9 +3765,9 @@ Both criteria should select a degree close to the true value of 2. BIC will gene
 </ul>
 </div>
 </div>
-<div id="outline-container-org32d2864" class="outline-3">
-<h3 id="org32d2864">Review Questions</h3>
-<div class="outline-text-3" id="text-org32d2864">
+<div id="outline-container-org4573993" class="outline-3">
+<h3 id="org4573993">Review Questions</h3>
+<div class="outline-text-3" id="text-org4573993">
 <hr />
 </div>
 </div>
@@ -3787,14 +3816,14 @@ A neural network with one or two hidden layers solves this problem well. We vary
 </p>
 
 
-<div id="org30b46ba" class="figure">
+<div id="org6827b3c" class="figure">
 <p><img src="./figures/nn.png" alt="nn.png" />
 </p>
 <p><span class="figure-number">Figure 4: </span>Neural network for the Iris dataset</p>
 </div>
 
 <p>
-Figure <a href="#org30b46ba">4</a> illustrates the neural network that the app works with. The input layer (left of the figure) has 4 nodes (the four flower features mentioned above) and a bias term (comparable to a constant in an OLS regression) denoted by the \(+1\) grey node at the top. Hidden layer 1 has 5 nodes and a bias node. Each line represents a coefficient. That is, a node in the hidden layer receives input from each of the 4 input features plus the bias. This input is of the form \(w^T x + b\) where \(x\) denotes a vector with the 4 measurements of flower features and \(b\) the bias (constant) term. This input is transformed using an activation function to which we return below. The coefficients \(w\) and \(b\) are referred to as weights. The goal is to estimate the weights of the neural network.
+Figure <a href="#org6827b3c">4</a> illustrates the neural network that the app works with. The input layer (left of the figure) has 4 nodes (the four flower features mentioned above) and a bias term (comparable to a constant in an OLS regression) denoted by the \(+1\) grey node at the top. Hidden layer 1 has 5 nodes and a bias node. Each line represents a coefficient. That is, a node in the hidden layer receives input from each of the 4 input features plus the bias. This input is of the form \(w^T x + b\) where \(x\) denotes a vector with the 4 measurements of flower features and \(b\) the bias (constant) term. This input is transformed using an activation function to which we return below. The coefficients \(w\) and \(b\) are referred to as weights. The goal is to estimate the weights of the neural network.
 </p>
 
 <p>
@@ -3806,12 +3835,12 @@ Finally, we do the same from the second layer to the output layer. We use a Soft
 </p>
 
 <p>
-In the app you can choose between three activation functions which are illustrated in Figure <a href="#org00b3e6e">5</a>. We come back to these functions below. In the app, the Softmax function takes in a vector with three values and turn these into three probabilities: that is, each value is between 0 and 1 and adding the three values gives 1.
+In the app you can choose between three activation functions which are illustrated in Figure <a href="#orgf8e3654">5</a>. We come back to these functions below. In the app, the Softmax function takes in a vector with three values and turn these into three probabilities: that is, each value is between 0 and 1 and adding the three values gives 1.
 </p>
 
 
 
-<div id="org00b3e6e" class="figure">
+<div id="orgf8e3654" class="figure">
 <p><img src="./figures/lecture5_activations.png" alt="lecture5_activations.png" />
 </p>
 <p><span class="figure-number">Figure 5: </span>Three activation functions</p>
@@ -4061,7 +4090,7 @@ plt.tight_layout()
 </div>
 
 
-<div id="org09d6138" class="figure">
+<div id="orgf1c78ab" class="figure">
 <p><img src="./figures/lecture5_activations.png" alt="lecture5_activations.png" />
 </p>
 </div>
@@ -4957,7 +4986,7 @@ plt.legend()
 </div>
 
 
-<div id="org301a0b9" class="figure">
+<div id="org34a1a63" class="figure">
 <p><img src="./figures/TrainValidationLossDemand.png" alt="TrainValidationLossDemand.png" />
 </p>
 </div>
@@ -5144,14 +5173,14 @@ Above we consider the case where the firm offers one option \((q,p)\) for all co
 </p>
 
 
-<div id="orgf2fb735" class="figure">
+<div id="orgd3c5286" class="figure">
 <p><img src="./figures/menu_comparison.png" alt="menu_comparison.png" />
 </p>
 <p><span class="figure-number">Figure 6: </span>Price discrimination based on the estimated demand and the true underlying model</p>
 </div>
 
 <p>
-Figure <a href="#orgf2fb735">6</a> illustrates the situation where the firm clusters its customers into six segments. We assume that through targeted marketing the firm can offer each segment its own bundle \((q,p)\) without worrying about incentive compatibility constraints (i.e. first-degree price discrimination). In the true model (where the firm has an oracle to learn the underlying utility functions), the profit maximizing menu of choices differentiates in both quality and prices. With a neural network the firm differentiates between low and high valuation consumers but does not pick up the differentiation among the low types. Perhaps with more observations the neural network would improve the low valuation offerings in its menu. The firm basing its marketing on a logistic regression fails to identify the interactions completely and does not differentiate its quality offerings.
+Figure <a href="#orgd3c5286">6</a> illustrates the situation where the firm clusters its customers into six segments. We assume that through targeted marketing the firm can offer each segment its own bundle \((q,p)\) without worrying about incentive compatibility constraints (i.e. first-degree price discrimination). In the true model (where the firm has an oracle to learn the underlying utility functions), the profit maximizing menu of choices differentiates in both quality and prices. With a neural network the firm differentiates between low and high valuation consumers but does not pick up the differentiation among the low types. Perhaps with more observations the neural network would improve the low valuation offerings in its menu. The firm basing its marketing on a logistic regression fails to identify the interactions completely and does not differentiate its quality offerings.
 </p>
 </div>
 </div>
@@ -5187,15 +5216,508 @@ Figure <a href="#orgf2fb735">6</a> illustrates the situation where the firm clus
 </div>
 </div>
 </div>
-<div id="outline-container-org357dcd2" class="outline-2">
-<h2 id="org357dcd2">Lecture 7: An empirical and theoretical application of neural networks</h2>
-<div class="outline-text-2" id="text-org357dcd2">
+<div id="outline-container-lecture-nn-applications" class="outline-2">
+<h2 id="lecture-nn-applications">Lecture 7: An empirical and theoretical application of neural networks</h2>
+<div class="outline-text-2" id="text-lecture-nn-applications">
+</div>
+<div id="outline-container-lecture7-learning-objectives" class="outline-3">
+<h3 id="lecture7-learning-objectives">Learning Objectives</h3>
+<div class="outline-text-3" id="text-lecture7-learning-objectives">
+<p>
+After this lecture you will be able to:
+</p>
+
+<ul class="org-ul">
+<li>Explain why time-series data require a strict temporal train/validation split and describe the data-leakage risk when lagged variables are used.</li>
+<li>Implement a small MLP (Multi-Layer Perceptron) in TensorFlow/Keras with <code>tanh</code> activations and interpret its learning curves.</li>
+<li>Describe the Phillips curve and what a neural network adds over a linear specification.</li>
+<li>Explain how a neural network can solve for Nash equilibria without any labelled data, using only the economic model&rsquo;s first-order conditions as the loss function.</li>
+<li>Use TensorFlow&rsquo;s <code>GradientTape</code> to differentiate profit expressions and train an equilibrium-solving network.</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-lecture7-introduction" class="outline-3">
+<h3 id="lecture7-introduction">Introduction</h3>
+<div class="outline-text-3" id="text-lecture7-introduction">
+<p>
+This lecture covers two complementary applications of neural networks in economics.
+</p>
+
+<p>
+The first is <b>empirical</b>: estimating the Phillips curve (the relationship between unemployment and inflation) for European countries.  The data are monthly Eurostat observations for many countries over more than two decades.  A linear specification imposes a fixed slope, but the true relationship is probably state-dependent: the effect of unemployment on inflation is stronger when the economy is near full employment.  A small multi-layer network with <code>tanh</code> activations can pick up this curvature automatically.  The key challenge is not the network itself but the data preparation: with monthly observations and lagged features, a naive random split would leak future information into the training set.
+</p>
+
+
+<p>
+The second is <b>theoretical</b>: using a network to solve the Cournot duopoly equilibrium.  Here there is no data at all: the network maps cost parameters \((c_1, c_2)\) to quantities \((x_1, x_2)\) and is trained to make both firms&rsquo; first-order conditions hold simultaneously.  The loss function is derived from the economic model, not from labelled observations.  This is a simple example of the broader idea that neural networks can solve equations where a solution is known to exist but deriving this solution is expensive or impossible to compute in closed form.
+</p>
+</div>
+</div>
+<div id="outline-container-lecture7-app" class="outline-3">
+<h3 id="lecture7-app">Interactive App</h3>
+<div class="outline-text-3" id="text-lecture7-app">
+<p>
+The app trains a small neural network to approximate the Cournot equilibrium.  Use the slider to fix \(c_2\) and choose the number of training iterations, then click <b>Train neural network</b>.  The plots compare the network&rsquo;s predicted equilibrium output \(x_1\) and price \(p\) to the closed-form solution as \(c_1\) varies from 0.1 to 3.
+</p>
+
+<div style="text-align:center;margin:20px 0;">
+  <a href="https://janboone.github.io/datascience-marimo/lecture7_cournot_nn.html"
+     target="_blank"
+     style="background:#1f3c88;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:1em;">
+    &#9654; Open app: Cournot equilibrium neural network
+  </a>
+</div>
+</div>
+</div>
+<div id="outline-container-lecture7-python-code" class="outline-3">
+<h3 id="lecture7-python-code">Python Code Explanation</h3>
+<div class="outline-text-3" id="text-lecture7-python-code">
+</div>
+<div id="outline-container-lecture7-phillips-curve" class="outline-4">
+<h4 id="lecture7-phillips-curve">Nonlinear Phillips curve</h4>
+<div class="outline-text-4" id="text-lecture7-phillips-curve">
+<div class="org-src-container">
+<pre class="src src-python"><code><span style="color: #89DDFF;">import</span> pandas <span style="color: #89DDFF;">as</span> pd
+<span style="color: #89DDFF;">import</span> numpy <span style="color: #89DDFF;">as</span> np
+<span style="color: #89DDFF;">import</span> matplotlib.pyplot <span style="color: #89DDFF;">as</span> plt
+<span style="color: #89DDFF;">import</span> tensorflow <span style="color: #89DDFF;">as</span> tf
+<span style="color: #89DDFF;">from</span> tensorflow <span style="color: #89DDFF;">import</span> keras
+<span style="color: #89DDFF;">from</span> tensorflow.keras <span style="color: #89DDFF;">import</span> layers
+</code></pre>
+</div>
+</div>
+<div id="outline-container-org88e4d51" class="outline-5">
+<h5 id="org88e4d51">Data and train/validation split</h5>
+<div class="outline-text-5" id="text-org88e4d51">
+<p>
+We load monthly (variable <code>date</code>) Eurostat data for many EU countries (<code>geo</code>), covering HICP (Harmonised Index of Consumer Prices) year-on-year inflation (<code>hicp_yoy</code>) and the unemployment rate (<code>urate</code>) with three lags of each variable:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><code><span style="color: #ffcb6b;">df</span> <span style="color: #89DDFF;">=</span> pd.read_csv(<span style="color: #c3e88d;">'./data/data_phillips_curve.csv'</span>)
+<span style="color: #82aaff;">print</span>(df.head())
+</code></pre>
+</div>
+
+
+<pre class="example">
+   Unnamed: 0 geo        date  ...  urate_lag1  urate_lag2  urate_lag3
+0           3  AT  1997-05-01  ...    5.266667    5.300000    5.266667
+1           4  AT  1997-06-01  ...    5.266667    5.266667    5.300000
+2           5  AT  1997-07-01  ...    5.266667    5.266667    5.266667
+3           6  AT  1997-08-01  ...    5.300000    5.266667    5.266667
+4           7  AT  1997-09-01  ...    5.266667    5.300000    5.266667
+</pre>
+
+<p>
+The columns <code>urate</code>, <code>urate_lag1</code>, <code>urate_lag2</code>, <code>urate_lag3</code> give the unemployment rate at time \(t, t-1, t-2, t-3\), and similarly for <code>hicp_yoy</code>.
+</p>
+</div>
+</div>
+<div id="outline-container-org2225769" class="outline-5">
+<h5 id="org2225769">Why the temporal split matters</h5>
+<div class="outline-text-5" id="text-org2225769">
+<p>
+With time-series data and lagged features, a random train/validation split would cause <b>data leakage</b>: the training set might contain observation \(t+1\) while the validation set contains \(t\), and the lag features of \(t+1\) include the target value at \(t\).  The network would effectively see the future during training.
+</p>
+
+<p>
+The correct approach is a strict temporal cutoff: all observations before a fixed date go into training, everything from that date onward goes into validation.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><code><span style="color: #ffcb6b;">X_cols</span> <span style="color: #89DDFF;">=</span> [<span style="color: #c3e88d;">"urate"</span>, <span style="color: #c3e88d;">"urate_lag1"</span>, <span style="color: #c3e88d;">"urate_lag2"</span>, <span style="color: #c3e88d;">"urate_lag3"</span>,
+          <span style="color: #c3e88d;">"hicp_yoy_lag1"</span>, <span style="color: #c3e88d;">"hicp_yoy_lag2"</span>, <span style="color: #c3e88d;">"hicp_yoy_lag3"</span>]
+<span style="color: #ffcb6b;">y_col</span>  <span style="color: #89DDFF;">=</span> <span style="color: #c3e88d;">"hicp_yoy"</span>
+
+<span style="color: #ffcb6b;">df</span>[<span style="color: #c3e88d;">"date"</span>] <span style="color: #89DDFF;">=</span> [pd.Timestamp(d) <span style="color: #89DDFF;">for</span> d <span style="color: #89DDFF;">in</span> df[<span style="color: #c3e88d;">"date"</span>].values]
+<span style="color: #ffcb6b;">cutoff_date</span> <span style="color: #89DDFF;">=</span> pd.Timestamp(<span style="color: #c3e88d;">"2019-01-01"</span>)   <span style="color: #676E95;"># </span><span style="color: #676E95;">train &lt; 2019, validate &gt;= 2019
+</span><span style="color: #ffcb6b;">train</span> <span style="color: #89DDFF;">=</span> df[df[<span style="color: #c3e88d;">"date"</span>] <span style="color: #89DDFF;">&lt;</span> cutoff_date].copy()
+<span style="color: #ffcb6b;">valid</span> <span style="color: #89DDFF;">=</span> df[df[<span style="color: #c3e88d;">"date"</span>] <span style="color: #89DDFF;">&gt;=</span> cutoff_date].copy()
+
+<span style="color: #82aaff;">print</span>(f<span style="color: #c3e88d;">"Train rows: </span>{<span style="color: #82aaff;">len</span>(train)}<span style="color: #c3e88d;">,  Validation rows: </span>{<span style="color: #82aaff;">len</span>(valid)}<span style="color: #c3e88d;">"</span>)
+</code></pre>
+</div>
+
+<pre class="example">
+Train rows: 8376,  Validation rows: 2797
+</pre>
+
+<p>
+Because the split follows calendar time, no information from the validation period leaks backward.  The general rule for panel data with lags: sort by date, choose a cutoff, put everything before the cutoff in training — never use <code>train_test_split</code> with <code>shuffle=True</code> for time series.
+</p>
+
+<p>
+Next we standardize our variables:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><code><span style="color: #ffcb6b;">mu</span> <span style="color: #89DDFF;">=</span> train[X_cols].mean(axis<span style="color: #89DDFF;">=</span>0)
+<span style="color: #ffcb6b;">sd</span> <span style="color: #89DDFF;">=</span> train[X_cols].std(axis<span style="color: #89DDFF;">=</span>0)
+
+<span style="color: #ffcb6b;">train_X</span> <span style="color: #89DDFF;">=</span> ((train[X_cols] <span style="color: #89DDFF;">-</span> mu) <span style="color: #89DDFF;">/</span> sd).values.astype(<span style="color: #c3e88d;">"float32"</span>)
+<span style="color: #ffcb6b;">valid_X</span> <span style="color: #89DDFF;">=</span> ((valid[X_cols] <span style="color: #89DDFF;">-</span> mu) <span style="color: #89DDFF;">/</span> sd).values.astype(<span style="color: #c3e88d;">"float32"</span>)
+<span style="color: #ffcb6b;">train_y</span> <span style="color: #89DDFF;">=</span> train[y_col].values.astype(<span style="color: #c3e88d;">"float32"</span>)
+<span style="color: #ffcb6b;">valid_y</span> <span style="color: #89DDFF;">=</span> valid[y_col].values.astype(<span style="color: #c3e88d;">"float32"</span>)
+</code></pre>
+</div>
+
+
+<p>
+Notice that the validation features are standardized with the <b>training mean and standard deviation</b>, not the validation statistics.  Applying the training statistics to both sets ensures the network sees the same scale at inference time as at training time.
+</p>
+</div>
+</div>
+<div id="outline-container-org549e5b2" class="outline-5">
+<h5 id="org549e5b2">Network architecture: <code>tanh</code> instead of ReLU</h5>
+<div class="outline-text-5" id="text-org549e5b2">
+<p>
+For the Phillips curve we use <code>tanh</code> activations rather than ReLU.  The <code>tanh</code> function is smooth and symmetric around zero, which is useful when the target variable (inflation) can be both positive and negative and when the relationship is expected to be curved rather than piecewise-linear.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><code>tf.random.set_seed(0)
+
+<span style="color: #ffcb6b;">model</span> <span style="color: #89DDFF;">=</span> keras.Sequential([
+    layers.Input(shape<span style="color: #89DDFF;">=</span>(<span style="color: #82aaff;">len</span>(X_cols),)),   <span style="color: #676E95;"># </span><span style="color: #676E95;">7 features
+</span>    layers.Dense(32, activation<span style="color: #89DDFF;">=</span><span style="color: #c3e88d;">"tanh"</span>),
+    layers.Dense(16, activation<span style="color: #89DDFF;">=</span><span style="color: #c3e88d;">"tanh"</span>),
+    layers.Dense(1),                       <span style="color: #676E95;"># </span><span style="color: #676E95;">linear output: predicted inflation
+</span>])
+
+model.<span style="color: #82aaff;">compile</span>(
+    optimizer<span style="color: #89DDFF;">=</span>keras.optimizers.Adam(1e<span style="color: #89DDFF;">-</span>3),
+    loss<span style="color: #89DDFF;">=</span><span style="color: #c3e88d;">"mse"</span>,
+    metrics<span style="color: #89DDFF;">=</span>[<span style="color: #c3e88d;">"mae"</span>],
+)
+
+<span style="color: #ffcb6b;">history</span> <span style="color: #89DDFF;">=</span> model.fit(
+    train_X, train_y,
+    validation_data<span style="color: #89DDFF;">=</span>(valid_X, valid_y),
+    epochs<span style="color: #89DDFF;">=</span>60,
+    batch_size<span style="color: #89DDFF;">=</span>256,
+    verbose<span style="color: #89DDFF;">=</span>0,
+)
+<span style="color: #ffcb6b;">hist</span> <span style="color: #89DDFF;">=</span> pd.DataFrame(history.history)
+<span style="color: #82aaff;">print</span>(hist.tail(3))
+</code></pre>
+</div>
+
+
+<pre class="example">
+         loss       mae   val_loss   val_mae
+57  23.305353  0.605331  19.817953  1.017315
+58  23.141350  0.603114  19.502026  1.011587
+59  22.979515  0.600987  19.191534  1.006326
+</pre>
+</div>
+</div>
+<div id="outline-container-orga4cf0a6" class="outline-5">
+<h5 id="orga4cf0a6">Learning curves and validation MAE</h5>
+<div class="outline-text-5" id="text-orga4cf0a6">
+<div class="org-src-container">
+<pre class="src src-python"><code>plt.figure()
+plt.plot(hist[<span style="color: #c3e88d;">"loss"</span>],     label<span style="color: #89DDFF;">=</span><span style="color: #c3e88d;">"train MSE"</span>)
+plt.plot(hist[<span style="color: #c3e88d;">"val_loss"</span>], label<span style="color: #89DDFF;">=</span><span style="color: #c3e88d;">"valid MSE"</span>)
+plt.xlabel(<span style="color: #c3e88d;">"epoch"</span>); plt.ylabel(<span style="color: #c3e88d;">"MSE"</span>)
+plt.legend()
+plt.title(<span style="color: #c3e88d;">"Learning curves &#8212; Phillips curve MLP"</span>)
+plt.tight_layout()
+</code></pre>
+</div>
+
+
+<div id="orgdcd85b7" class="figure">
+<p><img src="./figures/learning_curves_Philips_curve.png" alt="learning_curves_Philips_curve.png" />
+</p>
+</div>
+
+
+<p>
+We can calculate the mean absolute error and the root means squared error.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><code><span style="color: #ffcb6b;">pred_valid</span> <span style="color: #89DDFF;">=</span> model.predict(valid_X, verbose<span style="color: #89DDFF;">=</span>0).squeeze()
+<span style="color: #ffcb6b;">mae</span>  <span style="color: #89DDFF;">=</span> np.mean(np.<span style="color: #82aaff;">abs</span>(valid_y <span style="color: #89DDFF;">-</span> pred_valid))
+<span style="color: #ffcb6b;">rmse</span> <span style="color: #89DDFF;">=</span> np.sqrt(np.mean((valid_y <span style="color: #89DDFF;">-</span> pred_valid)<span style="color: #89DDFF;">**</span>2))
+<span style="color: #82aaff;">print</span>(f<span style="color: #c3e88d;">"Validation MAE: </span>{mae:.3f}<span style="color: #c3e88d;"> pp  |  RMSE: </span>{rmse:.3f}<span style="color: #c3e88d;"> pp"</span>)
+</code></pre>
+</div>
+
+<pre class="example">
+Validation MAE: 1.006 pp  |  RMSE: 4.381 pp
+</pre>
+
+<p>
+An MAE of about 1 percentage point means the network&rsquo;s inflation forecasts are, on average, 1 pp off from the realized value.
+</p>
+
+<p>
+With the three lags in our specification, it is not obvious how to plot the resulting Phillips curve in unemployment-inflation space.
+</p>
+</div>
+</div>
+</div>
+<div id="outline-container-lecture7-cournot" class="outline-4">
+<h4 id="lecture7-cournot">Neural network solution of the Cournot equilibrium</h4>
+<div class="outline-text-4" id="text-lecture7-cournot">
+<p>
+The second application turns the idea of neural networks upside down: instead of fitting a pattern in data, we train a network to satisfy a system of equations derived from economic theory.
+</p>
+</div>
+<div id="outline-container-org9cd824b" class="outline-5">
+<h5 id="org9cd824b">The Cournot model</h5>
+<div class="outline-text-5" id="text-org9cd824b">
+<p>
+Two firms produce a homogeneous good with inverse demand \(p(x_1, x_2) = 1 - x_1 - x_2\) and quadratic costs \(C_i(x_i) = \tfrac{1}{2} c_i x_i^2\).  Firm \(i\) maximizes
+</p>
+
+<p>
+\[\pi_i = (1 - x_1 - x_2)\, x_i - \tfrac{1}{2} c_i x_i^2.\]
+</p>
+
+<p>
+Taking the derivative with respect to \(x_i\) and setting it to zero gives the first-order condition (FOC):
+</p>
+
+<p>
+\[\frac{\partial \pi_i}{\partial x_i} = 1 - (2 + c_i)\,x_i - x_j = 0.\]
+</p>
+
+<p>
+The closed-form Nash equilibrium is
+</p>
+
+<p>
+\[x_1^* = \frac{1 + c_2}{(2+c_1)(2+c_2)-1}, \qquad x_2^* = \frac{1 + c_1}{(2+c_1)(2+c_2)-1}.\]
+</p>
+</div>
+</div>
+<div id="outline-container-org143fb36" class="outline-5">
+<h5 id="org143fb36">Equilibrium-solving network</h5>
+<div class="outline-text-5" id="text-org143fb36">
+<p>
+We build a small network that takes cost parameters \((c_1, c_2)\) as input and predicts quantities \((x_1, x_2)\).  The loss function is the average squared FOC residual; this equals zero at the Nash equilibrium:
+</p>
+
+<p>
+\[\mathcal{L} = \mathbb{E}_{(c_1,c_2)}\Bigl[\bigl(1-(2+c_1)x_1-x_2\bigr)^2 + \bigl(1-x_1-(2+c_2)x_2\bigr)^2\Bigr].\]
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><code><span style="color: #89DDFF;">def</span> <span style="color: #82aaff;">price</span>(x1, x2):
+    <span style="color: #89DDFF;">return</span> 1.0 <span style="color: #89DDFF;">-</span> x1 <span style="color: #89DDFF;">-</span> x2
+
+<span style="color: #89DDFF;">def</span> <span style="color: #82aaff;">closed_form_x</span>(c1, c2):
+    <span style="color: #ffcb6b;">denom</span>  <span style="color: #89DDFF;">=</span> (2.0 <span style="color: #89DDFF;">+</span> c1) <span style="color: #89DDFF;">*</span> (2.0 <span style="color: #89DDFF;">+</span> c2) <span style="color: #89DDFF;">-</span> 1.0
+    <span style="color: #ffcb6b;">x1_star</span> <span style="color: #89DDFF;">=</span> (1.0 <span style="color: #89DDFF;">+</span> c2) <span style="color: #89DDFF;">/</span> denom
+    <span style="color: #ffcb6b;">x2_star</span> <span style="color: #89DDFF;">=</span> (1.0 <span style="color: #89DDFF;">+</span> c1) <span style="color: #89DDFF;">/</span> denom
+    <span style="color: #89DDFF;">return</span> x1_star, x2_star
+
+<span style="color: #ffcb6b;">net</span> <span style="color: #89DDFF;">=</span> tf.keras.Sequential([
+    tf.keras.layers.Input(shape<span style="color: #89DDFF;">=</span>(2,)),
+    tf.keras.layers.Dense(64, activation<span style="color: #89DDFF;">=</span><span style="color: #c3e88d;">"tanh"</span>),
+    tf.keras.layers.Dense(64, activation<span style="color: #89DDFF;">=</span><span style="color: #c3e88d;">"tanh"</span>),
+    tf.keras.layers.Dense(2),    <span style="color: #676E95;"># </span><span style="color: #676E95;">raw outputs; softplus makes them non-negative
+</span>])
+
+<span style="color: #ffcb6b;">opt</span> <span style="color: #89DDFF;">=</span> tf.keras.optimizers.Adam(1e<span style="color: #89DDFF;">-</span>3)
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orgb30f64e" class="outline-5">
+<h5 id="orgb30f64e">The training step with <code>GradientTape</code></h5>
+<div class="outline-text-5" id="text-orgb30f64e">
+<p>
+The standard Keras <code>model.fit</code> loop differentiates a loss with respect to network weights.  Here we need the <b>same</b> outer gradient, but the loss itself is an economic expression.  <code>GradientTape</code> gives us explicit control: we record which computations to differentiate and with respect to what.
+</p>
+
+<p>
+The training step uses <b>two</b> nested tapes:
+</p>
+
+<ul class="org-ul">
+<li>The <b>inner</b> tape records how profit depends on outputs \((x_1, x_2)\), so we can compute \(\partial \pi_i / \partial x_i\).</li>
+<li>The <b>outer</b> tape records how the resulting FOC loss depends on the network weights, so <code>opt.apply_gradients</code> can update them. This we use for the gradient-descent algorithm to minimize the loss.</li>
+</ul>
+
+
+<p>
+The loss equals the loss on the FOC&rsquo;s plus a (small) penalty if price turns negative (this term differs from 0 if \(-p>0\) in the ReLu function).
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><code><span style="color: #89DDFF;">def</span> <span style="color: #82aaff;">sample_costs</span>(n, c_min<span style="color: #89DDFF;">=</span>0.0, c_max<span style="color: #89DDFF;">=</span>3.0):
+    <span style="color: #ffcb6b;">c1</span> <span style="color: #89DDFF;">=</span> tf.random.uniform((n, 1), c_min, c_max)
+    <span style="color: #ffcb6b;">c2</span> <span style="color: #89DDFF;">=</span> tf.random.uniform((n, 1), c_min, c_max)
+    <span style="color: #89DDFF;">return</span> tf.concat([c1, c2], axis<span style="color: #89DDFF;">=</span>1)   <span style="color: #676E95;"># </span><span style="color: #676E95;">shape (n, 2)
+</span>
+<span style="color: #89DDFF;">def</span> <span style="color: #82aaff;">train_step</span>(cc):
+    <span style="color: #ffcb6b;">c1</span>, <span style="color: #ffcb6b;">c2</span> <span style="color: #89DDFF;">=</span> cc[:, 0], cc[:, 1]
+
+    <span style="color: #89DDFF;">with</span> tf.GradientTape() <span style="color: #89DDFF;">as</span> outer:
+        <span style="color: #89DDFF;">with</span> tf.GradientTape(persistent<span style="color: #89DDFF;">=</span><span style="color: #f78c6c;">True</span>) <span style="color: #89DDFF;">as</span> inner:
+            <span style="color: #ffcb6b;">raw</span> <span style="color: #89DDFF;">=</span> net(cc, training<span style="color: #89DDFF;">=</span><span style="color: #f78c6c;">True</span>)
+            <span style="color: #ffcb6b;">x1</span>  <span style="color: #89DDFF;">=</span> tf.nn.softplus(raw[:, 0])   <span style="color: #676E95;"># </span><span style="color: #676E95;">softplus ensures xi &gt;= 0
+</span>            <span style="color: #ffcb6b;">x2</span>  <span style="color: #89DDFF;">=</span> tf.nn.softplus(raw[:, 1])
+
+            inner.watch([x1, x2])             <span style="color: #676E95;"># </span><span style="color: #676E95;">track x1, x2 for profit derivatives
+</span>            <span style="color: #ffcb6b;">p</span>   <span style="color: #89DDFF;">=</span> price(x1, x2)
+            <span style="color: #ffcb6b;">pi1</span> <span style="color: #89DDFF;">=</span> p <span style="color: #89DDFF;">*</span> x1 <span style="color: #89DDFF;">-</span> 0.5 <span style="color: #89DDFF;">*</span> c1 <span style="color: #89DDFF;">*</span> tf.square(x1)
+            <span style="color: #ffcb6b;">pi2</span> <span style="color: #89DDFF;">=</span> p <span style="color: #89DDFF;">*</span> x2 <span style="color: #89DDFF;">-</span> 0.5 <span style="color: #89DDFF;">*</span> c2 <span style="color: #89DDFF;">*</span> tf.square(x2)
+
+        <span style="color: #ffcb6b;">r1</span> <span style="color: #89DDFF;">=</span> inner.gradient(pi1, x1)   <span style="color: #676E95;"># </span><span style="color: #676E95;">&#8706;&#960;1/&#8706;x1 (should be 0 at equilibrium)
+</span>        <span style="color: #ffcb6b;">r2</span> <span style="color: #89DDFF;">=</span> inner.gradient(pi2, x2)   <span style="color: #676E95;"># </span><span style="color: #676E95;">&#8706;&#960;2/&#8706;x2
+</span>        <span style="color: #89DDFF;">del</span> inner
+
+        <span style="color: #676E95;"># </span><span style="color: #676E95;">loss function has two components
+</span>        <span style="color: #ffcb6b;">loss</span>  <span style="color: #89DDFF;">=</span> tf.reduce_mean(tf.square(r1)) <span style="color: #89DDFF;">+</span> tf.reduce_mean(tf.square(r2))
+        <span style="color: #ffcb6b;">loss</span> <span style="color: #89DDFF;">+=</span> 1e<span style="color: #89DDFF;">-</span>2 <span style="color: #89DDFF;">*</span> tf.reduce_mean(tf.square(tf.nn.relu(<span style="color: #89DDFF;">-</span>p)))
+
+    <span style="color: #ffcb6b;">grads</span> <span style="color: #89DDFF;">=</span> outer.gradient(loss, net.trainable_variables)
+    opt.apply_gradients(<span style="color: #82aaff;">zip</span>(grads, net.trainable_variables))
+    <span style="color: #89DDFF;">return</span> loss
+</code></pre>
+</div>
+
+
+<p>
+The key line is <code>inner.watch([x1, x2])</code>.  By default <code>GradientTape</code> only tracks <code>tf.Variable</code> objects.  Because <code>x1</code> and <code>x2</code> are computed tensors (not variables), we must explicitly tell the inner tape to watch them; otherwise <code>inner.gradient(pi1, x1)</code> returns <code>None</code>.
+</p>
+
+
+<p>
+The inner tape is created with <code>persistent = True</code>. By default a GradientTape frees all its recorded computation as soon as <code>.gradient()</code> is called once; it assumes you only need one gradient per tape. <code>persistent = True</code> disables that automatic release so the tape can be queried multiple times. Here we need it twice:
+</p>
+<ul class="org-ul">
+<li><code>r1 = inner.gradient(pi1, x1)</code> and</li>
+<li><code>r2 = inner.gradient(pi2, x2)</code></li>
+</ul>
+
+<p>
+Without <code>persistent = True</code> the second call would return <code>None</code> because the tape&rsquo;s resources would already be gone after the first.
+</p>
+
+<p>
+The cost is that a persistent tape holds the entire recorded computation graph in memory indefinitely. Inside a loop of 1500 iterations that accumulates fast. <code>del inner</code> forces the release immediately after the two gradient calls, before the outer tape computes its own gradient.
+</p>
+</div>
+</div>
+<div id="outline-container-orga707d09" class="outline-5">
+<h5 id="orga707d09">Training loop</h5>
+<div class="outline-text-5" id="text-orga707d09">
+<p>
+We train over 1500 iterations and every 300 iterations print the results on the test data.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><code><span style="color: #89DDFF;">for</span> it <span style="color: #89DDFF;">in</span> <span style="color: #82aaff;">range</span>(1, 1501):
+    <span style="color: #ffcb6b;">cc</span> <span style="color: #89DDFF;">=</span> sample_costs(512)
+    <span style="color: #ffcb6b;">loss</span> <span style="color: #89DDFF;">=</span> train_step(cc)
+
+    <span style="color: #89DDFF;">if</span> it <span style="color: #89DDFF;">%</span> 300 <span style="color: #89DDFF;">==</span> 0:
+        <span style="color: #ffcb6b;">cc_test</span>         <span style="color: #89DDFF;">=</span> sample_costs(256)
+        <span style="color: #ffcb6b;">raw_test</span>        <span style="color: #89DDFF;">=</span> net(cc_test, training<span style="color: #89DDFF;">=</span><span style="color: #f78c6c;">False</span>)
+        <span style="color: #ffcb6b;">x1_test</span>         <span style="color: #89DDFF;">=</span> tf.nn.softplus(raw_test[:, 0])
+        <span style="color: #ffcb6b;">x2_test</span>         <span style="color: #89DDFF;">=</span> tf.nn.softplus(raw_test[:, 1])
+        <span style="color: #ffcb6b;">x1_star</span>, <span style="color: #ffcb6b;">x2_star</span> <span style="color: #89DDFF;">=</span> closed_form_x(cc_test[:, 0], cc_test[:, 1])
+        <span style="color: #ffcb6b;">mae</span> <span style="color: #89DDFF;">=</span> (tf.reduce_mean(tf.<span style="color: #82aaff;">abs</span>(x1_test <span style="color: #89DDFF;">-</span> x1_star)) <span style="color: #89DDFF;">+</span>
+               tf.reduce_mean(tf.<span style="color: #82aaff;">abs</span>(x2_test <span style="color: #89DDFF;">-</span> x2_star)))
+        <span style="color: #82aaff;">print</span>(f<span style="color: #c3e88d;">"iter </span>{it:4d}<span style="color: #c3e88d;"> | loss </span>{loss.numpy():.3e}<span style="color: #c3e88d;"> | test MAE </span>{mae.numpy():.3e}<span style="color: #c3e88d;">"</span>)
+</code></pre>
+</div>
+
+
+<pre class="example">
+iter  300 | loss 1.263e-02 | test MAE 2.516e-02
+iter  600 | loss 3.670e-03 | test MAE 1.780e-02
+iter  900 | loss 1.393e-03 | test MAE 1.125e-02
+iter 1200 | loss 7.284e-04 | test MAE 7.962e-03
+iter 1500 | loss 4.822e-04 | test MAE 6.793e-03
+</pre>
+
+<p>
+As training progresses the FOC loss falls and the mean absolute deviation from the closed-form solution shrinks.  The network is learning the Nash equilibrium map \((c_1,c_2) \mapsto (x_1^*, x_2^*)\) without ever being given the closed-form formula. We only use the closed form solution above to illustrate that the network solution converges to the true equilibrium values.
+</p>
+</div>
+</div>
+<div id="outline-container-org5ee0a49" class="outline-5">
+<h5 id="org5ee0a49">Visualising the result</h5>
+<div class="outline-text-5" id="text-org5ee0a49">
+<div class="org-src-container">
+<pre class="src src-python"><code><span style="color: #ffcb6b;">c1_range</span> <span style="color: #89DDFF;">=</span> np.arange(0, 3.1, 0.1)[:, <span style="color: #f78c6c;">None</span>]
+<span style="color: #ffcb6b;">c2_fixed</span> <span style="color: #89DDFF;">=</span> 1.5 <span style="color: #89DDFF;">*</span> np.ones_like(c1_range)
+<span style="color: #ffcb6b;">cc_vis</span>   <span style="color: #89DDFF;">=</span> tf.concat([c1_range, c2_fixed], axis<span style="color: #89DDFF;">=</span>1)
+
+<span style="color: #ffcb6b;">raw_vis</span> <span style="color: #89DDFF;">=</span> net(cc_vis, training<span style="color: #89DDFF;">=</span><span style="color: #f78c6c;">False</span>)
+<span style="color: #ffcb6b;">x1_nn</span>   <span style="color: #89DDFF;">=</span> tf.nn.softplus(raw_vis[:, 0]).numpy()
+<span style="color: #ffcb6b;">x2_nn</span>   <span style="color: #89DDFF;">=</span> tf.nn.softplus(raw_vis[:, 1]).numpy()
+<span style="color: #ffcb6b;">p_nn</span>    <span style="color: #89DDFF;">=</span> 1.0 <span style="color: #89DDFF;">-</span> x1_nn <span style="color: #89DDFF;">-</span> x2_nn
+
+<span style="color: #ffcb6b;">x1_cf</span>, <span style="color: #ffcb6b;">x2_cf</span> <span style="color: #89DDFF;">=</span> closed_form_x(c1_range, c2_fixed)
+<span style="color: #ffcb6b;">p_cf</span> <span style="color: #89DDFF;">=</span> 1.0 <span style="color: #89DDFF;">-</span> x1_cf <span style="color: #89DDFF;">-</span> x2_cf
+
+plt.figure(figsize<span style="color: #89DDFF;">=</span>(8, 4))
+plt.plot(c1_range, p_nn, label<span style="color: #89DDFF;">=</span><span style="color: #c3e88d;">"Neural network price"</span>, ls<span style="color: #89DDFF;">=</span><span style="color: #c3e88d;">"--"</span>)
+plt.plot(c1_range, p_cf, label<span style="color: #89DDFF;">=</span><span style="color: #c3e88d;">"Closed-form price"</span>,    lw<span style="color: #89DDFF;">=</span>2, color<span style="color: #89DDFF;">=</span><span style="color: #c3e88d;">"black"</span>)
+plt.xlabel(<span style="color: #c3e88d;">"$c_1$"</span>); plt.ylabel(<span style="color: #c3e88d;">"$p^*$"</span>)
+plt.title(<span style="color: #c3e88d;">"Equilibrium price as a function of $c_1$  ($c_2 = 1.5$)"</span>)
+plt.legend(); plt.tight_layout()
+plt.savefig(<span style="color: #c3e88d;">"./figures/NN_solution_duopoly.png"</span>)
+</code></pre>
+</div>
+
+
+<div id="org8c48d8c" class="figure">
+<p><img src="./figures/NN_solution_duopoly.png" alt="NN_solution_duopoly.png" />
+</p>
+</div>
+
+<p>
+The neural network tracks the closed-form price closely.  The remaining gap can be reduced by training for more iterations or using a wider network.  Try it: change the number of iterations or the number of nodes in the Dense layers. Also plot \(x_1\) as a function of \(c_1\) and see how close the neural network prediction \(\hat x_1\) is to the closed form solution.
+</p>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-lecture7-summary" class="outline-3">
+<h3 id="lecture7-summary">Summary</h3>
+<div class="outline-text-3" id="text-lecture7-summary">
+<ul class="org-ul">
+<li>Time-series panel data requires a strict temporal train/validation split.  Using a random split with lagged features leaks the future into training and gives over-optimistic validation scores.</li>
+<li><code>tanh</code> activations are a natural choice for regression targets that can be positive or negative and for relationships expected to be smooth and symmetric.</li>
+<li>Standardization must always be done with training statistics; applying the same (training) transformation to the validation set is correct and does not constitute leakage.</li>
+<li>A neural network can solve for economic equilibria without any labelled data by minimizing the squared first-order conditions.  The loss function encodes economic theory rather than prediction error.</li>
+<li>TensorFlow&rsquo;s <code>GradientTape</code> gives fine-grained control over differentiation and is essential when the loss depends on derivatives of the model&rsquo;s outputs with respect to its inputs.</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-lecture7-review" class="outline-3">
+<h3 id="lecture7-review">Review Questions</h3>
+<div class="outline-text-3" id="text-lecture7-review">
+<ol class="org-ol">
+<li>You have monthly unemployment and inflation data from 2000 to 2023, and you want to use lags 1–3 of both variables as features.  A colleague proposes using <code>train_test_split</code> with <code>shuffle=True</code> and <code>test_size=0.2</code>.  Explain why this is wrong and describe the correct approach.</li>
+
+<li>In the Phillips curve application, why are the validation features standardised with the <b>training</b> mean and standard deviation rather than the validation statistics?</li>
+
+<li>The validation MSE for the Phillips curve network is much larger than the training MSE.  Does this necessarily indicate overfitting?  What else could explain the gap?</li>
+
+<li>In the Cournot equilibrium network, what is the loss function and why does it not require any labelled training data?</li>
+
+<li>In the code, <code>inner.watch([x1, x2])</code> is called before computing profits.  What happens if you remove this line?  Why is it necessary?</li>
+
+<li>The network uses <code>softplus</code> to convert raw outputs to quantities.  Why not just use the raw outputs directly?  What is the economic interpretation of the constraint this enforces?</li>
+</ol>
+
 <hr />
 </div>
 </div>
-<div id="outline-container-org569ed0e" class="outline-2">
-<h2 id="org569ed0e">Course takeaway: simulation as a bridge to machine learning</h2>
-<div class="outline-text-2" id="text-org569ed0e">
+</div>
+<div id="outline-container-org7748aff" class="outline-2">
+<h2 id="org7748aff">Course takeaway: simulation as a bridge to machine learning</h2>
+<div class="outline-text-2" id="text-org7748aff">
 <p>
 These lectures show that the gap between classical econometrics and modern machine learning is smaller than it appears. OLS, the workhorse of econometrics, is just a specific loss function minimised by a simple algorithm. Ridge and lasso are OLS with an extra line of code. Neural networks are deeper versions of the same idea.
 </p>
@@ -5207,9 +5729,9 @@ By building everything from scratch using simulation and optimisation, you devel
 <hr />
 </div>
 </div>
-<div id="outline-container-org801bb43" class="outline-2">
-<h2 id="org801bb43">Bibliography</h2>
-<div class="outline-text-2" id="text-org801bb43">
+<div id="outline-container-orgeb091f7" class="outline-2">
+<h2 id="orgeb091f7">Bibliography</h2>
+<div class="outline-text-2" id="text-orgeb091f7">
 <div class="csl-bib-body">
   <div class="csl-entry"><a id="citeproc_bib_item_1"></a>Downey, Allen. 2014. <i>Think Stats: Exploratory Data Analysis in Python</i>. Green Tea Press.</div>
   <div class="csl-entry"><a id="citeproc_bib_item_2"></a>———. 2023. <i>Probably Overthinking It</i>. Green Tea Press. <a href="https://greenteapress.com/wp/probably-overthinking-it/">https://greenteapress.com/wp/probably-overthinking-it/</a>.</div>
@@ -5223,7 +5745,7 @@ By building everything from scratch using simulation and optimisation, you devel
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Date: August 2026</p>
+<p class="date">Date: November 2026</p>
 <p class="author">Author: Jan Boone</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>

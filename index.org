@@ -1,7 +1,7 @@
 #+SETUPFILE: https://fniessen.github.io/org-html-themes/org/setup/html-theme-readtheorg.setup
 #+TITLE: Lectures Datascience for Economics
 #+AUTHOR: Jan Boone
-#+DATE: August 2026
+#+DATE: November 2026
 #+PROPERTY: header-args  :session lectures :async t  :results raw drawer
 #+PANDOC_OPTIONS: template:~/.local/share/pandoc/templates/eisvogel
 #+PANDOC_VARIABLES: titlepage=true
@@ -3693,6 +3693,392 @@ Figure ref:fig:PriceDiscriminationNN illustrates the situation where the firm cl
 #+END_EXPORT
 
 * Lecture 7: An empirical and theoretical application of neural networks
+:PROPERTIES:
+:CUSTOM_ID: lecture-nn-applications
+:header-args:  :session *lecture_nn* :python ~/my_env/tf_env/bin/python3 :async t  :results output :exports both
+:END:
+
+** Learning Objectives
+:PROPERTIES:
+:CUSTOM_ID: lecture7-learning-objectives
+:END:
+
+After this lecture you will be able to:
+
+- Explain why time-series data require a strict temporal train/validation split and describe the data-leakage risk when lagged variables are used.
+- Implement a small MLP (Multi-Layer Perceptron) in TensorFlow/Keras with =tanh= activations and interpret its learning curves.
+- Describe the Phillips curve and what a neural network adds over a linear specification.
+- Explain how a neural network can solve for Nash equilibria without any labelled data, using only the economic model's first-order conditions as the loss function.
+- Use TensorFlow's =GradientTape= to differentiate profit expressions and train an equilibrium-solving network.
+
+** Introduction
+:PROPERTIES:
+:CUSTOM_ID: lecture7-introduction
+:END:
+
+This lecture covers two complementary applications of neural networks in economics.
+
+The first is *empirical*: estimating the Phillips curve (the relationship between unemployment and inflation) for European countries.  The data are monthly Eurostat observations for many countries over more than two decades.  A linear specification imposes a fixed slope, but the true relationship is probably state-dependent: the effect of unemployment on inflation is stronger when the economy is near full employment.  A small multi-layer network with =tanh= activations can pick up this curvature automatically.  The key challenge is not the network itself but the data preparation: with monthly observations and lagged features, a naive random split would leak future information into the training set.
+
+
+The second is *theoretical*: using a network to solve the Cournot duopoly equilibrium.  Here there is no data at all: the network maps cost parameters $(c_1, c_2)$ to quantities $(x_1, x_2)$ and is trained to make both firms' first-order conditions hold simultaneously.  The loss function is derived from the economic model, not from labelled observations.  This is a simple example of the broader idea that neural networks can solve equations where a solution is known to exist but deriving this solution is expensive or impossible to compute in closed form.
+
+** Interactive App
+:PROPERTIES:
+:CUSTOM_ID: lecture7-app
+:END:
+
+The app trains a small neural network to approximate the Cournot equilibrium.  Use the slider to fix $c_2$ and choose the number of training iterations, then click *Train neural network*.  The plots compare the network's predicted equilibrium output $x_1$ and price $p$ to the closed-form solution as $c_1$ varies from 0.1 to 3.
+
+#+BEGIN_EXPORT html
+<div style="text-align:center;margin:20px 0;">
+  <a href="https://janboone.github.io/datascience-marimo/lecture7_cournot_nn.html"
+     target="_blank"
+     style="background:#1f3c88;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:1em;">
+    &#9654; Open app: Cournot equilibrium neural network
+  </a>
+</div>
+#+END_EXPORT
+
+** Python Code Explanation
+:PROPERTIES:
+:CUSTOM_ID: lecture7-python-code
+:END:
+
+*** Nonlinear Phillips curve
+:PROPERTIES:
+:CUSTOM_ID: lecture7-phillips-curve
+:END:
+
+#+BEGIN_SRC python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import layers
+#+END_SRC
+
+
+**** Data and train/validation split
+
+We load monthly (variable =date=) Eurostat data for many EU countries (=geo=), covering HICP (Harmonised Index of Consumer Prices) year-on-year inflation (=hicp_yoy=) and the unemployment rate (=urate=) with three lags of each variable:
+
+#+BEGIN_SRC python :exports both
+df = pd.read_csv('./data/data_phillips_curve.csv')
+print(df.head())
+#+END_SRC
+
+
+:    Unnamed: 0 geo        date  ...  urate_lag1  urate_lag2  urate_lag3
+: 0           3  AT  1997-05-01  ...    5.266667    5.300000    5.266667
+: 1           4  AT  1997-06-01  ...    5.266667    5.266667    5.300000
+: 2           5  AT  1997-07-01  ...    5.266667    5.266667    5.266667
+: 3           6  AT  1997-08-01  ...    5.300000    5.266667    5.266667
+: 4           7  AT  1997-09-01  ...    5.266667    5.300000    5.266667
+
+The columns =urate=, =urate_lag1=, =urate_lag2=, =urate_lag3= give the unemployment rate at time $t, t-1, t-2, t-3$, and similarly for =hicp_yoy=.
+
+**** Why the temporal split matters
+
+With time-series data and lagged features, a random train/validation split would cause *data leakage*: the training set might contain observation $t+1$ while the validation set contains $t$, and the lag features of $t+1$ include the target value at $t$.  The network would effectively see the future during training.
+
+The correct approach is a strict temporal cutoff: all observations before a fixed date go into training, everything from that date onward goes into validation.
+
+#+BEGIN_SRC python :exports both
+X_cols = ["urate", "urate_lag1", "urate_lag2", "urate_lag3",
+          "hicp_yoy_lag1", "hicp_yoy_lag2", "hicp_yoy_lag3"]
+y_col  = "hicp_yoy"
+
+df["date"] = [pd.Timestamp(d) for d in df["date"].values]
+cutoff_date = pd.Timestamp("2019-01-01")   # train < 2019, validate >= 2019
+train = df[df["date"] < cutoff_date].copy()
+valid = df[df["date"] >= cutoff_date].copy()
+
+print(f"Train rows: {len(train)},  Validation rows: {len(valid)}")
+#+END_SRC
+
+#+RESULTS:
+: Train rows: 8376,  Validation rows: 2797
+
+Because the split follows calendar time, no information from the validation period leaks backward.  The general rule for panel data with lags: sort by date, choose a cutoff, put everything before the cutoff in training — never use =train_test_split= with =shuffle=True= for time series.
+
+Next we standardize our variables:
+
+#+BEGIN_SRC python
+mu = train[X_cols].mean(axis=0)
+sd = train[X_cols].std(axis=0)
+
+train_X = ((train[X_cols] - mu) / sd).values.astype("float32")
+valid_X = ((valid[X_cols] - mu) / sd).values.astype("float32")
+train_y = train[y_col].values.astype("float32")
+valid_y = valid[y_col].values.astype("float32")
+#+END_SRC
+
+
+Notice that the validation features are standardized with the *training mean and standard deviation*, not the validation statistics.  Applying the training statistics to both sets ensures the network sees the same scale at inference time as at training time.
+
+**** Network architecture: =tanh= instead of ReLU
+
+For the Phillips curve we use =tanh= activations rather than ReLU.  The =tanh= function is smooth and symmetric around zero, which is useful when the target variable (inflation) can be both positive and negative and when the relationship is expected to be curved rather than piecewise-linear.
+
+#+BEGIN_SRC python :exports both
+tf.random.set_seed(0)
+
+model = keras.Sequential([
+    layers.Input(shape=(len(X_cols),)),   # 7 features
+    layers.Dense(32, activation="tanh"),
+    layers.Dense(16, activation="tanh"),
+    layers.Dense(1),                       # linear output: predicted inflation
+])
+
+model.compile(
+    optimizer=keras.optimizers.Adam(1e-3),
+    loss="mse",
+    metrics=["mae"],
+)
+
+history = model.fit(
+    train_X, train_y,
+    validation_data=(valid_X, valid_y),
+    epochs=60,
+    batch_size=256,
+    verbose=0,
+)
+hist = pd.DataFrame(history.history)
+print(hist.tail(3))
+#+END_SRC
+
+
+:          loss       mae   val_loss   val_mae
+: 57  23.305353  0.605331  19.817953  1.017315
+: 58  23.141350  0.603114  19.502026  1.011587
+: 59  22.979515  0.600987  19.191534  1.006326
+
+
+**** Learning curves and validation MAE
+
+#+BEGIN_SRC python :results graphics file output  :file ./figures/learning_curves_Philips_curve.png :exports both
+plt.figure()
+plt.plot(hist["loss"],     label="train MSE")
+plt.plot(hist["val_loss"], label="valid MSE")
+plt.xlabel("epoch"); plt.ylabel("MSE")
+plt.legend()
+plt.title("Learning curves — Phillips curve MLP")
+plt.tight_layout()
+#+END_SRC
+
+#+RESULTS:
+[[file:./figures/learning_curves_Philips_curve.png]]
+
+
+We can calculate the mean absolute error and the root means squared error.
+
+#+BEGIN_SRC python :exports both
+pred_valid = model.predict(valid_X, verbose=0).squeeze()
+mae  = np.mean(np.abs(valid_y - pred_valid))
+rmse = np.sqrt(np.mean((valid_y - pred_valid)**2))
+print(f"Validation MAE: {mae:.3f} pp  |  RMSE: {rmse:.3f} pp")
+#+END_SRC
+
+: Validation MAE: 1.006 pp  |  RMSE: 4.381 pp
+
+An MAE of about 1 percentage point means the network's inflation forecasts are, on average, 1 pp off from the realized value.
+
+With the three lags in our specification, it is not obvious how to plot the resulting Phillips curve in unemployment-inflation space.
+
+*** Neural network solution of the Cournot equilibrium
+:PROPERTIES:
+:CUSTOM_ID: lecture7-cournot
+:END:
+
+The second application turns the idea of neural networks upside down: instead of fitting a pattern in data, we train a network to satisfy a system of equations derived from economic theory.
+
+**** The Cournot model
+
+Two firms produce a homogeneous good with inverse demand $p(x_1, x_2) = 1 - x_1 - x_2$ and quadratic costs $C_i(x_i) = \tfrac{1}{2} c_i x_i^2$.  Firm $i$ maximizes
+
+$$\pi_i = (1 - x_1 - x_2)\, x_i - \tfrac{1}{2} c_i x_i^2.$$
+
+Taking the derivative with respect to $x_i$ and setting it to zero gives the first-order condition (FOC):
+
+$$\frac{\partial \pi_i}{\partial x_i} = 1 - (2 + c_i)\,x_i - x_j = 0.$$
+
+The closed-form Nash equilibrium is
+
+$$x_1^* = \frac{1 + c_2}{(2+c_1)(2+c_2)-1}, \qquad x_2^* = \frac{1 + c_1}{(2+c_1)(2+c_2)-1}.$$
+
+**** Equilibrium-solving network
+
+We build a small network that takes cost parameters $(c_1, c_2)$ as input and predicts quantities $(x_1, x_2)$.  The loss function is the average squared FOC residual; this equals zero at the Nash equilibrium:
+
+$$\mathcal{L} = \mathbb{E}_{(c_1,c_2)}\Bigl[\bigl(1-(2+c_1)x_1-x_2\bigr)^2 + \bigl(1-x_1-(2+c_2)x_2\bigr)^2\Bigr].$$
+
+#+BEGIN_SRC python
+def price(x1, x2):
+    return 1.0 - x1 - x2
+
+def closed_form_x(c1, c2):
+    denom  = (2.0 + c1) * (2.0 + c2) - 1.0
+    x1_star = (1.0 + c2) / denom
+    x2_star = (1.0 + c1) / denom
+    return x1_star, x2_star
+
+net = tf.keras.Sequential([
+    tf.keras.layers.Input(shape=(2,)),
+    tf.keras.layers.Dense(64, activation="tanh"),
+    tf.keras.layers.Dense(64, activation="tanh"),
+    tf.keras.layers.Dense(2),    # raw outputs; softplus makes them non-negative
+])
+
+opt = tf.keras.optimizers.Adam(1e-3)
+#+END_SRC
+
+
+**** The training step with =GradientTape=
+
+The standard Keras =model.fit= loop differentiates a loss with respect to network weights.  Here we need the *same* outer gradient, but the loss itself is an economic expression.  =GradientTape= gives us explicit control: we record which computations to differentiate and with respect to what.
+
+The training step uses *two* nested tapes:
+
+- The *inner* tape records how profit depends on outputs $(x_1, x_2)$, so we can compute $\partial \pi_i / \partial x_i$.
+- The *outer* tape records how the resulting FOC loss depends on the network weights, so =opt.apply_gradients= can update them. This we use for the gradient-descent algorithm to minimize the loss.
+
+
+The loss equals the loss on the FOC's plus a (small) penalty if price turns negative (this term differs from 0 if $-p>0$ in the ReLu function).
+
+#+BEGIN_SRC python
+def sample_costs(n, c_min=0.0, c_max=3.0):
+    c1 = tf.random.uniform((n, 1), c_min, c_max)
+    c2 = tf.random.uniform((n, 1), c_min, c_max)
+    return tf.concat([c1, c2], axis=1)   # shape (n, 2)
+
+def train_step(cc):
+    c1, c2 = cc[:, 0], cc[:, 1]
+
+    with tf.GradientTape() as outer:
+        with tf.GradientTape(persistent=True) as inner:
+            raw = net(cc, training=True)
+            x1  = tf.nn.softplus(raw[:, 0])   # softplus ensures xi >= 0
+            x2  = tf.nn.softplus(raw[:, 1])
+
+            inner.watch([x1, x2])             # track x1, x2 for profit derivatives
+            p   = price(x1, x2)
+            pi1 = p * x1 - 0.5 * c1 * tf.square(x1)
+            pi2 = p * x2 - 0.5 * c2 * tf.square(x2)
+
+        r1 = inner.gradient(pi1, x1)   # ∂π1/∂x1 (should be 0 at equilibrium)
+        r2 = inner.gradient(pi2, x2)   # ∂π2/∂x2
+        del inner
+
+        # loss function has two components
+        loss  = tf.reduce_mean(tf.square(r1)) + tf.reduce_mean(tf.square(r2))
+        loss += 1e-2 * tf.reduce_mean(tf.square(tf.nn.relu(-p)))
+
+    grads = outer.gradient(loss, net.trainable_variables)
+    opt.apply_gradients(zip(grads, net.trainable_variables))
+    return loss
+#+END_SRC
+
+
+The key line is =inner.watch([x1, x2])=.  By default =GradientTape= only tracks =tf.Variable= objects.  Because =x1= and =x2= are computed tensors (not variables), we must explicitly tell the inner tape to watch them; otherwise =inner.gradient(pi1, x1)= returns =None=.
+
+
+The inner tape is created with =persistent = True=. By default a GradientTape frees all its recorded computation as soon as =.gradient()= is called once; it assumes you only need one gradient per tape. =persistent = True= disables that automatic release so the tape can be queried multiple times. Here we need it twice:
+- =r1 = inner.gradient(pi1, x1)= and
+- =r2 = inner.gradient(pi2, x2)=
+
+Without =persistent = True= the second call would return =None= because the tape's resources would already be gone after the first.
+
+The cost is that a persistent tape holds the entire recorded computation graph in memory indefinitely. Inside a loop of 1500 iterations that accumulates fast. =del inner= forces the release immediately after the two gradient calls, before the outer tape computes its own gradient.
+
+
+**** Training loop
+
+We train over 1500 iterations and every 300 iterations print the results on the test data.
+
+#+BEGIN_SRC python :exports both
+for it in range(1, 1501):
+    cc = sample_costs(512)
+    loss = train_step(cc)
+
+    if it % 300 == 0:
+        cc_test         = sample_costs(256)
+        raw_test        = net(cc_test, training=False)
+        x1_test         = tf.nn.softplus(raw_test[:, 0])
+        x2_test         = tf.nn.softplus(raw_test[:, 1])
+        x1_star, x2_star = closed_form_x(cc_test[:, 0], cc_test[:, 1])
+        mae = (tf.reduce_mean(tf.abs(x1_test - x1_star)) +
+               tf.reduce_mean(tf.abs(x2_test - x2_star)))
+        print(f"iter {it:4d} | loss {loss.numpy():.3e} | test MAE {mae.numpy():.3e}")
+#+END_SRC
+
+
+: iter  300 | loss 1.263e-02 | test MAE 2.516e-02
+: iter  600 | loss 3.670e-03 | test MAE 1.780e-02
+: iter  900 | loss 1.393e-03 | test MAE 1.125e-02
+: iter 1200 | loss 7.284e-04 | test MAE 7.962e-03
+: iter 1500 | loss 4.822e-04 | test MAE 6.793e-03
+
+As training progresses the FOC loss falls and the mean absolute deviation from the closed-form solution shrinks.  The network is learning the Nash equilibrium map $(c_1,c_2) \mapsto (x_1^*, x_2^*)$ without ever being given the closed-form formula. We only use the closed form solution above to illustrate that the network solution converges to the true equilibrium values.
+
+**** Visualising the result
+
+
+#+begin_src python :results graphics file output :file ./figures/NN_solution_duopoly.png :exports both
+c1_range = np.arange(0, 3.1, 0.1)[:, None]
+c2_fixed = 1.5 * np.ones_like(c1_range)
+cc_vis   = tf.concat([c1_range, c2_fixed], axis=1)
+
+raw_vis = net(cc_vis, training=False)
+x1_nn   = tf.nn.softplus(raw_vis[:, 0]).numpy()
+x2_nn   = tf.nn.softplus(raw_vis[:, 1]).numpy()
+p_nn    = 1.0 - x1_nn - x2_nn
+
+x1_cf, x2_cf = closed_form_x(c1_range, c2_fixed)
+p_cf = 1.0 - x1_cf - x2_cf
+
+plt.figure(figsize=(8, 4))
+plt.plot(c1_range, p_nn, label="Neural network price", ls="--")
+plt.plot(c1_range, p_cf, label="Closed-form price",    lw=2, color="black")
+plt.xlabel("$c_1$"); plt.ylabel("$p^*$")
+plt.title("Equilibrium price as a function of $c_1$  ($c_2 = 1.5$)")
+plt.legend(); plt.tight_layout()
+plt.savefig("./figures/NN_solution_duopoly.png")
+#+END_SRC
+
+#+RESULTS:
+[[file:./figures/NN_solution_duopoly.png]]
+
+The neural network tracks the closed-form price closely.  The remaining gap can be reduced by training for more iterations or using a wider network.  Try it: change the number of iterations or the number of nodes in the Dense layers. Also plot $x_1$ as a function of $c_1$ and see how close the neural network prediction $\hat x_1$ is to the closed form solution.
+
+** Summary
+:PROPERTIES:
+:CUSTOM_ID: lecture7-summary
+:END:
+
+- Time-series panel data requires a strict temporal train/validation split.  Using a random split with lagged features leaks the future into training and gives over-optimistic validation scores.
+- =tanh= activations are a natural choice for regression targets that can be positive or negative and for relationships expected to be smooth and symmetric.
+- Standardization must always be done with training statistics; applying the same (training) transformation to the validation set is correct and does not constitute leakage.
+- A neural network can solve for economic equilibria without any labelled data by minimizing the squared first-order conditions.  The loss function encodes economic theory rather than prediction error.
+- TensorFlow's =GradientTape= gives fine-grained control over differentiation and is essential when the loss depends on derivatives of the model's outputs with respect to its inputs.
+
+** Review Questions
+:PROPERTIES:
+:CUSTOM_ID: lecture7-review
+:END:
+
+1. You have monthly unemployment and inflation data from 2000 to 2023, and you want to use lags 1–3 of both variables as features.  A colleague proposes using =train_test_split= with =shuffle=True= and =test_size=0.2=.  Explain why this is wrong and describe the correct approach.
+
+2. In the Phillips curve application, why are the validation features standardised with the *training* mean and standard deviation rather than the validation statistics?
+
+3. The validation MSE for the Phillips curve network is much larger than the training MSE.  Does this necessarily indicate overfitting?  What else could explain the gap?
+
+4. In the Cournot equilibrium network, what is the loss function and why does it not require any labelled training data?
+
+5. In the code, =inner.watch([x1, x2])= is called before computing profits.  What happens if you remove this line?  Why is it necessary?
+
+6. The network uses =softplus= to convert raw outputs to quantities.  Why not just use the raw outputs directly?  What is the economic interpretation of the constraint this enforces?
 
 --------------------
 
