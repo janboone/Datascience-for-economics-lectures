@@ -2,7 +2,7 @@
 #+TITLE: Lectures Datascience for Economics
 #+AUTHOR: Jan Boone
 #+DATE: November 2026
-#+PROPERTY: header-args  :session lectures :async t  :results raw drawer
+#+PROPERTY: header-args  :session lectures :async t  :results output
 #+PANDOC_OPTIONS: template:~/.local/share/pandoc/templates/eisvogel
 #+PANDOC_VARIABLES: titlepage=true
 #+PANDOC_OPTIONS: resource-path:.:figures
@@ -3186,7 +3186,7 @@ The progression numpy $\to$ TensorFlow GradientTape $\to$ Keras reflects the usu
 :CUSTOM_ID: lecture-demand-estimation
 :header-args:  :session *lecture_nn* :python ~/my_env/tf_env/bin/python3 :async t  :results output :exports both
 :END:
-
+**Skills you learn in this lecture:** 
 ** Learning Objectives
 :PROPERTIES:
 :CUSTOM_ID: lecture6-learning-objectives
@@ -3697,7 +3697,7 @@ Figure ref:fig:PriceDiscriminationNN illustrates the situation where the firm cl
 :CUSTOM_ID: lecture-nn-applications
 :header-args:  :session *lecture_nn* :python ~/my_env/tf_env/bin/python3 :async t  :results output :exports both
 :END:
-
+**Skills you learn in this lecture:** 
 ** Learning Objectives
 :PROPERTIES:
 :CUSTOM_ID: lecture7-learning-objectives
@@ -4079,6 +4079,1693 @@ The neural network tracks the closed-form price closely.  The remaining gap can 
 5. In the code, =inner.watch([x1, x2])= is called before computing profits.  What happens if you remove this line?  Why is it necessary?
 
 6. The network uses =softplus= to convert raw outputs to quantities.  Why not just use the raw outputs directly?  What is the economic interpretation of the constraint this enforces?
+
+--------------------
+
+#+BEGIN_EXPORT latex
+\newpage
+#+END_EXPORT
+
+* Lecture 8: Getting data from the Eurostat API
+
+**Skills you learn in this lecture:** 
+** Learning Objectives
+:PROPERTIES:
+:CUSTOM_ID: lecture8-learning-objectives
+:header-args:  :session *lecture_eurostat* :async t :results output :exports both
+:END:
+
+After this lecture you will be able to:
+
+- Download data from Eurostat using the =eurostat= Python package.
+- Reshape wide data (years as columns) to long data (years as rows) using =pd.melt=.
+- Pivot a categorical variable into separate columns using =set_index= and =unstack=.
+- Merge multiple dataframes on different key combinations (country only; country + year; country + sex + year).
+- Build an interactive Altair scatter plot with a year slider.
+
+** Introduction
+:PROPERTIES:
+:CUSTOM_ID: lecture8-introduction
+:END:
+
+Statistical agencies like Eurostat publish large amounts of data through APIs (Application Programming Interfaces): standardized interfaces that let programs request data directly, without any clicking.  Using an API instead of downloading files by hand has three advantages: the code is reproducible (anyone can rerun it and get the same data), it scales to many variables, and it automatically picks up updates when Eurostat revises its numbers.
+
+This lecture builds a dataset on health outcomes and their potential determinants for EU countries.  We combine five sources: preventable and treatable mortality (2011–2020), GDP per capita (2011–2020), household income by quintile (2015), and three lifestyle variables — share of the population with high BMI, daily heavy smoking, and monthly binge drinking (2014 and 2019).
+
+The data engineering is the main lesson.  Each source arrives in a different shape and needs a different sequence of =melt=, =unstack=, and =merge= operations before the sources can be combined.  Once the data is in the right shape, we build an interactive Altair chart that lets you explore how GDP per capita relates to treatable mortality across EU countries over time.
+
+** Interactive App
+:PROPERTIES:
+:CUSTOM_ID: lecture8-app
+:END:
+
+The app walks through the four pandas reshaping steps — wide format, =melt=, =unstack=, and =rename= — on a small slice of the Eurostat mortality dataset.  Use the dropdown to move through each step and see how the dataframe changes shape.
+
+#+BEGIN_EXPORT html
+<div style="text-align:center;margin:20px 0;">
+  <a href="https://janboone.github.io/datascience-marimo/lecture8_eurostat.html"
+     target="_blank"
+     style="background:#1f3c88;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:1em;">
+    &#9654; Open app: Eurostat data reshaping
+  </a>
+</div>
+#+END_EXPORT
+
+** Python Code Explanation
+:PROPERTIES:
+:CUSTOM_ID: lecture8-python-code
+:END:
+
+*** Setup
+:PROPERTIES:
+:CUSTOM_ID: lecture8-setup
+:END:
+
+#+BEGIN_SRC python
+import numpy as np
+import pandas as pd
+import altair as alt
+import eurostat
+from country_codes import eurostat_dictionary
+#+END_SRC
+
+#+RESULTS:
+
+The =eurostat= package wraps the Eurostat REST API.  Its main method is =get_data_df(code)=, where =code= is the dataset identifier shown on the Eurostat data browser (e.g. =hlth_cd_apr=).  The function returns a pandas DataFrame with one column per year and one row per combination of the remaining dimensions.
+
+=eurostat_dictionary= is a simple Python dictionary mapping two-letter country codes (=AT=, =BE=, …) to full country names.  We use it to replace abbreviations with readable labels.
+
+We restrict the analysis to EU and closely associated countries:
+
+#+BEGIN_SRC python
+EU_countries = [
+    'Belgium', 'Bulgaria', 'Czechia', 'Denmark', 'Germany', 'Estonia',
+    'Ireland', 'Greece', 'Spain', 'France', 'Croatia', 'Italy',
+    'Cyprus', 'Latvia', 'Lithuania', 'Luxembourg', 'Hungary', 'Malta',
+    'Netherlands', 'Austria', 'Poland', 'Portugal', 'Romania',
+    'Slovenia', 'Slovakia', 'Finland', 'Sweden',
+    'Iceland', 'Norway', 'Switzerland',
+]
+#+END_SRC
+
+#+RESULTS:
+
+*** Mortality data
+:PROPERTIES:
+:CUSTOM_ID: lecture8-mortality
+:END:
+
+**** Downloading and inspecting
+
+#+BEGIN_SRC python :exports both
+df = eurostat.get_data_df('hlth_cd_apr')
+print(df.head(2))
+#+END_SRC
+
+
+:   freq mortalit sex    icd10 unit geo\TIME_PERIOD  2011  ...  2017  2018  2019  2020  2021  2022  2023
+: 0    A     PRVT   F  A00-A09   NR              AT   7.0  ...  10.0   8.0   6.0  13.0  15.0   9.0  15.0
+: 1    A     PRVT   F  A00-A09   NR              BE  25.0  ...  45.0  26.0  44.0  39.0  27.0  41.0  37.0
+
+The dataset arrives in *wide format*: each year is a separate column.  The column =geo\TIME_PERIOD= holds country codes.  We want to end up with one row per (country, year, sex) combination.
+
+**** Rename and replace abbreviations
+
+#+BEGIN_SRC python
+df.rename({'geo\\TIME_PERIOD': 'geo'}, inplace=True, axis=1)
+df['country'] = df['geo'].replace(eurostat_dictionary)
+#+END_SRC
+
+
+=.rename= changes a *column name*; =.replace= changes *values inside a column*.  The replacements are passed as a dictionary ={'old':'new'}=.  We need to escape the backslash in the column name because Python interprets =\T= as an escape sequence otherwise.
+
+**** Filter rows and drop redundant columns
+
+#+BEGIN_SRC python :exports both
+df = df[
+    df.country.isin(EU_countries) &
+    df.sex.isin(['M', 'F']) &
+    df.mortalit.isin(['PRVT', 'TRT']) &
+    (df.unit == 'RT') &
+    (df.icd10 == 'TOTAL')
+]
+df.drop(['unit', 'icd10', 'geo', 'freq'], axis=1, inplace=True)
+print(df.head(2))
+#+END_SRC
+
+:      mortalit sex    2011   2012    2013   2014  ...   2019    2020    2021    2022   2023  country
+: 6650     PRVT   F   95.29  96.16   93.22  93.95  ...  94.81   99.09  104.91   99.01  90.71  Austria
+: 6651     PRVT   F  101.35  99.97  100.34  95.40  ...  92.39  113.63  105.11  101.32  92.86  Belgium
+
+We select =unit == 'RT'= (rate per 100 000 population) and =icd10 == 'TOTAL'= (all causes combined).  The column =mortalit= contains two values: =PRVT= (preventable) and =TRT= (treatable).
+
+**** Melt: wide to long
+
+=pd.melt= turns columns into rows.  We keep =country=, =sex=, and =mortalit= as identifier columns; the year columns (=2011= to =2020=) become values in a new =year= column.
+
+#+BEGIN_SRC python :exports both
+df = pd.melt(
+    df,
+    id_vars=['country', 'sex', 'mortalit'],
+    value_vars=["{}".format(y) for y in range(2011, 2021)],
+    var_name='year',
+    value_name='rate',
+)
+df['year'] = df['year'].astype(int)
+print(df.head(3))
+#+END_SRC
+
+
+
+
+#+begin_example
+   country sex mortalit  year    rate
+0  Austria   F     PRVT  2011   95.29
+1  Belgium   F     PRVT  2011  101.35
+2  Bulgaria  F     PRVT  2011  119.32
+#+end_example
+
+**** Unstack: split =mortalit= into two columns
+
+We now have one row per (country, sex, mortalit, year) combination.  We want two columns — =Preventable mortality= and =Treatable mortality= — instead of one =mortalit= column.  =unstack= does this: it takes the last level of a MultiIndex and spreads it across columns.
+
+#+BEGIN_SRC python :exports both
+df.set_index(['country', 'year', 'sex', 'mortalit'], inplace=True)
+df = df.unstack()          # pivots 'mortalit' (last index level) into columns
+df.reset_index(inplace=True)
+df.columns = [' '.join(col).strip() for col in df.columns.values]
+df.rename({'rate PRVT': 'Preventable mortality',
+           'rate TRT':  'Treatable mortality'}, inplace=True, axis=1)
+print(df.head(3))
+#+END_SRC
+
+
+
+#+begin_example
+   country  year sex  Preventable mortality  Treatable mortality
+0  Austria  2011   F                  95.29                67.41
+1  Austria  2011   M                 248.50                96.86
+2  Austria  2012   F                  96.16                69.72
+#+end_example
+
+After =unstack=, the columns are a MultiIndex of the form =(rate, PRVT)=, =(rate, TRT)=.  The list comprehension =' '.join(col).strip()= flattens each tuple into a single string (=rate PRVT=), which we then rename to something readable.
+
+*** GDP per capita
+:PROPERTIES:
+:CUSTOM_ID: lecture8-gdp
+:END:
+
+The same pattern — download, rename, filter, melt — but simpler because there is only one variable (GDP), so no =unstack= is needed.
+
+#+BEGIN_SRC python :exports both
+df_gdp = eurostat.get_data_df('nama_10_pc')
+df_gdp.rename({'geo\\TIME_PERIOD': 'geo'}, inplace=True, axis=1)
+df_gdp['country'] = df_gdp['geo'].replace(eurostat_dictionary)
+
+df_gdp = df_gdp[
+    df_gdp.country.isin(EU_countries) &
+    (df_gdp.na_item == 'B1GQ') &
+    (df_gdp.unit == 'CP_EUR_HAB')
+]
+df_gdp.drop(['unit', 'na_item', 'geo', 'freq'], axis=1, inplace=True)
+
+df_gdp = pd.melt(
+    df_gdp,
+    id_vars=['country'],
+    value_vars=["{}".format(y) for y in range(2011, 2021)],
+    var_name='year',
+    value_name='GDP per capita',
+)
+df_gdp['year'] = df_gdp['year'].astype(int)
+print(df_gdp.head(3))
+#+END_SRC
+
+
+#+begin_example
+   country  year  GDP per capita
+0  Austria  2011         36970.0
+1  Belgium  2011         34310.0
+2  Bulgaria 2011          5640.0
+#+end_example
+
+We select =na_item == 'B1GQ'= (gross domestic product) and =unit == 'CP_EUR_HAB'= (current prices, euro per inhabitant).
+
+#+BEGIN_SRC python
+df = df.merge(df_gdp, how='left', on=['country', 'year'])
+#+END_SRC
+
+Merging on both =country= and =year= ensures each row in the mortality frame gets the GDP for the matching country *and* year.
+
+Run =df.head()= yourself. Why are there duplicate entries in the column =GDP per capita=?
+
+*** Income quintiles
+:PROPERTIES:
+:CUSTOM_ID: lecture8-quintiles
+:END:
+
+This dataset has a different structure: a =quant_inc= column with values =QU1= to =QU5= that we want to pivot into five separate columns. In case you want to check the different options, see [[https://ec.europa.eu/eurostat/databrowser/view/icw_res_02/default/table?lang=en]]
+
+#+BEGIN_SRC python :exports both
+df_inc = eurostat.get_data_df('icw_res_02')
+df_inc.rename({'geo\\TIME_PERIOD': 'geo'}, inplace=True, axis=1)
+
+df_inc = df_inc[
+    (df_inc.indic_ewb == 'DI') &
+    (df_inc.statinfo == 'AVG') &
+    df_inc.quant_inc.isin(['QU1', 'QU2', 'QU3', 'QU4', 'QU5']) &
+    (df_inc.quant_expn == 'TOTAL') &
+    (df_inc.quant_wlth == 'TOTAL')
+]
+df_inc.drop(['unit', 'quant_expn', 'quant_wlth', 'indic_ewb', 'statinfo', 'freq'],
+             axis=1, inplace=True)
+
+# Only year 2015 is available across countries
+df_inc = pd.melt(df_inc, id_vars=['geo', 'quant_inc'],
+                 value_vars=['2015'], var_name='year', value_name='y_')
+df_inc['year'] = df_inc['year'].astype(int)
+print(df_inc.head(3))
+#+END_SRC
+
+
+#+begin_example
+  geo quant_inc  year       y_
+0  AT       QU1  2015  16542.1
+1  BE       QU1  2015  15834.1
+2  BG       QU1  2015   1847.7
+#+end_example
+
+Now =quant_inc= needs to become five columns, one per quintile.  We use the same =set_index= / =unstack= pattern as for mortality:
+
+#+BEGIN_SRC python :exports both
+df_inc.drop_duplicates(subset=['geo', 'year', 'quant_inc'], inplace=True)
+df_inc.set_index(['geo', 'year', 'quant_inc'], inplace=True)
+df_inc = df_inc.unstack()
+df_inc.reset_index(inplace=True)
+df_inc.columns = [''.join(col).strip() for col in df_inc.columns.values]
+df_inc['country'] = df_inc['geo'].replace(eurostat_dictionary)
+df_inc.drop(['geo'], inplace=True, axis=1)
+df_inc = df_inc[df_inc.country.isin(EU_countries)]
+print(df_inc.head(3))
+#+END_SRC
+
+
+#+begin_example
+   year    y_QU1    y_QU2    y_QU3    y_QU4    y_QU5   country
+0  2015  16542.1  27955.8  36687.8  48214.5  74519.8   Austria
+1  2015  15834.1  23310.6  33248.2  44849.9  68233.2   Belgium
+2  2015   1847.7   3270.1   5115.9   7451.6  14354.6  Bulgaria
+#+end_example
+
+Because income quintile data is only available for 2015, we merge on =country= alone.  Every row for a given country will receive the same quintile values regardless of year; a simplification.
+
+#+BEGIN_SRC python
+df = df.merge(df_inc.drop(columns='year'), how='left', on='country')
+#+END_SRC
+
+
+*** Lifestyle variables: BMI, smoking, alcohol
+:PROPERTIES:
+:CUSTOM_ID: lecture8-lifestyle
+:END:
+
+Three lifestyle surveys are available for *two years*: 2014 and 2019.  Including both years lets us study whether lifestyle patterns changed over the five-year gap and allows the Altair plot to show a lifestyle dimension for both survey years.
+
+Because we now have a =year= column in these dataframes, the merge with the main dataframe must be on =country=, =sex=, *and* =year=.  Rows in the mortality frame for other years (2011–2013, 2015–2018, 2020) will receive =NaN= for the lifestyle variables.
+
+**** BMI
+
+#+BEGIN_SRC python :exports both
+df_bmi = eurostat.get_data_df('hlth_ehis_bm1i')
+df_bmi.rename({'geo\\TIME_PERIOD': 'geo'}, inplace=True, axis=1)
+
+df_bmi = df_bmi[
+    (df_bmi.bmi == 'BMI_GE30') &
+    (df_bmi['quant_inc'] == 'TOTAL') &
+    df_bmi.sex.isin(['F', 'M']) &
+    (df_bmi.age == 'Y15-64')
+]
+df_bmi.drop(['quant_inc', 'age', 'unit', 'bmi', 'freq'], axis=1, inplace=True)
+
+# Include both 2014 and 2019
+df_bmi = pd.melt(df_bmi, id_vars=['geo', 'sex'],
+                 value_vars=['2014', '2019'],
+                 var_name='year', value_name='high bmi')
+df_bmi['year'] = df_bmi['year'].astype(int)
+df_bmi['country'] = df_bmi['geo'].replace(eurostat_dictionary)
+df_bmi.drop(['geo'], inplace=True, axis=1)
+df_bmi = df_bmi[df_bmi.country.isin(EU_countries)]
+df_bmi['high bmi'] = df_bmi['high bmi'].astype(float) / 100.0
+print(df_bmi.head(3))
+#+END_SRC
+
+
+
+#+begin_example
+  sex  year  high bmi   country
+0   F  2014     0.113   Austria
+1   F  2014     0.129   Belgium
+2   F  2014     0.116  Bulgaria
+#+end_example
+
+#+BEGIN_SRC python
+df = df.merge(df_bmi, how='left', on=['country', 'sex', 'year'])
+#+END_SRC
+
+
+**** Smoking
+
+#+BEGIN_SRC python
+df_smk = eurostat.get_data_df('hlth_ehis_sk3i')
+df_smk.rename({'geo\\TIME_PERIOD': 'geo'}, inplace=True, axis=1)
+
+df_smk = df_smk[
+    (df_smk.age == 'Y15-64') &
+    (df_smk.smoking == 'SM_GE20D') &
+    (df_smk['quant_inc'] == 'TOTAL') &
+    df_smk.sex.isin(['F', 'M'])
+]
+df_smk.drop(['quant_inc', 'age', 'unit', 'smoking', 'freq'], axis=1, inplace=True)
+
+df_smk = pd.melt(df_smk, id_vars=['geo', 'sex'],
+                 value_vars=['2014', '2019'],
+                 var_name='year', value_name='smoking')
+df_smk['year'] = df_smk['year'].astype(int)
+df_smk['country'] = df_smk['geo'].replace(eurostat_dictionary)
+df_smk.drop(['geo'], inplace=True, axis=1)
+df_smk = df_smk[df_smk.country.isin(EU_countries)]
+df_smk['smoking'] = df_smk['smoking'].astype(float) / 100.0
+
+df = df.merge(df_smk, how='left', on=['country', 'sex', 'year'])
+#+END_SRC
+
+**** Alcohol (binge drinking)
+
+#+BEGIN_SRC python
+df_alc = eurostat.get_data_df('hlth_ehis_al3e')
+df_alc.rename({'geo\\TIME_PERIOD': 'geo'}, inplace=True, axis=1)
+
+df_alc = df_alc[
+    (df_alc.age == 'Y15-64') &
+    df_alc.sex.isin(['F', 'M']) &
+    (df_alc.isced11 == 'TOTAL') &
+    (df_alc.frequenc == 'MTH')
+]
+df_alc.drop(['isced11', 'age', 'unit', 'frequenc', 'freq'], axis=1, inplace=True)
+
+df_alc = pd.melt(df_alc, id_vars=['geo', 'sex'],
+                 value_vars=['2014', '2019'],
+                 var_name='year', value_name='binge drinking')
+df_alc['year'] = df_alc['year'].astype(int)
+df_alc['country'] = df_alc['geo'].replace(eurostat_dictionary)
+df_alc.drop(['geo'], inplace=True, axis=1)
+df_alc = df_alc[df_alc.country.isin(EU_countries)]
+df_alc['binge drinking'] = df_alc['binge drinking'].astype(float) / 100.0
+
+df = df.merge(df_alc, how='left', on=['country', 'sex', 'year'])
+#+END_SRC
+
+*** Saving the combined dataset
+:PROPERTIES:
+:CUSTOM_ID: lecture8-save
+:END:
+
+#+BEGIN_SRC python :exports both
+df.to_csv('./data/health_data.csv', index=False)
+print(df.shape)
+print(df.columns.tolist())
+#+END_SRC
+
+
+#+begin_example
+(600, 14)
+['country', 'year', 'sex', 'Preventable mortality', 'Treatable mortality', 'GDP per capita', 'y_QU1', 'y_QU2', 'y_QU3', 'y_QU4', 'y_QU5', 'high bmi', 'smoking', 'binge drinking']
+#+end_example
+
+*** Interactive Altair chart
+:PROPERTIES:
+:CUSTOM_ID: lecture8-altair
+:END:
+
+Altair is a Python library for declarative statistical visualisation.  You describe *what* you want to show (which columns map to which visual channels: x-axis, y-axis, colour, tooltip) and Altair generates the chart.
+
+#+BEGIN_SRC python
+df = pd.read_csv('./data/health_data.csv')
+df['log GDP']       = np.log(df['GDP per capita'])
+df['log mortality'] = np.log(df['Treatable mortality'])
+df['Gender']        = df['sex'].replace({'F': 'Female', 'M': 'Male'})
+#+END_SRC
+
+
+**** Binding a slider to a selection
+
+#+BEGIN_SRC python
+year_slider = alt.binding_range(min=2011, max=2020, step=1, name='Year: ')
+year_select = alt.selection_point(
+    fields=['year'], bind=year_slider, value=2014
+)
+#+END_SRC
+
+
+=alt.binding_range= creates the HTML slider widget.  =alt.selection_point= links that widget to a named selection that filters the data.
+
+**** Building the chart
+
+#+BEGIN_SRC python
+chart = (
+    alt.Chart(df)
+    .mark_point(filled=True, size=60)
+    .encode(
+        x=alt.X('log GDP', title='GDP per capita (log)',
+                 scale=alt.Scale(domain=[8.5, 12])),
+        y=alt.Y('log mortality', title='Treatable mortality (log)',
+                 scale=alt.Scale(domain=[3.8, 6.2])),
+        color=alt.Color('country', legend=None),
+        column=alt.Column('Gender'),
+        tooltip=['country', 'year', 'Treatable mortality', 'GDP per capita'],
+    )
+    .add_params(year_select)
+    .transform_filter(year_select)
+    .configure_axis(grid=False)
+    .configure_view(strokeWidth=0)
+    .interactive()
+)
+
+chart.save('./figures/gdp_mortality.html')
+#+END_SRC
+
+
+
+Each =.encode(...)= argument maps a data column to a visual channel.  The =column= encoding splits the chart into two side-by-side panels (one per gender).  =.add_params= attaches the slider and =.transform_filter= keeps only rows matching the selected year.  =.interactive()= adds pan-and-zoom.
+
+#+INCLUDE: "./figures/gdp_mortality.html" export html
+
+#+BEGIN_EXPORT latex
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{./figures/gdp_mortality.png}
+\end{figure}
+#+END_EXPORT
+
+
+I showed an LLM the code for the imports of different variables above. Then I asked it to create a helper function to automate some of the steps that we do repeatedly. This is a productive way to use an LLM: make sure you master the steps yourself first, then ask the LLM to generalize the workflow that you created. In this way it is easy:
+- to understand the code that the LLM produces (it is based on your own code that you already know) and
+- to test the LLM: the outcomes should be the same as the outcomes you produced yourself with your own code.
+
+The helper function is called =get_eurostat= and can be found in this [[https://github.com/janboone/Datascience-for-economics-lectures][github repository]]: =eurostat_helpers.py=. If you save this file in your own working directory, you can experiment with it. Two examples to use this helper function:
+
+#+begin_src python
+from eurostat_helpers import get_eurostat
+
+# GDP per capita (simple, no extra id_vars)
+df_gdp = get_eurostat('nama_10_pc', value_name='GDP per capita',
+                      filter_dict={'unit': 'CP_EUR_HAB', 'na_item': 'B1GQ'},
+                      years=range(2011, 2021))
+
+# BMI by sex, two years, percentage → fraction
+df_bmi = get_eurostat('hlth_ehis_bm1i', id_vars=['sex'],
+                      value_name='high bmi',
+                      filter_dict={'bmi': 'BMI_GE30', 'quant_inc': 'TOTAL',
+                                   'age': 'Y15-64', 'sex': ['F', 'M']},
+                      years=[2014, 2019], divide_by=100)
+#+end_src
+
+#+RESULTS:
+
+
+
+** Summary
+:PROPERTIES:
+:CUSTOM_ID: lecture8-summary
+:END:
+
+- The Eurostat API delivers data in wide format (years as columns).  =pd.melt= converts it to long format; this is almost always the right shape for further analysis and visualization.
+- When a categorical variable (like =mortalit= or =quant_inc=) needs to become separate columns, set it as the last index level and call =unstack()=.  Reset the index afterwards and flatten the resulting MultiIndex columns with a list comprehension.
+- Always merge on all columns that jointly identify a row.  Merging on country alone is correct only when the other variable genuinely does not vary across time or sex.  Adding year (or sex) to the merge key avoids broadcasting a single value to every row.
+- Lifestyle survey data covers only two years (2014, 2019).  After merging on country + sex + year, rows for other years will be =NaN= for those columns.  This is fine; the =NaN= values simply signal that no survey was conducted in those years.
+- Altair charts are declarative: you specify the mapping from data to visual channels, and Altair handles rendering.  Interactivity (sliders, zoom, tooltips) requires no JavaScript: attach a =selection= and a =binding=.
+
+** Review Questions
+:PROPERTIES:
+:CUSTOM_ID: lecture8-review
+:END:
+
+1. The Eurostat dataset on mortality arrives with years as column names (=2011=, =2012=, …).  Why is this format inconvenient for analysis and plotting?  What does =pd.melt= produce instead?
+
+2. After the =melt= step, the mortality data has a =mortalit= column with values =PRVT= and =TRT=.  Describe, step by step, how =set_index=, =unstack=, =reset_index=, and the column-renaming list comprehension transform this into a dataframe with columns =Preventable mortality= and =Treatable mortality=.
+
+3. The income quintile merge uses =on='country'= (no year).  Why?  What assumption does this embed about the income distribution?
+
+4. The lifestyle variables are merged =on=['country', 'sex', 'year']=.  What happens in the merged dataframe for a country-sex-year combination where no survey was conducted (e.g. Austria, Female, 2015)?  Is this a problem for the Altair chart if the slider only shows 2014 and 2019?
+
+5. In the Altair code, what does =.transform_filter(year_select)= do?  Why is =.add_params(year_select)= also needed?
+
+--------------------
+
+#+BEGIN_EXPORT latex
+\newpage
+#+END_EXPORT
+* Lecture 9: Bayesian Statistics
+:PROPERTIES:
+:CUSTOM_ID: lecture9
+:header-args:  :session *lecture_bayes* :python ~/anaconda3/envs/pymc_env2/bin/python3.14 :async t :results output :exports both
+:END:
+
+**Skills you learn in this lecture:**
+
+** Learning Objectives
+:PROPERTIES:
+:CUSTOM_ID: lecture9-learning-objectives
+:END:
+
+After this lecture you will be able to:
+
+- Explain Bayes' theorem in terms of prior, likelihood, and posterior.
+- Compute a grid approximation to the posterior distribution using =numpy= and =scipy=.
+- Specify a Bayesian model in =pymc=, sample from the posterior, and interpret the output.
+- Diagnose convergence using trace plots and the $\hat{R}$ and effective sample size (ESS) statistics.
+- Use the posterior predictive distribution to assess model fit.
+- Implement Bayesian missing-data imputation using masked arrays in =pymc=.
+- Code a simple Metropolis-Hastings sampler and explain how NUTS improves on it.
+- Identify cases where maximum likelihood gives a counter-intuitive estimate.
+
+** Introduction
+:PROPERTIES:
+:CUSTOM_ID: lecture9-introduction
+:END:
+
+In frequentist statistics a parameter such as a regression slope is a fixed unknown number, and we report confidence intervals that cover that number with a given probability across repeated experiments.  In Bayesian statistics the parameter is itself a random variable: we represent our uncertainty about it with a probability distribution — the /posterior/ — that combines our prior belief with the evidence in the data.
+
+This lecture introduces Bayesian reasoning and the practical tools for applying it in Python.  We start with a grid approximation to make the posterior calculation transparent, then move to =pymc=, which uses Markov Chain Monte Carlo (MCMC) to sample from posteriors that have no closed-form expression.  We apply the tools to a regression model for health outcomes — first dropping missing observations in the conventional way, then replacing that with a Bayesian imputation that retains all the data but does not ignore the uncertainty surrounding the missing values.  Two additional topics close the lecture: a from-scratch Metropolis-Hastings sampler that shows what =pymc= is doing under the hood, and a comparison with maximum likelihood that illustrates why priors matter most when data are scarce.
+
+** Interactive App
+:PROPERTIES:
+:CUSTOM_ID: lecture9-app
+:END:
+
+The app shows how the posterior for the probability of heads $p$ is updated sequentially as more coin flips arrive.  Each panel shows the previous posterior (dashed) and the new posterior after one additional flip (solid).  The last panel jumps from $n=5$ to $n=20$ by updating with all 15 remaining flips at once.  Switch the prior from uniform to the sceptical or optimistic Beta distribution to see how a prior is gradually overwhelmed by data.
+
+#+BEGIN_EXPORT latex
+\url{https://janboone.github.io/datascience-marimo/lecture9\_bayes\_coins.html}
+#+END_EXPORT
+
+#+BEGIN_EXPORT html
+<div style="text-align:center;margin:20px 0;">
+  <a href="https://janboone.github.io/datascience-marimo/lecture9_bayes_coins.html"
+     target="_blank"
+     style="background:#1f3c88;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:1em;">
+    &#9654; Open app: Bayesian Updating — Coin Flipping
+  </a>
+</div>
+#+END_EXPORT
+
+** Python Code Explanation
+:PROPERTIES:
+:CUSTOM_ID: lecture9-python-code
+:END:
+
+*** Grid approximation
+:PROPERTIES:
+:CUSTOM_ID: lecture9-grid
+:END:
+
+We start with the simplest possible Bayesian problem: estimating the probability $p$ that a coin lands heads.  We observe 14 heads in 20 throws.  Bayes' theorem says
+
+$$\text{Prob}(p \mid \text{data}) = \frac{P(\text{data} \mid p)\, P(p)}{P(\text{data})} \propto P(\text{data} \mid p)\, P(p).$$
+
+The denominator $P(\text{data})$ is just a normalising constant.  The likelihood is $P(\text{data} \mid p) = \binom{20}{14} p^{14}(1-p)^6$ and the prior is uniform: $P(p) = 1$ for $p \in [0,1]$.
+
+The grid approximation evaluates the numerator on a fine grid of candidate values, then divides by the sum so the result integrates to one.
+
+#+begin_src python :results graphics file output :file ./figures/Posterior_coins.png
+import numpy as np
+import scipy as sc
+import matplotlib.pyplot as plt
+
+p_grid  = np.linspace(0, 1, 100)
+prior   = np.ones_like(p_grid)          # uniform prior
+likelihood = sc.stats.binom.pmf(14, 20, p_grid)
+
+posterior  = likelihood * prior
+posterior  = posterior / posterior.sum() # normalise to sum to 1
+
+plt.plot(p_grid, posterior)
+plt.xlabel('$p$')
+plt.ylabel('Posterior probability (grid)')
+plt.title('Posterior after 14 heads in 20 throws')
+#+END_SRC
+
+#+RESULTS:
+[[file:./figures/Posterior_coins.png]]
+
+The posterior peaks near $14/20 = 0.7$ because that value makes the observed data most likely.  Notice that =posterior= is a vector of 100 numbers, not a continuous curve, but with a fine enough grid the approximation is excellent.
+
+The grid approximation becomes impractical when there are many parameters: a grid with 100 points per dimension requires $100^d$ evaluations for $d$ parameters.  This is why MCMC is needed.
+
+*** PyMC: coin flipping
+:PROPERTIES:
+:CUSTOM_ID: lecture9-pymc-coin
+:END:
+
+=pymc= expresses the same model in a few lines.  All variable definitions go inside a =with pm.Model() as ...= context. Here we denote the model: =coin_model=.
+
+#+BEGIN_SRC python
+import pymc as pm
+
+with pm.Model() as coin_model:
+    p   = pm.Uniform('p', 0, 1)                       # prior
+    obs = pm.Binomial('obs', n=20, p=p, observed=14)  # likelihood
+    trace = pm.sample(2000, tune=1000)
+#+END_SRC
+
+#+begin_example
+/home/janboone/anaconda3/envs/pymc_env2/lib/python3.14/site-packages/arviz/__init__.py:39: FutureWarning: 
+ArviZ is undergoing a major refactor to improve flexibility and extensibility while maintaining a user-friendly interface.
+Some upcoming changes may be backward incompatible.
+For details and migration guidance, visit: https://python.arviz.org/en/latest/user_guide/migration_guide.html
+  warn(
+Initializing NUTS using jitter+adapt_diag...
+Multiprocess sampling (4 chains in 4 jobs)
+NUTS: [p]
+                                                                                
+                              Step      Grad      Sampli…                       
+  Progre…   Draws   Diverg…   size      evals     Speed     Elapsed   Remaini…  
+ ────────────────────────────────────────────────────────────────────────────── 
+  ━━━━━━━   3000    0         1.501     3         10766.…   0:00:00   0:00:00   
+                                                  draws/s                       
+  ━━━━━━━   3000    0         1.818     3         10145.…   0:00:00   0:00:00   
+                                                  draws/s                       
+  ━━━━━━━   3000    0         1.460     3         9411.44   0:00:00   0:00:00   
+                                                  draws/s                       
+  ━━━━━━━   3000    0         1.205     3         5263.32   0:00:00   0:00:00   
+                                                  draws/s                       
+                                                                                
+
+Sampling 4 chains for 1_000 tune and 2_000 draw iterations (4_000 + 8_000 draws total) took 5 seconds.
+#+end_example
+
+
+Each line inside the =with= block adds a node to the model graph.
+
+- =pm.Uniform('p', 0, 1)= declares the prior for $p$: a uniform distribution on $[0,1]$. Note that the parameter name =p= is mentioned twice in this line. This is important in a =pymc= model.
+- =pm.Binomial('obs', n=20, p=p, observed=14)= defines the likelihood.  The keyword =observed=14= tells =pymc= that this variable is data, not a parameter to be sampled.
+- =pm.sample(2000, tune=1000)= runs 4 parallel Markov chains, each with 1000 warm-up (tuning) steps and 2000 sampling steps.  The tuning steps are discarded.
+- =NUTS= stands for No-U-Turn Sampler; it is a version of an MCMC (or HMC) algorithm.
+
+**** Trace plot
+
+
+#+begin_src python :results graphics file output :file ./figures/traceplot_coins.png
+pm.plot_trace(trace)
+#+END_SRC
+
+#+RESULTS:
+[[file:./figures/traceplot_coins.png]]
+
+The trace plot has two panels per parameter.  The left panel shows the marginal posterior (a kernel density estimate).  The right panel shows the raw chain: the sequence of sampled values over iterations.
+
+A good trace has three properties:
+- *Stationarity*: in the right panel the chain fluctuates around a constant mean, with no visible trend.
+- *Mixing*: in the right panel the chain moves freely across the posterior, not stuck in one region.
+- *Chain overlap*: in the left panel all four chains explore the same region (distributions overlap).
+
+**** Summary table
+
+#+BEGIN_SRC python
+print(pm.summary(trace))
+#+END_SRC
+
+:     mean     sd  hdi_3%  hdi_97%  mcse_mean  mcse_sd  ess_bulk  ess_tail  r_hat
+: p  0.682  0.098    0.49    0.851      0.002    0.001    3317.0    5105.0    1.0
+
+The summary reports the posterior mean, standard deviation, highest-density intervals (HDI), and two convergence diagnostics:
+
+- $\hat{R}$ (=r_hat=): the ratio of between-chain variance to within-chain variance.  A value close to 1.0 means the chains have converged to the same distribution.  Values above 1.01 are a warning.
+- *Effective sample size* (=ess_bulk=, =ess_tail=): MCMC samples are correlated, so 2000 raw samples may contain less information than 2000 independent draws.  ESS estimates the equivalent number of independent samples.  Values much lower than the number of raw samples signal poor mixing.
+- =mcse_mean= measures the standard error of the posterior mean (expectation).  It indicates how precisely the sample mean approximates the true posterior mean; a smaller value relative to the posterior standard deviation suggests higher precision. =mcse_sd= measures the standard error of the posterior standard deviation. It indicates the precision of the estimated posterior spread. 
+
+*** PyMC: simulated data
+:PROPERTIES:
+:CUSTOM_ID: lecture9-pymc-simulated
+:END:
+
+To check that =pymc= recovers the true parameter values, we first generate data from our own model and then estimate that model.
+
+#+BEGIN_SRC python
+import pandas as pd
+
+def generating_data(a1=1, a2=-1, b=3, n=100):
+    rng = np.random.default_rng(42)
+    x1    = rng.normal(0, 1, n)
+    x2    = rng.normal(0, 1, n)
+    noise = rng.normal(0, 1, n)
+    y     = b + a1*x1 + a2*x2 + noise
+    return pd.DataFrame({'y': y, 'x1': x1, 'x2': x2})
+
+df = generating_data()
+#+END_SRC
+
+
+We specify broad priors that are consistent with standardized data. The priors for the =constant, slope1= and =slope= allow positive and negative values. But the prior for =sigma= is =HalfNormal= rather than =Normal= because a standard deviation $\sigma > 0$. This model is called =model_sim=.
+
+#+BEGIN_SRC python
+with pm.Model() as model_sim:
+    constant = pm.Normal('constant', mu=0, sigma=3)
+    slope1   = pm.Normal('slope1',   mu=0, sigma=2)
+    slope2   = pm.Normal('slope2',   mu=0, sigma=2)
+    sigma    = pm.HalfNormal('sigma', sigma=1)
+
+    mu  = constant + slope1*df.x1 + slope2*df.x2
+    obs = pm.Normal('obs', mu=mu, sigma=sigma, observed=df.y)
+
+    trace_sim = pm.sample(2000, tune=1000)
+#+END_SRC
+
+
+After sampling, check the trace plots and the trace summary with the same code as above but the trace is called =trace_sim= this time.  The posterior means for =constant=, =slope1=, =slope2= should be close to 3, 1, and −1 respectively.  All $\hat{R}$ values should be near 1.0. 
+
+**** Posterior predictive check
+
+The posterior predictive distribution answers: given the estimated model, what values of $y$ would we expect to observe?  We compare these predictions with the actual data to assess model fit.
+
+#+begin_src python :results graphics file output :file ./figures/posterior_predictive_simulated.png
+with model_sim:
+    ppc = pm.sample_posterior_predictive(trace_sim, var_names=['obs'])
+
+# 95% credible interval for each observation
+percentiles = np.percentile(
+    ppc.posterior_predictive['obs'], [2.5, 97.5], axis=[0, 1]
+).T
+
+fig, axes = plt.subplots(1, 2, figsize=(10, 4))
+for ax, x, xlabel in zip(axes, [df.x1, df.x2], ['$x_1$', '$x_2$']):
+    ax.vlines(x, percentiles[:, 0], percentiles[:, 1], alpha=0.2)
+    ax.scatter(x, df.y, color='r', s=15)
+    ax.set(xlabel=xlabel, ylabel='$y$')
+plt.tight_layout()
+#+END_SRC
+
+#+RESULTS:
+[[file:./figures/posterior_predictive_simulated.png]]
+
+For most observations the red dot (actual value) falls inside the 95% prediction interval (vertical line).  Points outside the interval are not necessarily a problem; we expect about 5% of them to fall outside by construction.
+
+*** Health data: complete case analysis
+:PROPERTIES:
+:CUSTOM_ID: lecture9-health-complete
+:END:
+
+We now apply the same Bayesian framework to the health dataset from Lecture 8.  We model log treatable mortality as a function of log GDP per capita, income inequality, three lifestyle variables, and gender.
+
+**** Setup
+
+#+BEGIN_SRC python
+df = pd.read_csv('./data/health_data.csv')
+df.rename({'year_x': 'year'}, inplace=True, axis=1)
+
+income_quintiles = ['y_QU1', 'y_QU2', 'y_QU3', 'y_QU4', 'y_QU5']
+df['inequality'] = (np.log(df[income_quintiles].mean(axis=1))
+                    - np.log(df[income_quintiles]).mean(axis=1))
+df.drop(income_quintiles, axis=1, inplace=True)
+#+END_SRC
+
+The inequality measure is $\ln\bigl(\sum_i \phi_i Y_i\bigr) - \sum_i \phi_i \ln(Y_i)$, the log of the mean minus the mean of the logs (Jensen's inequality implies this is non-negative and larger when incomes are more dispersed).
+
+The simplest way to handle missing values is to drop all rows that contain one.
+
+#+BEGIN_SRC python
+df_small = df.dropna()
+
+def standardize(x):
+    return (x - x.mean()) / x.std()
+
+log_mortality    = standardize(np.log(df_small['Treatable mortality']))
+gdp              = standardize(np.log(df_small['GDP per capita']))
+inequality       = standardize(df_small['inequality'])
+high_bmi         = standardize(df_small['high bmi'])
+smoking          = standardize(df_small['smoking'])
+binge_drinking   = standardize(df_small['binge drinking'])
+gender           = (df_small['sex'] == 'F').astype(float)
+#+END_SRC
+
+
+Standardising before estimation keeps all coefficients on the same scale and helps the sampler mix efficiently.
+
+**** Seat-belt prior
+
+We use a tight prior $\sigma_{\text{prior}} = 0.1$ on all slope coefficients.  Because the variables are standardised, a coefficient of 1 would mean a one-standard-deviation increase in the predictor shifts mortality by one standard deviation which is a large effect.  The small prior pushes coefficients toward zero unless the data strongly support a non-zero value.  This is analogous to ridge regression, but stated as a prior rather than a penalty.  The more data, the less the prior matters.
+
+#+BEGIN_SRC python
+sigma_prior = 0.1
+
+with pm.Model() as model_health:
+    constant         = pm.Normal('constant',         mu=0, sigma=1)
+    b_gdp            = pm.Normal('b_gdp',            mu=0, sigma=sigma_prior)
+    b_inequality     = pm.Normal('b_inequality',     mu=0, sigma=sigma_prior)
+    b_smoking        = pm.Normal('b_smoking',        mu=0, sigma=sigma_prior)
+    b_high_bmi       = pm.Normal('b_high_bmi',       mu=0, sigma=sigma_prior)
+    b_binge_drinking = pm.Normal('b_binge_drinking', mu=0, sigma=sigma_prior)
+    b_female         = pm.Normal('b_female',         mu=0, sigma=sigma_prior)
+    b_female_gdp     = pm.Normal('b_female_gdp',     mu=0, sigma=sigma_prior)
+    sigma            = pm.HalfNormal('sigma', sigma=1)
+
+    mu = (constant
+          + b_gdp            * gdp
+          + b_inequality     * inequality
+          + b_smoking        * smoking
+          + b_high_bmi       * high_bmi
+          + b_binge_drinking * binge_drinking
+          + b_female         * gender
+          + b_female_gdp     * gdp * gender)
+
+    mortality = pm.Normal('mortality', mu=mu, sigma=sigma, observed=log_mortality)
+    trace_health = pm.sample(2000, tune=1000)
+
+with model_health:
+    ppc_health = pm.sample_posterior_predictive(trace_health, var_names=['mortality'])
+#+END_SRC
+
+
+The interaction =b_female_gdp * gdp * gender= allows the slope on GDP to differ between men and women.  Check the summary: all $\hat{R}$ values should be close to 1.0, and the ESS should be in the hundreds or thousands.
+
+#+BEGIN_SRC python
+variables_health = ['b_female', 'b_gdp', 'b_female_gdp', 'b_inequality',
+                    'b_smoking', 'b_high_bmi', 'b_binge_drinking']
+print(pm.summary(trace_health.posterior, variables_health))
+#+END_SRC
+
+
+:                    mean     sd  hdi_3%  hdi_97%  mcse_mean  mcse_sd  ess_bulk  ess_tail  r_hat
+: b_female         -0.135  0.087  -0.295    0.030      0.001    0.001    8179.0    6161.0    1.0
+: b_gdp            -0.509  0.065  -0.629   -0.384      0.001    0.001    7785.0    6484.0    1.0
+: b_female_gdp     -0.058  0.070  -0.193    0.072      0.001    0.001    9138.0    6205.0    1.0
+: b_inequality      0.141  0.050   0.050    0.238      0.000    0.001   11830.0    6383.0    1.0
+: b_smoking         0.137  0.057   0.030    0.240      0.001    0.001    9261.0    6282.0    1.0
+: b_high_bmi        0.079  0.049  -0.013    0.169      0.000    0.001   11589.0    5943.0    1.0
+: b_binge_drinking  0.248  0.057   0.141    0.354      0.001    0.001   10584.0    6103.0    1.0
+
+Also check the trace plot for the three features that we discussed above:
+
+#+begin_src python :results graphics file output :file ./figures/traceplot_health_complete_cases.png
+pm.plot_trace(trace_health,variables_health)
+#+END_SRC
+
+#+RESULTS:
+[[file:./figures/traceplot_health_complete_cases.png]]
+
+*** Health data: missing data imputation
+:PROPERTIES:
+:CUSTOM_ID: lecture9-health-missing
+:END:
+
+Dropping all rows with any missing value (complete-case analysis) discards information: an observation with a missing lifestyle variable still carries useful information about the relationship between GDP and mortality. Imputing a value for the missing observation is also problematic: it suggests to the algorithm that we are equally sure about an observed value as we are about an imputed value. This is not correct, there is (a lot of) uncertainty about the imputed value. The estimation technique should take this into account.
+
+A better approach is to model the missing values explicitly. In =pymc=, a covariate with missing values is treated as a latent variable with its own prior.  We tell =pymc= which entries are missing using a NumPy masked array.  =pymc= samples the missing values from the posterior jointly with all other parameters.
+
+
+For more information on masked =numpy= arrays: see https://numpy.org/doc/stable/reference/maskedarray.html. For here it should be sufficient to consider the following example.
+
+#+begin_src python
+x = np.ma.array([1, 2, np.nan], mask=[0, 0, 1])
+print("x in compressed/readable format: {}".format(x.compressed()))
+print("x in raw format: ")
+print(x)
+print(x.mask)
+#+end_src
+
+#+RESULTS:
+: x in compressed/readable format: [1. 2.]
+: x in raw format: 
+: [1.0 2.0 --]
+: [False False  True]
+
+The =mask= (=[False, False,  True]=) in the example above, indicates which values are missing (=True=) and which values are there (=False=). This additional information allows =pymc= to figure out that there are missing values in the data which need to be treated differently (i.e. sampled from a distribution).
+
+#+BEGIN_SRC python
+def standardize_ma(x):
+    x_ma = np.ma.masked_invalid(x)
+    return (x_ma - x_ma.mean()) / x_ma.std()
+
+df_full = pd.read_csv('./data/health_data.csv')
+df_full.rename({'year_x': 'year'}, inplace=True, axis=1)
+income_quintiles = ['y_QU1', 'y_QU2', 'y_QU3', 'y_QU4', 'y_QU5']
+df_full['inequality'] = (np.log(df_full[income_quintiles].mean(axis=1))
+                         - np.log(df_full[income_quintiles]).mean(axis=1))
+df_full.drop(income_quintiles, axis=1, inplace=True)
+df_full.dropna(subset=['Treatable mortality'], inplace=True)
+
+log_mortality  = standardize(np.log(df_full['Treatable mortality']))
+gender         = (df_full['sex'] == 'F').astype(float)
+gdp_ma         = standardize_ma(np.log(df_full['GDP per capita']))
+inequality_ma  = standardize_ma(df_full['inequality'])
+high_bmi_ma    = standardize_ma(df_full['high bmi'])
+smoking_ma     = standardize_ma(df_full['smoking'])
+binge_ma       = standardize_ma(df_full['binge drinking'])
+#+END_SRC
+
+A masked array marks the missing entries as invalid.  When passed to =pm.Normal(..., observed=gdp_ma)=, =pymc= automatically identifies the masked positions and samples values for them from the specified distribution.  Since all covariates are based on summation and standardized, $\mathcal{N}(0, 1)$ is a reasonable prior for a missing value.
+
+#+BEGIN_SRC python
+with pm.Model() as model_missing:
+    constant         = pm.Normal('constant',         mu=0, sigma=1)
+    b_gdp            = pm.Normal('b_gdp',            mu=0, sigma=sigma_prior)
+    b_inequality     = pm.Normal('b_inequality',     mu=0, sigma=sigma_prior)
+    b_smoking        = pm.Normal('b_smoking',        mu=0, sigma=sigma_prior)
+    b_high_bmi       = pm.Normal('b_high_bmi',       mu=0, sigma=sigma_prior)
+    b_binge_drinking = pm.Normal('b_binge_drinking', mu=0, sigma=sigma_prior)
+    b_female         = pm.Normal('b_female',         mu=0, sigma=sigma_prior)
+    b_female_gdp     = pm.Normal('b_female_gdp',     mu=0, sigma=sigma_prior)
+    sigma            = pm.HalfNormal('sigma', sigma=1)
+
+    # Missing covariates are latent variables with N(0,1) priors
+    Gdp         = pm.Normal('Gdp',         mu=0, sigma=1, observed=gdp_ma)
+    Inequality  = pm.Normal('Inequality',  mu=0, sigma=1, observed=inequality_ma)
+    Smoking     = pm.Normal('Smoking',     mu=0, sigma=1, observed=smoking_ma)
+    High_bmi    = pm.Normal('High_bmi',    mu=0, sigma=1, observed=high_bmi_ma)
+    Binge       = pm.Normal('Binge',       mu=0, sigma=1, observed=binge_ma)
+
+    mu = (constant
+          + b_gdp            * Gdp
+          + b_inequality     * Inequality
+          + b_smoking        * Smoking
+          + b_high_bmi       * High_bmi
+          + b_binge_drinking * Binge
+          + b_female         * gender
+          + b_female_gdp     * Gdp * gender)
+
+    mortality = pm.Normal('mortality', mu=mu, sigma=sigma, observed=log_mortality)
+    trace_missing = pm.sample()
+#+END_SRC
+
+
+Notice that in the trace output, =pymc= automatically adds parameters like =Binge_unobserved=: the sampled values for the missing binge observations.  For observed entries, the "sampled" value is simply the data value; for missing entries it is drawn from the posterior.
+
+Comparing =pm.summary(trace_health)= with =pm.summary(trace_missing)= shows whether the imputation changes the conclusions.  Coefficients should be similar but the missing-data model typically has narrower credible intervals because it uses more observations.
+
+
+#+BEGIN_SRC python
+variables_health = ['b_female', 'b_gdp', 'b_female_gdp', 'b_inequality',
+                    'b_smoking', 'b_high_bmi', 'b_binge_drinking']
+print(pm.summary(trace_missing.posterior, variables_health))
+#+END_SRC
+
+
+:                    mean     sd  hdi_3%  hdi_97%  mcse_mean  mcse_sd  ess_bulk  ess_tail  r_hat
+: b_female         -0.598  0.040  -0.671   -0.523      0.001    0.001    2916.0    3020.0    1.0
+: b_gdp            -0.791  0.029  -0.843   -0.735      0.001    0.000    3230.0    2920.0    1.0
+: b_female_gdp      0.213  0.036   0.143    0.278      0.001    0.001    4530.0    3053.0    1.0
+: b_inequality      0.149  0.022   0.105    0.187      0.000    0.000    5328.0    3162.0    1.0
+: b_smoking         0.010  0.042  -0.066    0.091      0.001    0.001    1197.0    1689.0    1.0
+: b_high_bmi        0.061  0.041  -0.018    0.134      0.001    0.001    1126.0    2254.0    1.0
+: b_binge_drinking  0.127  0.042   0.043    0.201      0.001    0.001     940.0    1758.0    1.0
+
+Also check the trace plot for the three features that we discussed above:
+
+#+begin_src python :results graphics file output :file ./figures/traceplot_health_missing.png
+pm.plot_trace(trace_missing,variables_health)
+#+END_SRC
+
+#+RESULTS:
+[[file:./figures/traceplot_health_missing.png]]
+
+To see how the missing observations play out in pymc consider the variable =binge=. The variable =binge_ma= itself has 600 observations. The variable representing the missing observations, =Binge= has shape (4, 1000, 600): 4 chains and 1000 samples from the sampling algorithm and then the 600 observations. The first observation of =binge_ma= is missing and hence =Binge= has different values in its posterior (first chain, first ten samples). 
+
+#+begin_src python :display plain
+print(binge_ma.shape)
+print(trace_missing.posterior.Binge.shape)
+print(binge_ma[0])
+print(trace_missing.posterior.Binge[0,:10,0].values)
+#+end_src
+
+#+RESULTS:
+: (600,)
+: (4, 1000, 600)
+: --
+: [ 0.70621589 -0.33497234  0.63095383 -0.56732448 -1.16922842 -1.59237948
+:  -1.29697474 -0.81873592 -0.04275067 -0.48773273]
+
+We look for an index where do have an observation:
+
+#+begin_src python
+print(np.where(binge_ma.mask==False))
+#+end_src
+
+#+RESULTS:
+: (array([  6,   7,  16,  17,  26,  27,  36,  37,  46,  47,  56,  57,  66,
+:         67,  76,  77,  86,  87,  96,  97, 106, 107, 116, 117, 126, 127,
+:        136, 137, 146, 147, 156, 157, 166, 167, 196, 197, 206, 207, 216,
+:        217, 226, 227, 236, 237, 246, 247, 256, 257, 266, 267, 276, 277,
+:        286, 287, 296, 297, 306, 307, 316, 317, 326, 327, 336, 337, 346,
+:        347, 356, 357, 366, 367, 376, 377, 386, 387, 396, 397, 416, 417,
+:        426, 427, 436, 437, 446, 447, 456, 457, 466, 467, 476, 477, 486,
+:        487, 496, 497, 506, 507, 516, 517, 526, 527, 536, 537, 546, 547,
+:        556, 557, 566, 567, 576, 577]),)
+
+At index 16, =binge_ma= has a value and hence posterior trace at this index contains only one value: the observed one.
+
+#+begin_src python :display plain
+print(binge_ma[16])
+print(trace_missing.posterior.Binge[0,:10,16].values)
+#+end_src
+
+#+RESULTS:
+: -0.6199810886778987
+: [-0.61998109 -0.61998109 -0.61998109 -0.61998109 -0.61998109 -0.61998109
+:  -0.61998109 -0.61998109 -0.61998109 -0.61998109]
+
+*** MCMC algorithm
+:PROPERTIES:
+:CUSTOM_ID: lecture9-mcmc
+:END:
+
+For a long time many people realized that Bayesian statistics is a better way to estimate parameters and show the uncertainty surrounding them than frequentist statistics. The problem was that computing posterior distributions (especially in high dimensions) took far too long to be practical. This has changed in the past twenty years with more computer power and better algorithms to approximate the posterior. In terms of Bayes' theorem $p(\theta | data) = p(\theta, data)/p(data)$ the problem is the denominator $p(data)$. Calculating the denominator requires integration over all parameters in the vector $\theta$. In a model with, say, 10 parameters this becomes too costly in terms computation. The solution that Bayesian libraries like =pymc= and =stan= use, is: do not calculate $p(data)$.
+
+Instead, we use a four step algorithm to approximate the posterior distribution. Here we illustrate how these four steps can approximate any distribution by just evaluating $p(\theta,data)$ and trying to calculate $p(data)$. =pymc= samples from the posterior using the NUTS (No-U-Turn Sampler) algorithm.  To understand what NUTS is doing, we first code the simpler Metropolis-Hastings algorithm.
+
+**** Metropolis-Hastings in four steps
+
+We are trying to approximate a distribution/density function $f(p)$ and we start at initial point $p_0$: $ p_{\text{current}} = p_0$. Then 
+at each iteration of the algorithm:
+
+1. *Propose* a new candidate value by adding a small random perturbation to the current value: $p' = p_{\text{current}} + \varepsilon$, where $\varepsilon \sim \mathcal{N}(0, \delta^2)$ for some small step size $\delta > 0$.
+2. *Compute the acceptance ratio* $\alpha = \frac{f(p')}{f(p_{\text{current}})}$, where $f$ is the (un-normalised) target density.
+3. *Accept or reject*: draw $u \sim \text{Uniform}(0, 1)$.  If $u < \alpha$, move to $p'$; otherwise stay at $p_{\text{current}}$. In words, we accept $p'$ with probability $\alpha$.
+4. *Record* the current value (whether moved or not).
+
+
+The important step is 2. In our notation above, step 2 only needs $p(\theta,data)$; for this step we do not need to evaluate $p(data)$.
+
+After many iterations, the recorded values form an approximate sample from the target distribution. In the example below we want to approximate the beta distribution with parameters 2, 5.
+
+#+BEGIN_SRC python
+from scipy.stats import beta as beta_dist
+
+def log_target(p):
+    if p <= 0 or p >= 1:
+        return -np.inf
+    return beta_dist.logpdf(p, 2, 5)   # target: Beta(2, 5)
+
+def metropolis_hastings(log_target, n_samples=20_000, step_size=0.15, start=0.5):
+    samples    = np.empty(n_samples)
+    current    = start
+    n_accepted = 0
+
+    for i in range(n_samples):
+        proposal      = current + np.random.normal(0, step_size)
+        log_alpha     = log_target(proposal) - log_target(current)
+        if np.log(np.random.uniform()) < log_alpha:
+            current    = proposal
+            n_accepted += 1
+        samples[i] = current
+
+    print(f"Acceptance rate: {n_accepted / n_samples:.1%}")
+    return samples
+
+samples = metropolis_hastings(log_target)
+#+END_SRC
+
+#+RESULTS:
+: Acceptance rate: 72.6%
+
+We compare the sampled distribution with the true Beta(2, 5) density.
+
+#+begin_src python :results graphics file output :file ./figures/our_own_mcmc.png
+p_grid = np.linspace(0.001, 0.999, 300)
+
+fig, axes = plt.subplots(1, 2, figsize=(11, 4))
+axes[0].plot(samples[:500], alpha=0.6)
+axes[0].set(xlabel='Iteration', ylabel='$p$', title='Trace (first 500 steps)')
+
+axes[1].hist(samples, bins=60, density=True, alpha=0.5, label='MCMC samples')
+axes[1].plot(p_grid, beta_dist.pdf(p_grid, 2, 5), 'r-', lw=2, label='True Beta(2, 5)')
+axes[1].set(xlabel='$p$', ylabel='Density', title='Sampled vs. true distribution')
+axes[1].legend()
+
+plt.tight_layout()
+#+END_SRC
+
+#+RESULTS:
+[[file:./figures/our_own_mcmc.png]]
+
+The left panel is a trace plot: we plot the values of $p$ that we draw one after the other. With enough samples the histogram in the right panel closely matches the red curve.
+
+**** How NUTS improves on Metropolis-Hastings
+
+The basic Metropolis-Hastings algorithm has two weaknesses:
+
+1. *Proposal tuning*: if =step_size= is too small, the chain moves slowly and the acceptance rate is near 100% but autocorrelation is high; if it is too large, most proposals are rejected (as outliers have very low density) and the chain barely moves.  NUTS uses gradient information to set the step size automatically.
+
+2. *Random walk*: the Gaussian proposal causes the chain to wander rather than move purposefully toward unexplored regions.  NUTS simulates Hamiltonian dynamics: the chain "slides" along the posterior surface like a ball on a frictionless landscape, turning around just before it would double back (the "no-U-turn" criterion).  This gives much better mixing for the same number of likelihood evaluations.
+
+=pymc= exposes the tuning diagnostics: the target acceptance rate defaults to 0.8 and the step size is adapted automatically during the warm-up phase.
+
+*** Maximum likelihood and Bayes
+:PROPERTIES:
+:CUSTOM_ID: lecture9-mle-bayes
+:END:
+
+Maximum likelihood chooses the parameter value that maximizes the probability of the observed data.  In most econometric applications this works well.  But in small samples it can produce estimates that violate common sense.
+
+**** The die example
+
+You throw a six-sided die once and observe a 6.  Consider two models:
+
+- Model A: the die is fair ($p_6 = 1/6$).
+- Model B: all faces show 6, so $p_6 = 1$.
+
+The likelihood of Model B given the data is $1$; the likelihood of Model A is $1/6$.  Maximum likelihood therefore selects Model B: after a single observation of 6, MLE concludes that the die shows only sixes.
+
+This conclusion is absurd — a single observation of 6 should not convince us that the die is rigged. Also you may know (prior knowledge) that a die with 6 on all sides is rather rare in the real world; have you ever seen one?
+
+Can you formalize this example with probabilities that the die shows 1,2,...,6: $p_1,p_2,...,p_6 \ge 0$ and $p_1 + p_2 + ... + p_6 = 1$. Write down the log likelihood when observing 6 once with one throw of the die. Maximize over $p_1,...,p_6$ and finding that the ML estimator is $p_6 = 1$
+
+****** Why Bayes gives a more sensible answer
+
+The problem is that MLE treats the likelihood as if it were a probability distribution over models, but it is not: $P(\text{data} \mid \text{model})$ is a probability in data space, not in model space (we condition on "model" or model parameters).  Two different likelihoods cannot be compared without a prior.
+
+#+BEGIN_SRC python
+p_grid     = np.array([1/6, 1.0])
+likelihood = np.array([1/6, 1.0])
+labels     = ['Fair die (A)', 'All-sixes die (B)']
+
+print("Likelihoods:")
+for label, l in zip(labels, likelihood):
+    print(f"  {label}: {l:.4f}")
+print(f"\nMLE selects: {labels[likelihood.argmax()]}")
+# Prior: 99 % chance the die is fair, 1 % chance it is rigged
+prior      = np.array([0.99, 0.01])
+unnorm     = likelihood * prior
+posterior  = unnorm / unnorm.sum()
+
+print("Posterior:")
+for label, post in zip(labels, posterior):
+    print(f"  {label}: {post:.1%}")
+#+END_SRC
+
+
+: Likelihoods:
+:   Fair die (A): 0.1667
+:   All-sixes die (B): 1.0000
+: 
+: MLE selects: All-sixes die (B)
+: Posterior:
+:   Fair die (A): 94.3%
+:   All-sixes die (B): 5.7%
+
+With a prior that reflects the rarity of rigged dice, the posterior still strongly favours the fair die after observing a 6.  Only after many consecutive 6s would the data overwhelm the prior.
+
+
+**** Formalizing the Die Example
+
+To see how maximizing the log likelihood leads to this answer, consider the following steps:
+
+***** The Parameter Space
+
+The parameter vector is $\boldsymbol{p} = (p_1, p_2, \dots, p_6)$ with:
+$$p_k \geq 0 \quad \forall k, \qquad \sum_{k=1}^{6} p_k = 1$$
+
+***** The Likelihood
+
+We throw the die once and observe a 6. The probability of this outcome is simply $p_6$, so the likelihood function is:
+$$L(p_1, \dots, p_6) = p_6$$
+
+The *log-likelihood* is:
+$$\ell(p_1, \dots, p_6) = \log p_6$$
+
+***** Maximization
+
+We maximize $\ell = \log p_6$ subject to the constraints. Since $\log(\cdot)$ is strictly increasing, this is equivalent to maximizing $p_6$ itself subject to:
+$$p_k \geq 0, \qquad \sum_{k=1}^{6} p_k = 1$$
+
+From the constraint: $p_6 = 1 - \sum_{k=1}^{5} p_k$. Since $p_k \geq 0$, we have $p_6 \leq 1$, with equality when:
+$$p_1 = p_2 = p_3 = p_4 = p_5 = 0$$
+
+***** The MLE
+
+$$\boxed{\hat{p}_6^{\,\text{MLE}} = 1, \qquad \hat{p}_k^{\,\text{MLE}} = 0 \text{ for } k \neq 6}$$
+
+The log-likelihood at the maximum is $\ell = \log(1) = 0$, which is indeed its global maximum (since $\log p_6 \leq 0$ for all $p_6 \in (0,1]$).
+
+***** Why This Is Absurd
+
+After a *single* observation, MLE assigns probability *zero* to all five faces that were not observed. This is a pure over-fitting artifact: MLE has no mechanism to incorporate the prior knowledge that real dice are (almost certainly) fair, and it extrapolates wildly from minimal data. This is precisely where Bayesian inference, through a prior on $\boldsymbol{p}$, restores common sense.
+
+
+** Summary
+:PROPERTIES:
+:CUSTOM_ID: lecture9-summary
+:END:
+
+- Bayesian statistics represents uncertainty about parameters as probability distributions.  The posterior combines prior belief with the likelihood of the observed data via Bayes' theorem.
+- The grid approximation evaluates the un-normalised posterior on a fine grid and re-normalises.  It is exact up to discretisation error but does not scale beyond a handful of parameters.
+- =pymc= uses MCMC to sample from high-dimensional posteriors.  The NUTS sampler adapts its step size automatically and uses gradient information to sample efficiently from the posterior distribution.
+- Convergence is assessed from trace plots and summary ($\hat{R} \approx 1.0$, good chain mixing and overlap) and from effective sample size (ESS should be in the hundreds or thousands).
+- The posterior predictive distribution generates new data under the fitted model.  Plotting 95% prediction intervals against the observed data reveals whether the model fits well.
+- Complete-case analysis (=dropna=) is simple but discards observations that have missing values in any variable.  =pymc= can instead model missing covariates as latent variables, improving efficiency and removing the potential bias introduced by discarding data.
+- Metropolis-Hastings proposes random perturbations and accepts or rejects based on the ratio of target densities.  NUTS replaces random proposals with gradient-guided Hamiltonian dynamics, giving better mixing for the same number of posterior evaluations.
+- Maximum likelihood can give counter-intuitive estimates in small samples because it does not account for the prior plausibility of parameter values.  A Bayesian prior regularizes the estimate towards sensible values.
+
+** Review Questions
+:PROPERTIES:
+:CUSTOM_ID: lecture9-review
+:END:
+
+1. In Bayes' theorem, $\text{Prob}(p \mid \text{data}) \propto P(\text{data} \mid p)\, P(p)$.  What is the role of the normalising constant $P(\text{data})$?  Why is it safe to ignore it when comparing posteriors for different values of $p$?
+
+2. The grid approximation computes =posterior = likelihood * prior / posterior.sum()=.  Why does dividing by =posterior.sum()= (rather than integrating) give a valid approximation?  In what sense does it break down when the number of parameters grows?
+
+3. In the =pymc= coin model, what would happen if you replaced =pm.Uniform('p', 0, 1)= with =pm.Beta('p', 2, 5)=?  Would the posterior change?  How?
+
+4. A trace plot shows one chain that is stuck near $p = 0.3$ while the other three chains explore a wider range.  What does $\hat{R}$ measure in this situation, and why would it be elevated?  What would you check or change?
+
+5. Why does complete-case analysis potentially introduce bias, not just a loss of precision?  Under what conditions is it unbiased?
+
+6. In the missing-data model, =pm.Normal('Gdp', 0, 1, observed=gdp_ma)= is added.  For an observed (non-missing) row, what does this line contribute to the model?  For a missing row, what does it contribute?
+
+7. In the Metropolis-Hastings algorithm, what is the effect of making =step_size= very small?  Very large?  How does NUTS avoid the need to tune this parameter?
+
+8. Suppose you observe 3 heads in 3 coin flips.  (a) What is the MLE for $p$?  (b) What is the posterior mean under a uniform prior?  (c) Under a =Beta(2, 2)= prior?  Which estimate is most sensible and why?
+
+
+--------------------
+
+#+BEGIN_EXPORT latex
+\newpage
+#+END_EXPORT
+
+* Lecture 10: Bayesian informed policy making
+:PROPERTIES:
+:CUSTOM_ID: lecture10
+:header-args:  :session *lecture_bayes* :python ~/anaconda3/envs/pymc_env2/bin/python3.14 :async t :results output :exports both
+:END:
+
+** Learning Objectives
+:PROPERTIES:
+:CUSTOM_ID: lecture10-learning-objectives
+:END:
+
+After this lecture you will be able to:
+
+- Explain Jensen's inequality and illustrate why replacing an uncertain parameter with its expected value in a non-linear objective can lead to a sub-optimal decision.
+- Generate panel data with fixed effects in Python.
+- Specify hierarchical (partially pooled) fixed effects in a =pymc= model using coordinates and the =dims= argument.
+- Use posterior draws of elasticities to obtain a distribution of policy outcomes.
+- Evaluate a social planner's welfare function under parameter uncertainty and report the distribution of the optimal policy.
+
+** Introduction
+:PROPERTIES:
+:CUSTOM_ID: lecture10-introduction
+:END:
+
+In the previous lecture we estimated Bayesian models and inspected the posterior.  The payoff of obtaining a full posterior — rather than a single point estimate — becomes clearest when we have to make a decision.
+
+The first application (interactive app) strips the decision problem down to its essentials: a test for rogue vampires with imperfect accuracy.  The parameters that describe the test's accuracy are uncertain.  We compare the frequentist approach (plug in point estimates) with the Bayesian approach (treat the parameters as distributions) and show that the two approaches can recommend different decisions because the objective function is a non-linear function of the error probabilities.
+
+The second application is an economic policy question.  The social housing authority wants to impose a rent cap: lower rents benefit tenants, but reduce the supply of social housing.  The supply elasticity — how much supply falls for each euro reduction in rent — is unknown and must be estimated from panel data.  We generate the data, estimate the supply model with postal code and year fixed effects in =pymc=, and then evaluate the distribution of welfare under different cap levels.  Because the welfare function is non-linear in housing supply, expected welfare at the average elasticity differs from average welfare over the posterior (Jensen's inequality).
+
+** Interactive App
+:PROPERTIES:
+:CUSTOM_ID: lecture10-app
+:END:
+
+The app shows the vampire incarceration decision problem.  Sliders control the Type I and Type II error probabilities ($p_I$, $p_{II}$), the damages ($D_I$, $D_{II}$), the prior probability that a vampire is rogue ($\pi$), and the concentration $\kappa$ of the Beta posteriors.
+
+Under the frequentist approach, $p_I$ and $p_{II}$ are fixed numbers: the expected damage from incarcerating is a single value.  Under the Bayesian approach, $p_I$ and $p_{II}$ are drawn from Beta distributions; the expected damage is a distribution.  The callout reports whether the two approaches agree on the decision to incarcerate.  Decrease $\kappa$ to increase parameter uncertainty and amplify the Jensen gap between the Bayesian expected damage and the frequentist damage estimate.
+
+#+BEGIN_EXPORT latex
+\url{https://janboone.github.io/datascience-marimo/lecture10\_vampire.html}
+#+END_EXPORT
+
+#+BEGIN_EXPORT html
+<div style="text-align:center;margin:20px 0;">
+  <a href="https://janboone.github.io/datascience-marimo/lecture10_vampire.html"
+     target="_blank"
+     style="background:#1f3c88;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:1em;">
+    &#9654; Open app: Vampire Incarceration — Frequentist vs. Bayesian
+  </a>
+</div>
+#+END_EXPORT
+
+** Python Code Explanation
+:PROPERTIES:
+:CUSTOM_ID: lecture10-python-code
+:END:
+
+*** Data generation: social housing supply
+:PROPERTIES:
+:CUSTOM_ID: lecture10-data
+:END:
+
+We simulate a panel data set of social housing supply across 10 postal codes and 6 years (2018–2023).  The key variables are:
+
+- /Rent/ $P_{it}$: the regulated rent in postal code $i$ in year $t$ (exogenous — set by housing policy rather than supply and demand).
+- /Interest rate/ $r_t$: the mortgage rate in year $t$ — a supply shifter, since higher rates make new construction more expensive.
+- /Supply/ $Q_{it}$: the number of social housing units available.
+
+The supply equation is
+
+$$Q_{it} = \alpha + \beta_s P_{it} + \gamma_s r_t + \delta_i + \eta_t + \varepsilon_{it},$$
+
+where $\delta_i$ is a postal code fixed effect and $\eta_t$ is a year fixed effect.  We want to recover $\beta_s$, the supply price elasticity.
+
+#+begin_src python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from itertools import product
+
+rng = np.random.default_rng(42)
+
+n_pc, n_years = 10, 6
+years_list    = list(range(2018, 2018 + n_years))
+
+# True supply parameters
+alpha_true   = 100.0
+beta_s_true  =   0.5
+gamma_s_true = -800.0
+sigma_true   =  12.0
+
+# Unknown fixed effects
+pc_fe_true   = rng.normal(0, 25, n_pc)
+year_fe_true = rng.normal(0, 10, n_years)
+
+records = []
+for pc_idx, yr_idx in product(range(n_pc), range(n_years)):
+    rent   = 480 + 20 * pc_idx + 8 * yr_idx + rng.normal(0, 15)
+    r      = 0.025 + 0.003 * yr_idx + rng.normal(0, 0.002)
+    supply = (alpha_true
+              + beta_s_true  * rent
+              + gamma_s_true * r
+              + pc_fe_true[pc_idx]
+              + year_fe_true[yr_idx]
+              + rng.normal(0, sigma_true))
+    records.append({'postal_code': pc_idx, 'year': years_list[yr_idx],
+                    'rent': round(rent, 1), 'interest_rate': round(r, 4),
+                    'supply': round(supply, 1)})
+
+df = pd.DataFrame(records)
+print(df.head(8))
+print("\nMean rent:   {:.0f} €".format(df['rent'].mean()))
+print("Mean supply: {:.0f} units".format(df['supply'].mean()))
+#+end_src
+
+#+begin_example
+   postal_code  year   rent  interest_rate  supply
+0            0  2018  485.5         0.0231   351.3
+1            0  2019  487.3         0.0276   328.7
+2            0  2020  514.3         0.0307   335.8
+3            0  2021  498.7         0.0351   344.6
+4            0  2022  518.2         0.0379   366.8
+5            0  2023  513.9         0.0390   315.0
+6            1  2018  509.2         0.0273   314.2
+7            1  2019  495.4         0.0264   316.2
+
+Mean rent:   589 €
+Mean supply: 365 units
+#+end_example
+
+
+Rents average 589 euros.  The scatter plot confirms the positive relationship between rent and supply: higher regulated rent makes social housing more profitable for providers.
+
+#+begin_src python :results graphics file output :file ./figures/lecture10_supply_data.png
+fig, axes = plt.subplots(1, 2, figsize=(11, 4))
+
+for pc in df['postal_code'].unique():
+    sub = df[df['postal_code'] == pc].sort_values('year')
+    axes[0].plot(sub['year'], sub['rent'], alpha=0.6)
+    axes[1].scatter(sub['rent'], sub['supply'], alpha=0.5, s=20)
+
+axes[0].set(xlabel='Year', ylabel='Rent (€)', title='Regulated rent by postal code')
+axes[1].set(xlabel='Rent (€)', ylabel='Supply (units)',
+            title='Rent–supply relationship across postal codes')
+fig.tight_layout()
+#+end_src
+
+#+RESULTS:
+[[file:./figures/lecture10_supply_data.png]]
+
+*** PyMC estimation with fixed effects
+:PROPERTIES:
+:CUSTOM_ID: lecture10-pymc
+:END:
+
+We estimate the supply equation with =pymc=.  Postal code and year effects are modelled as /partially pooled/ random effects: each effect is drawn from a common Normal distribution whose variance is itself estimated.  Partial pooling shrinks effects towards the group mean, reducing over-fitting compared with estimating each effect freely (no pooling).
+
+The =coords= dictionary gives each dimension a list of levels.  The =dims= argument in =pm.Normal= tells =pymc= that =pc_fe= has one element per postal code and =year_fe= has one per year, so the model output is labelled automatically.
+
+#+begin_src python
+import pymc as pm
+import arviz as az
+
+df['pc_idx']   = df['postal_code']
+df['year_idx'] = df['year'] - years_list[0]
+
+coords = {
+    'postal_code': list(range(n_pc)),
+    'year':        years_list,
+}
+
+with pm.Model(coords=coords) as supply_model:
+    # Main supply parameters
+    alpha   = pm.Normal('alpha',   mu=100, sigma=100)
+    beta_s  = pm.Normal('beta_s',  mu=0.5, sigma=1.0)
+    gamma_s = pm.Normal('gamma_s', mu=0,   sigma=500)
+    sigma   = pm.HalfNormal('sigma', sigma=20)
+
+    # Hierarchical fixed effects
+    sigma_pc   = pm.HalfNormal('sigma_pc',   sigma=30)
+    sigma_year = pm.HalfNormal('sigma_year', sigma=15)
+    pc_fe   = pm.Normal('pc_fe',   mu=0, sigma=sigma_pc,   dims='postal_code')
+    year_fe = pm.Normal('year_fe', mu=0, sigma=sigma_year, dims='year')
+
+    # Linear predictor
+    mu = (alpha
+          + beta_s  * df['rent'].values
+          + gamma_s * df['interest_rate'].values
+          + pc_fe[df['pc_idx'].values]
+          + year_fe[df['year_idx'].values])
+
+    pm.Normal('Q_obs', mu=mu, sigma=sigma, observed=df['supply'].values)
+
+    trace = pm.sample(2000, tune=1000, target_accept=0.9, random_seed=42)
+
+print(az.summary(trace, var_names=['alpha', 'beta_s', 'gamma_s', 'sigma']))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Initializing NUTS using jitter+adapt_diag...
+Multiprocess sampling (4 chains in 4 jobs)
+NUTS: [alpha, beta_s, gamma_s, sigma, sigma_pc, sigma_year, pc_fe, year_fe]
+/home/janboone/anaconda3/envs/pymc_env2/lib/python3.14/site-packages/arviz/__init__.py:39: FutureWarning: 
+ArviZ is undergoing a major refactor to improve flexibility and extensibility while maintaining a user-friendly interface.
+Some upcoming changes may be backward incompatible.
+For details and migration guidance, visit: https://python.arviz.org/en/latest/user_guide/migration_guide.html
+  warn(
+/home/janboone/anaconda3/envs/pymc_env2/lib/python3.14/site-packages/pymc/step_methods/hmc/quadpotential.py:316: RuntimeWarning: overflow encountered in dot
+  return 0.5 * np.dot(x, v_out)
+                                                                                
+                              Step      Grad      Sampli…                       
+  Progre…   Draws   Diverg…   size      evals     Speed     Elapsed   Remaini…  
+ ────────────────────────────────────────────────────────────────────────────── 
+  ━━━━━━━   3000    0         0.023     255       224.50    0:00:13   0:00:00   
+                                                  draws/s                       
+  ━━━━━━━   3000    0         0.029     191       236.49    0:00:12   0:00:00   
+                                                  draws/s                       
+  ━━━━━━━   3000    0         0.027     255       229.09    0:00:13   0:00:00   
+                                                  draws/s                       
+  ━━━━━━━   3000    0         0.037     255       229.45    0:00:13   0:00:00   
+                                                  draws/s                       
+                                                                                
+
+Sampling 4 chains for 1_000 tune and 2_000 draw iterations (4_000 + 8_000 draws total) took 18 seconds.
+            mean       sd    hdi_3%  hdi_97%  mcse_mean  mcse_sd  ess_bulk  ess_tail  r_hat
+alpha    132.839   50.827    37.145  226.398      1.124    0.762    2058.0    2507.0    1.0
+beta_s     0.412    0.085     0.256    0.574      0.002    0.001    2159.0    2614.0    1.0
+gamma_s -337.239  431.729 -1126.731  488.015      6.759    5.023    4082.0    4374.0    1.0
+sigma     11.923    1.330     9.493   14.384      0.021    0.017    3962.0    4626.0    1.0
+#+end_example
+
+
+
+The posterior for =beta_s= is centred on the true value of 0.5.  All $\hat{R}$ statistics are 1.0 and effective sample sizes are in the thousands, indicating good convergence. You can also check the three convergence criteria in the trace plot.
+
+#+begin_src python :results graphics file output :file ./figures/lecture10_trace.png
+az.plot_trace(trace, var_names=['beta_s', 'gamma_s', 'sigma'])
+plt.tight_layout()
+#+end_src
+
+#+RESULTS:
+[[file:./figures/lecture10_trace.png]]
+
+We can also look at the year fixed effects with the following code:
+
+#+begin_src python
+print(az.summary(trace, var_names=['year_fe']))
+#+end_src
+
+#+RESULTS:
+:                  mean     sd  hdi_3%  hdi_97%  mcse_mean  mcse_sd  ess_bulk  ess_tail  r_hat
+: year_fe[2018]   9.973  6.915  -2.465   23.213      0.139    0.102    2605.0    3057.0    1.0
+: year_fe[2019]   4.848  6.108  -6.713   15.910      0.120    0.102    2745.0    3076.0    1.0
+: year_fe[2020]  -5.765  5.803 -17.124    4.921      0.110    0.097    2886.0    3416.0    1.0
+: year_fe[2021]   5.414  5.822  -4.833   17.026      0.112    0.097    2805.0    3206.0    1.0
+: year_fe[2022]  -0.301  6.201 -12.667   11.104      0.116    0.103    2951.0    3200.0    1.0
+: year_fe[2023] -14.233  7.326 -28.142   -1.233      0.150    0.107    2426.0    3389.0    1.0
+
+
+
+*** Policy analysis: welfare and the rent cap
+:PROPERTIES:
+:CUSTOM_ID: lecture10-policy
+:END:
+
+The government considers a rent cap.  Current average rent is 589 euros.  A cap at 500 euros would reduce rents for all postal code-year combinations where the regulated rent exceeds 500 euros.  Supply will fall due to the cap because providers receive less rent. We use our estimated model to gauge to which extent supply will fall.
+
+The social planner's welfare function positively values units on the market and penalizes rents above 500 euros:
+
+$$W(P_\text{cap}) = \lambda_{supply} \ln( Q_\text{total}(P_\text{cap})) - \lambda_{pen} \sum_{i,t} \bigl[\max(0,\, P_{it}^{\text{eff}} - 500)\bigr]^2,$$
+
+where $P_{it}^{\text{eff}} = \min(P_{it}, P_\text{cap})$ is the effective rent after the cap.  The second term is a convex (ReLU-squared) penalty: the planner is indifferent between 460 and 490 euros rent, but welfare is reduced with rents above 500 euros.
+
+#+begin_src python
+def welfare(cap_level, beta_s_val, df, lambda_pen=0.00005,lambda_supply=400):
+    """
+    Social planner welfare at a given cap and supply elasticity.
+
+    cap_level  : rent cap in €
+    beta_s_val : supply elasticity (scalar or 1-D array of posterior draws)
+    """
+    effective_rent = np.minimum(df['rent'].values, cap_level)
+    supply_change  = np.atleast_1d(beta_s_val)[:, None] * (effective_rent - df['rent'].values)
+    total_supply   = df['supply'].values.sum() + supply_change.sum(axis=1)
+    rent_penalty   = np.sum(np.maximum(effective_rent - 500, 0) ** 2)
+    return lambda_supply*np.log(1+total_supply) - lambda_pen * rent_penalty
+
+# Posterior draws of beta_s (all chains combined)
+beta_s_draws = trace.posterior['beta_s'].values.flatten()
+
+# Grid of cap levels
+cap_grid = np.arange(420, 650, 5)
+
+# Welfare at each (cap, draw) — shape: (n_caps, n_draws)
+W_grid = np.array([welfare(cap, beta_s_draws, df) for cap in cap_grid])
+
+W_mean  = W_grid.mean(axis=1)
+W_lower = np.percentile(W_grid,  5, axis=1)
+W_upper = np.percentile(W_grid, 95, axis=1)
+#+end_src
+
+#+RESULTS:
+
+#+begin_src python :results graphics file output :file ./figures/lecture10_welfare.png
+fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+
+# Welfare curve
+axes[0].fill_between(cap_grid, W_lower, W_upper, alpha=0.3, color='steelblue',
+                     label='90% posterior band')
+axes[0].plot(cap_grid, W_mean, color='steelblue', lw=2, label='Posterior mean')
+axes[0].axvline(500, color='firebrick', ls='--', lw=1.5, label='500 € threshold')
+axes[0].set(xlabel='Rent cap (€)', ylabel='Total welfare',
+            title='Planner welfare at different cap levels')
+axes[0].legend()
+
+# Distribution of the optimal cap across posterior draws
+opt_cap_draws = cap_grid[W_grid.argmax(axis=0)]
+axes[1].hist(opt_cap_draws, bins=30, density=True, color='steelblue', alpha=0.7)
+axes[1].axvline(cap_grid[W_mean.argmax()], color='black', lw=2, ls='--',
+                label='Optimal cap at mean welfare')
+axes[1].set(xlabel='Optimal rent cap (€)', ylabel='Density',
+            title='Distribution of optimal cap (posterior draws)')
+axes[1].legend(fontsize=8)
+
+fig.tight_layout()
+#+end_src
+
+#+RESULTS:
+[[file:./figures/lecture10_welfare.png]]
+
+The left panel shows that welfare peaks somewhere around 540–560 euros: a cap this high captures most of the rent-relief benefit while preserving supply.  The right panel shows the distribution of the optimal cap across all posterior draws of $\beta_s$ and the optimal cap when maximizing expected welfare.
+
+*** Optimal cap and Jensen's inequality
+:PROPERTIES:
+:CUSTOM_ID: lecture10-optimal-cap
+:END:
+
+We compare two decision rules:
+
+1. *Plug-in (frequentist)*: find the cap that maximizes $W$ at the posterior mean of $\beta_s$.
+2. *Bayesian*: for each posterior draw of $\beta_s$, find the optimal cap; report the distribution.
+
+#+begin_src python
+beta_s_mean  = float(beta_s_draws.mean())
+W_freq       = np.array([welfare(cap, beta_s_mean, df) for cap in cap_grid])
+cap_freq_opt = cap_grid[W_freq.argmax()]
+
+opt_caps         = cap_grid[W_grid.argmax(axis=0)]
+cap_bayes_median = float(np.median(opt_caps))
+cap_bayes_p5     = float(np.percentile(opt_caps,  5))
+cap_bayes_p95    = float(np.percentile(opt_caps, 95))
+
+print("Posterior mean of beta_s:        {:.3f}".format(beta_s_mean))
+print("Frequentist optimal cap:         {} €".format(cap_freq_opt))
+print("Bayesian median optimal cap:     {} €".format(cap_bayes_median))
+print("90% credible interval for cap:  {} – {} €".format(
+    int(cap_bayes_p5), int(cap_bayes_p95)))
+#+end_src
+
+#+RESULTS:
+: Posterior mean of beta_s:        0.412
+: Frequentist optimal cap:         580 €
+: Bayesian median optimal cap:     580.0 €
+: 90% credible interval for cap:  550 – 605 €
+
+With a Bayesian analysis we can visualize whether there is a probability that the rent cap actually reduces welfare compared to the baseline. In this case, there is such risk but it is small.
+
+Explain why the expression for =baseline_welfare= is correct in this case. Why is this the welfare level without a rent cap?
+
+
+#+begin_src python :results graphics file output :file ./figures/welfare_frequentist_optimal_distribution.png
+plt.hist(welfare(cap_freq_opt,beta_s_draws,df),bins=100,density=True,label=f'Welfare with {cap_freq_opt} rent cap')
+baseline_welfare = welfare(1000,beta_s_draws,df)
+plt.vlines(baseline_welfare,0,0.15,'red',linestyle='--',label='baseline welfare')
+plt.xlabel('welfare')
+plt.ylabel('density')
+plt.title(f'Welfare distribution of a {cap_freq_opt} rent cap compared to baseline welfare')
+plt.legend()
+#+end_src
+
+#+RESULTS:
+[[file:./figures/welfare_frequentist_optimal_distribution.png]]
+
+
+** Summary
+:PROPERTIES:
+:CUSTOM_ID: lecture10-summary
+:END:
+
+- When an objective function is non-linear in uncertain parameters, Jensen's inequality implies that the expected value of the objective differs from the objective evaluated at the expected parameter.  The frequentist plug-in approach ignores this gap; the Bayesian approach does not.
+- Hierarchical fixed effects in =pymc= are specified with =coords= (dimension labels) and =dims= (which dimension each random variable spans).  Partial pooling shrinks individual effects towards the group mean, reducing over-fitting compared with free (no-pooling) estimation.
+- The full posterior distribution of a parameter (here, the supply elasticity) translates directly into a distribution of policy outcomes.  Reporting this distribution gives decision-makers a realistic picture of policy risk.
+- A rent cap reduces rents but also reduces the supply of social housing.  The optimal cap trades off these two effects and depends on the supply elasticity.  Under parameter uncertainty, the optimal cap is itself uncertain.
+
+** Review Questions
+:PROPERTIES:
+:CUSTOM_ID: lecture10-review
+:END:
+
+1. In the vampire app, what happens to the distribution of expected damage from incarcerating when you increase $\kappa$ towards very large values?  Why does the Bayesian decision converge to the frequentist decision?
+
+2. Explain in words why Jensen's inequality implies that the frequentist plug-in approach overestimates welfare when the welfare function is concave in the uncertain parameter.  In which direction does the Bayesian expected welfare deviate from the frequentist estimate?
+
+3. In the supply model, why does the interest rate $r_t$ need to vary by year but not by postal code?  What would happen to the identification of $\gamma_s$ if $r$ were constant over time?
+
+4. What is the difference between "complete pooling", "no pooling", and "partial pooling" for the postal code fixed effects?  In which setting does =pymc='s hierarchical prior correspond to partial pooling?
+
+5. The optimal cap formula $P^*_\text{cap} = 500 + \beta_s/(2\lambda)$ is linear in $\beta_s$.  What does this imply for the Jensen gap in the optimal cap?  Under what modification of the welfare function would the optimal cap become a non-linear function of $\beta_s$?
+
+6. Suppose the supply elasticity has a 95% credible interval of 0.2 to 0.8 (instead of the tight interval in the simulation).  Qualitatively, how would the distribution of optimal caps change?  How would you advise a minister who needs a single number for the optimal cap?
+
+7. Describe a real-world policy context (other than rent control) where (a) a key parameter must be estimated from data, (b) the policy objective is non-linear in that parameter, and (c) ignoring parameter uncertainty could lead to a costly mistake.
 
 --------------------
 
